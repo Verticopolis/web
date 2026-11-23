@@ -25,6 +25,31 @@ prompt already tells players it is an engine update and shows the new version.
 Entries below 1.51.1 were curated from the commit history after the fact, so they
 are documentation only: no build that a client fetches carries them.
 
+## 4.15.0
+
+- Phones and tablets get the 1994 desktop: the tower window fills the screen with Info and Tools, the Map floats over the tower at its usual size, and a taskbar sized for a finger. Turn a tablet sideways for the full desktop.
+- Tap a room on the Map's Eval, Pricing, Hotel or Occupancy view to open that room's card, which names its main gripe, so you can see why a room is red before you build. On the Traffic view, a tap on a floor opens the card of the elevator or stairs nearest the tap that serves that floor.
+- The Player's Manual now works offline. The first time you open it online, your browser saves every page, the release notes and the search, so Help opens with no connection after that. Pictures are saved as you look at them.
+- In the player's manual, Edit > Find… opens the search box again.
+- The game runs engine 1.58.0, which changes nothing in play: the engine's test builds now come in the same package.
+- The game runs engine 1.60.0. Nothing changes in play.
+- Nothing changes in play. The help pages' game windows keep their Windows 95 look.
+- On the desktop, Tower Info, Map and Bulletin open from the Window menu alone; the Tower menu no longer repeats them.
+- Fires, bomb threats and thieves no longer come ten times as often each month on the real-world calendar as on the 1994 one: a month now brings about as many on either. A Modern tower with no defenses sees about one fire a year instead of nine.
+- The office rent line reads "(1 office)" for a single office instead of "(1 offices)".
+- Help: Calendar and clock and Events say how often emergencies come on each calendar.
+- A tower brought in from a 1994 `.TDT` keeps each elevator's Elevator window settings, and saving it for SimTower (1994) writes them back as they were. Before, the export reset every elevator to the default settings. A tower that keeps them saves in a format older versions of the game can't open.
+- About this game no longer repeats the version, engine crate and source hash. It shows each once, both sides only when they differ, and names the components package; Copy diagnostics still copies every detail.
+- On a phone held upright, the Getting Started card now sits under the top bar instead of covering its stats, and on a short phone its steps scroll so the card stays clear of the tools.
+- On a phone held sideways, the Getting Started card also sits under the top bar instead of covering it.
+- The menu bar, message boxes and desk windows now come from the shared components package (2.0.0). They should look and work as before.
+- Tower Statistics words the parking demand in the singular for one office, suite or home ("1 office + 2 suites"), where it used to read "1 offices".
+
+### Contributors
+
+- Still-Trainer-7395 on Reddit asked for a way to see why a room is red from the Map.
+- TourDeMexixo reported far too many fires on the real-world calendar.
+
 ## 4.14.3
 
 - The game's links to its code, its issue tracker and the bug report form now go to its new home on GitHub, Verticopolis/web.
