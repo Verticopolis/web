@@ -84,7 +84,7 @@ describe("notFoundPageTemplate", () => {
     expect(links[1].getAttribute("href")).toBe("/");
   });
 
-  it("puts the clock in the taskbar tray and the game behind its Verticopolis button", () => {
+  it("puts the clock in the taskbar tray and the game behind its Start button", () => {
     const frag = renderToFragment(notFoundPageTemplate({ path: "/x", clock: "4:34 PM" }));
     expect(frag.querySelector(".nf-taskbar .nf-tray time")?.textContent).toBe("4:34 PM");
     expect(frag.querySelector(".nf-taskbar a.nf-start")?.getAttribute("href")).toBe("/");

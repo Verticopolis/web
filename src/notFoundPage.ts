@@ -30,7 +30,7 @@ import { GAME_HOME, HELP_ORIGIN, helpUrl } from "./helpAddress";
 export type NotFoundSite = "game" | "help";
 
 /** What a pick on the page reports in `not_found_pick`: one of its buttons,
- *  the window's close box, or the taskbar's Verticopolis button. */
+ *  the window's close box, or the taskbar's Start button. */
 export type NotFoundPick = "game" | "manual" | "changelog" | "rooms" | "close" | "taskbar";
 
 /** A place the page offers, with the code its pick reports. */
@@ -116,7 +116,7 @@ export function notFoundPageTemplate(view: NotFoundView): TemplateResult {
     lines: ["The link may be mistyped, or the page may have moved."],
     links,
     close: backToGame("close", "Close and go to the game"),
-    start: backToGame("taskbar", "Verticopolis"),
+    start: backToGame("taskbar", "Start"),
     task: "Page not found",
     clock,
     ...(fromGame ? { note: html`<p id=${BACK_NOTE_ID} class="page-note" tabindex="-1" hidden></p>` } : {}),

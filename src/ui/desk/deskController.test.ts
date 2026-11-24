@@ -320,7 +320,7 @@ describe("DeskController", () => {
     expect(trackAppAction).toHaveBeenCalledWith("desk_control", "sounds");
   });
 
-  it("opens the Control Panel from the Verticopolis menu, and counts the pick", () => {
+  it("opens the Control Panel from the Start menu, and counts the pick", () => {
     new DeskController(doc).start();
     doc.querySelector<HTMLElement>(".desk-start")!.click();
     doc.querySelector<HTMLElement>('.desk-start-menu [data-item="desk-control-panel"]')!.click();
@@ -329,7 +329,7 @@ describe("DeskController", () => {
     expect(trackAppAction).toHaveBeenCalledWith("desk_start", "desk-control-panel");
   });
 
-  it("keeps the Verticopolis menu to commands no other menu holds", () => {
+  it("keeps the Start menu to commands no other menu holds", () => {
     new DeskController(doc).start();
     doc.querySelector<HTMLElement>(".desk-start")!.click();
     const entries = doc.querySelectorAll(".desk-start-menu .mb-item, .desk-start-menu .mb-sep");
@@ -388,7 +388,7 @@ describe("DeskController", () => {
     expect(palette.classList.contains("pal-collapsed")).toBe(false);
   });
 
-  it("brings a window to the front when it is pressed, and runs a Verticopolis menu item", () => {
+  it("brings a window to the front when it is pressed, and runs a Start menu item", () => {
     new DeskController(doc).start();
     const mapButton = () => doc.querySelector('.desk-task[data-win="map"]')!;
     expect(mapButton().getAttribute("aria-pressed")).toBe("false");
@@ -466,7 +466,7 @@ describe("DeskController analytics", () => {
     expect(trackAppAction).toHaveBeenCalledWith("desk_window", "map_restore");
   });
 
-  it("counts the Verticopolis menu opening on a tower, and each tray button", () => {
+  it("counts the Start menu opening on a tower, and each tray button", () => {
     new DeskController(doc).start();
     doc.querySelector<HTMLElement>(".desk-start")!.click();
     expect(trackAppAction).toHaveBeenCalledWith("desk_start_open", "tower");

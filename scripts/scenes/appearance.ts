@@ -2,7 +2,7 @@
  * The appearance schemes (Options > Appearance…, owner 2026-11-17), written
  * into docs/screenshots/features/ for the Help site and the PR review: the
  * dialog over the Standard desk, then the canon tower's desk in Skyline and
- * in High Contrast (with the Verticopolis menu and the dialog open in
+ * in High Contrast (with the Start menu and the dialog open in
  * Skyline, and the Tower menu's greyed items and the update prompt's notes in High Contrast), a phone in Skyline, and the phone title screen in both schemes. A scheme scene starts the page with the
  * scheme kept (`initScript`), the way a returning player's page opens.
  * Every scene runs on its own page, so a kept scheme never reaches another

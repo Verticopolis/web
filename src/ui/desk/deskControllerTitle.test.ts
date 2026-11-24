@@ -7,7 +7,8 @@ vi.mock("../../analyticsActions", () => ({ trackAppAction: vi.fn(), trackAppActi
 
 import { trackAppAction, trackAppActionOnce } from "../../analyticsActions";
 import { DESK_MQ } from "@verticopolis/components/windows/desk/deskScreen";
-import { DESK_TITLE_CLASS } from "@verticopolis/components/windows/desk/deskTitle";
+import { DESK_TITLE_CLASS, DESK_TITLE_POCKET_CLASS } from "@verticopolis/components/windows/desk/deskTitle";
+import { TOUCH_MQ } from "@verticopolis/components/windows/desk/deskPocket";
 import { DeskController } from "./deskController";
 
 /** The title screen over the game, on a computer. */
@@ -54,7 +55,7 @@ describe("the title screen on the desk", () => {
     expect(doc.activeElement).toBe(doc.querySelector("#splash .primary"));
   });
 
-  it("runs a Verticopolis menu item, and leaves out Close, since there is no tower to close", () => {
+  it("runs a Start menu item, and leaves out Close, since there is no tower to close", () => {
     new DeskController(doc).start();
     const open = vi.fn();
     onMenuItem("mb-import", open, doc);
@@ -78,14 +79,59 @@ describe("the title screen on the desk", () => {
     expect(doc.querySelector(".desk-tray-sound")!.classList.contains("muted")).toBe(true);
   });
 
-  it("counts the title window showing once, its taskbar button, the Verticopolis menu opening and the tray's sound", () => {
+  it("counts the title window showing once, its taskbar button, the Start menu opening and the tray's sound", () => {
     new DeskController(doc).start();
-    expect(trackAppActionOnce).toHaveBeenCalledWith("desk_title_shown");
+    expect(trackAppActionOnce).toHaveBeenCalledWith("desk_title_shown", "desk");
     doc.querySelector<HTMLElement>(".desk-task")!.click();
     expect(trackAppAction).toHaveBeenCalledWith("desk_task", "title_front");
     doc.querySelector<HTMLElement>(".desk-start")!.click();
     expect(trackAppAction).toHaveBeenCalledWith("desk_start_open", "title");
     doc.querySelector<HTMLElement>(".desk-tray-sound")!.click();
     expect(trackAppAction).toHaveBeenCalledWith("desk_tray", "sound");
+  });
+
+  it("puts the title screen on the pocket desk on a phone, and counts it as the pocket one", () => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn((query: string) => ({ matches: query === TOUCH_MQ, addEventListener: () => {} })),
+    );
+    new DeskController(doc).start();
+    expect([
+      doc.body.classList.contains(DESK_TITLE_CLASS),
+      doc.body.classList.contains(DESK_TITLE_POCKET_CLASS),
+    ]).toEqual([true, true]);
+    expect(doc.querySelectorAll(".desk-title-bar")).toHaveLength(1);
+    expect(trackAppActionOnce).toHaveBeenCalledWith("desk_title_shown", "pocket");
+  });
+
+  it("moves the title window between the desks as a tablet turns, and counts it once", () => {
+    let query = TOUCH_MQ;
+    const heard: (() => void)[] = [];
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn((q: string) => ({
+        get matches() {
+          return q === query;
+        },
+        addEventListener: (_: string, f: () => void) => heard.push(f),
+      })),
+    );
+    new DeskController(doc).start();
+    expect(doc.body.classList.contains(DESK_TITLE_POCKET_CLASS)).toBe(true);
+    query = DESK_MQ;
+    for (const f of heard) f();
+    expect([
+      doc.body.classList.contains(DESK_TITLE_CLASS),
+      doc.body.classList.contains(DESK_TITLE_POCKET_CLASS),
+    ]).toEqual([true, false]);
+    expect(doc.querySelectorAll(".desk-title-bar")).toHaveLength(1);
+    expect(vi.mocked(trackAppActionOnce).mock.calls.filter(([a]) => a === "desk_title_shown")).toEqual([
+      ["desk_title_shown", "pocket"],
+    ]);
+  });
+
+  it("keeps the title screen off the pocket desk on a computer", () => {
+    new DeskController(doc).start();
+    expect(doc.body.classList.contains(DESK_TITLE_POCKET_CLASS)).toBe(false);
   });
 });

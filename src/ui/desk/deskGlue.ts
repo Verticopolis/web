@@ -3,16 +3,16 @@ import type { StartItem } from "@verticopolis/components/windows/desk/deskTaskba
 
 /**
  * What the game puts on the 1994 desk the components package draws: the
- * Verticopolis menu's items, the Control Panel's icons and the game menu item
+ * Start menu's items, the Control Panel's icons and the game menu item
  * each runs, and the tower window's name.
  *
  * Cost: nothing runs per frame; the names are read when the taskbar redraws.
  */
 
-/** The Verticopolis menu's Control Panel item, which the desk opens itself. */
+/** The Start menu's Control Panel item, which the desk opens itself. */
 export const CONTROL_PANEL_ITEM = "desk-control-panel";
 
-/** The Verticopolis menu: each item runs the game's menu item with its id,
+/** The Start menu: each item runs the game's menu item with its id,
  *  so it does exactly what its menu twin does. A null is a separator. It
  *  holds no command another menu holds: the manual and About live in Help,
  *  Settings in Options, the screen saver in the Control Panel (#2600). */
