@@ -5,19 +5,11 @@ import { renderToFragment, viewTemplate, drawElement } from "./testing/litTestUt
 import { WELCOME_LINKS, welcomeModalTemplate } from "./templates/welcome";
 import {
   LAUNCH_FIREWORKS_SEEN_KEY,
-  MAX_SPARKS,
-  SPARKS_PER_BURST,
-  LAUNCH_WINDOW_MS,
-  burst,
-  drawSky,
   latchLaunchFireworks,
   majorOf,
   maybeLaunchFireworks,
-  newSky,
   shouldPlayLaunchFireworks,
   showLaunchFireworks,
-  stepSky,
-  stillSky,
   type LaunchFireworksGate,
 } from "./launchFireworks";
 
@@ -26,6 +18,10 @@ import {
 vi.mock("../deployTarget", () => ({ PREVIEW_DEPLOY: true }));
 const analytics = vi.hoisted(() => ({ trackAppAction: vi.fn() }));
 vi.mock("../analytics", () => analytics);
+// The show itself is the components' (and tested there); these tests check
+// where and how the welcome sets it off.
+const fireworks = vi.hoisted(() => ({ playFireworks: vi.fn() }));
+vi.mock("@verticopolis/components/windows/fireworks", () => fireworks);
 
 /** A storage double: a map behind spied getItem/setItem. */
 function memoryStorage(seed: Record<string, string> = {}) {
@@ -132,72 +128,11 @@ describe("whether the fireworks play", () => {
   });
 });
 
-describe("the sky", () => {
-  it("sends up a rocket, bursts it at its height and lets the sparks die out", () => {
-    const sky = newSky(200, 100);
-    stepSky(sky, 16, () => 0.5);
-    expect(sky.rockets).toHaveLength(1);
-    // Keep stepping past the launch window until the sky is empty again.
-    let sawSparks = false;
-    for (let i = 0; i < 1000 && (sky.elapsedMs < LAUNCH_WINDOW_MS || sky.rockets.length || sky.sparks.length); i++) {
-      stepSky(sky, 50, () => 0.5);
-      if (sky.sparks.length) sawSparks = true;
-    }
-    expect(sawSparks).toBe(true);
-    expect(sky.rockets).toHaveLength(0);
-    expect(sky.sparks).toHaveLength(0);
-  });
-
-  it("launches no rockets after the launch window", () => {
-    const sky = newSky(200, 100);
-    sky.elapsedMs = LAUNCH_WINDOW_MS + 1;
-    stepSky(sky, 50, () => 0.5);
-    expect(sky.rockets).toHaveLength(0);
-  });
-
-  it("clamps a long stall to one short step", () => {
-    const sky = newSky(200, 100);
-    stepSky(sky, 10_000, () => 0.5);
-    expect(sky.elapsedMs).toBeLessThanOrEqual(50);
-  });
-
-  it("caps the live sparks", () => {
-    const sky = newSky(200, 100);
-    const bursts = Math.ceil(MAX_SPARKS / SPARKS_PER_BURST) + 3;
-    for (let i = 0; i < bursts; i++) burst(sky, 100, 50, "#ffffff", () => 0.5);
-    expect(sky.sparks).toHaveLength(MAX_SPARKS);
-  });
-
-  it("lays out a still frame of four full bursts for reduced motion", () => {
-    const sky = stillSky(200, 100);
-    expect(sky.sparks).toHaveLength(4 * SPARKS_PER_BURST);
-    expect(sky.rockets).toHaveLength(0);
-  });
-
-  it("paints one pixel per spark and per rocket", () => {
-    const sky = newSky(200, 100);
-    burst(sky, 100, 50, "#ffc94a", () => 0.5);
-    sky.rockets.push({ x: 10, y: 90, vy: -50, burstY: 20, color: "#50e0ff" });
-    const ctx = { clearRect: vi.fn(), fillRect: vi.fn(), fillStyle: "", globalAlpha: 1 };
-    drawSky(ctx as unknown as CanvasRenderingContext2D, sky);
-    expect(ctx.clearRect).toHaveBeenCalledWith(0, 0, 200, 100);
-    expect(ctx.fillRect).toHaveBeenCalledTimes(SPARKS_PER_BURST + 1);
-    expect(ctx.globalAlpha).toBe(1);
-  });
-});
-
 describe("the show", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     document.getElementById("test-modal")?.remove();
   });
-
-  /** A canvas context double, so the frame loop runs under the test DOM. */
-  function stubCanvas() {
-    const ctx = { clearRect: vi.fn(), fillRect: vi.fn(), fillStyle: "", globalAlpha: 1, imageSmoothingEnabled: true };
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
-    return ctx;
-  }
 
   /** The UI's two modal primitives as spies. Opening renders the template into
    *  a box inside a dialog, as `UI.openModal` does; closing empties
@@ -219,9 +154,8 @@ describe("the show", () => {
   }
 
   it("opens the welcome in the shared modal, displaceable, with its actions wired", () => {
-    stubCanvas();
     const { ui, box } = modalPort();
-    showLaunchFireworks({ ui, reducedMotion: true, raf: vi.fn() });
+    showLaunchFireworks({ ui, reducedMotion: true });
     expect(ui.openModal).toHaveBeenCalledTimes(1);
     expect(ui.openModal.mock.calls[0]![1]).toMatchObject({ displaceable: true });
     expect(ui.wireActions).toHaveBeenCalledWith(box);
@@ -229,10 +163,9 @@ describe("the show", () => {
   });
 
   it("reports the player's close once, through the dialog's close event", () => {
-    stubCanvas();
     const { ui, dialog } = modalPort();
     const onClosed = vi.fn();
-    showLaunchFireworks({ ui, reducedMotion: true, raf: vi.fn(), onClosed });
+    showLaunchFireworks({ ui, reducedMotion: true, onClosed });
     expect(onClosed).not.toHaveBeenCalled();
     dialog.dispatchEvent(new Event("close"));
     expect(onClosed).toHaveBeenCalledTimes(1);
@@ -241,17 +174,15 @@ describe("the show", () => {
   });
 
   it("does not count a dialog that replaced the welcome as the player closing it", () => {
-    stubCanvas();
     const { ui, dialog } = modalPort();
     const onClosed = vi.fn();
-    showLaunchFireworks({ ui, reducedMotion: true, raf: vi.fn(), onClosed });
+    showLaunchFireworks({ ui, reducedMotion: true, onClosed });
     ui.openModal.mock.calls[0]![1]!.onDisplaced!();
     dialog.dispatchEvent(new Event("close")); // the replacing dialog closes
     expect(onClosed).not.toHaveBeenCalled();
   });
 
   it("counts the welcome showing, each help link, and how it closed: OK, the ✕, Escape or a backdrop click", () => {
-    stubCanvas();
     const actions = () => analytics.trackAppAction.mock.calls;
     const ways: [string, (dialog: HTMLDialogElement, box: HTMLElement) => void][] = [
       ["ok", (_d, box) => box.querySelector<HTMLElement>("[data-act='close']")!.click()],
@@ -268,7 +199,7 @@ describe("the show", () => {
     for (const [how, close] of ways) {
       analytics.trackAppAction.mockClear();
       const { ui, dialog, box } = modalPort();
-      showLaunchFireworks({ ui, reducedMotion: true, raf: vi.fn() });
+      showLaunchFireworks({ ui, reducedMotion: true });
       expect(actions()).toEqual([["welcome_shown"]]);
       close(dialog, box);
       dialog.dispatchEvent(new Event("close"));
@@ -279,7 +210,7 @@ describe("the show", () => {
     }
     analytics.trackAppAction.mockClear();
     const { ui, box } = modalPort();
-    showLaunchFireworks({ ui, reducedMotion: true, raf: vi.fn() });
+    showLaunchFireworks({ ui, reducedMotion: true });
     for (const a of box.querySelectorAll("a")) {
       a.addEventListener("click", (e) => e.preventDefault()); // no navigation in the test page
       a.click();
@@ -293,10 +224,9 @@ describe("the show", () => {
   });
 
   it("counts a displacement once, and stops listening to the dialog that took its place", () => {
-    stubCanvas();
     analytics.trackAppAction.mockClear();
     const { ui, dialog, box } = modalPort();
-    showLaunchFireworks({ ui, reducedMotion: true, raf: vi.fn() });
+    showLaunchFireworks({ ui, reducedMotion: true });
     ui.openModal.mock.calls[0]![1]!.onDisplaced!();
     box.querySelector("a")!.addEventListener("click", (e) => e.preventDefault());
     box.querySelector("a")!.click(); // the replacing dialog's own link, as it were
@@ -304,63 +234,27 @@ describe("the show", () => {
     expect(analytics.trackAppAction.mock.calls).toEqual([["welcome_shown"], ["welcome_close", "displaced"]]);
   });
 
-  it("puts the fireworks canvas inside the dialog, ahead of the window's box", () => {
-    stubCanvas();
-    const { ui, dialog, box } = modalPort();
-    showLaunchFireworks({ ui, reducedMotion: true, raf: vi.fn() });
-    const canvas = dialog.firstElementChild as HTMLCanvasElement;
-    expect(canvas.tagName).toBe("CANVAS");
-    expect(canvas.className).toBe("launch-fireworks-sky");
-    expect(canvas.getAttribute("aria-hidden")).toBe("true");
-    expect(canvas.nextElementSibling).toBe(box);
-  });
-
-  it("with reduced motion, paints one still frame and starts no frame loop", () => {
-    const ctx = stubCanvas();
-    const raf = vi.fn();
-    showLaunchFireworks({ ui: modalPort().ui, reducedMotion: true, raf });
-    expect(raf).not.toHaveBeenCalled();
-    expect(ctx.fillRect).toHaveBeenCalledTimes(4 * SPARKS_PER_BURST);
-  });
-
-  it("animates frame after frame with motion on", () => {
-    const ctx = stubCanvas();
-    const frames: FrameRequestCallback[] = [];
-    const raf = vi.fn((cb: FrameRequestCallback) => frames.push(cb));
-    showLaunchFireworks({ ui: modalPort().ui, reducedMotion: false, rand: () => 0.5, raf });
-    frames[0]!(0);
-    frames[1]!(16);
-    expect(raf).toHaveBeenCalledTimes(3);
-    expect(ctx.clearRect).toHaveBeenCalledTimes(2);
-    expect(ctx.fillRect).toHaveBeenCalled(); // the first rocket
-  });
-
-  it("stops its frame loop when the dialog closes and takes the canvas", () => {
-    const ctx = stubCanvas();
-    const frames: FrameRequestCallback[] = [];
-    const raf = vi.fn((cb: FrameRequestCallback) => frames.push(cb));
-    const port = modalPort();
-    showLaunchFireworks({ ui: port.ui, reducedMotion: false, rand: () => 0.5, raf });
-    frames[0]!(0);
-    port.close();
-    frames[1]!(16);
-    expect(raf).toHaveBeenCalledTimes(2);
-    expect(ctx.clearRect).toHaveBeenCalledTimes(1);
-  });
-
-  it("stops asking for frames once the last spark is gone", () => {
-    stubCanvas();
-    const frames: FrameRequestCallback[] = [];
-    const raf = vi.fn((cb: FrameRequestCallback) => frames.push(cb));
-    showLaunchFireworks({ ui: modalPort().ui, reducedMotion: false, rand: () => 0.5, raf });
-    let now = 0;
-    for (let i = 0; i < 1000 && frames.length === i + 1; i++) {
-      frames[i]!(now);
-      now += 50;
+  it("sets the fireworks off inside the dialog at the screen's size, with reduced motion as given", () => {
+    for (const reducedMotion of [true, false]) {
+      fireworks.playFireworks.mockClear();
+      const { ui, dialog } = modalPort();
+      showLaunchFireworks({ ui, reducedMotion });
+      expect(fireworks.playFireworks).toHaveBeenCalledTimes(1);
+      expect(fireworks.playFireworks).toHaveBeenCalledWith(document, dialog, {
+        reducedMotion,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+      dialog.remove();
     }
-    const asked = raf.mock.calls.length;
-    expect(asked).toBeGreaterThan(LAUNCH_WINDOW_MS / 50);
-    expect(asked).toBeLessThan(1000);
+  });
+
+  it("sets off no fireworks when the welcome has no dialog to sit in", () => {
+    fireworks.playFireworks.mockClear();
+    const box = document.createElement("div");
+    const ui = { openModal: vi.fn(() => box), wireActions: vi.fn() };
+    showLaunchFireworks({ ui, reducedMotion: false });
+    expect(fireworks.playFireworks).not.toHaveBeenCalled();
   });
 });
 
@@ -428,7 +322,6 @@ describe("the boot call", () => {
   }
 
   it("shows the welcome on every load until the player closes it, then never again", () => {
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     vi.spyOn(navigator, "webdriver", "get").mockReturnValue(false); // the test DOM reports automation
     const { ui, dialog } = dialogPort();
     maybeLaunchFireworks(ui, () => true);
@@ -443,7 +336,6 @@ describe("the boot call", () => {
   });
 
   it("never sets the latch when a `?debug=fireworks` preview closes", () => {
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     history.replaceState(null, "", "/?debug=fireworks");
     const { ui, dialog } = dialogPort();
     maybeLaunchFireworks(ui, () => true);

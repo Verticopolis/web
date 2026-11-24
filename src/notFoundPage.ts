@@ -1,5 +1,11 @@
-import { html, nothing, render, type TemplateResult } from "lit-html";
-import { iconTemplate } from "@verticopolis/components/windows/icons";
+import { html, render, type TemplateResult } from "lit-html";
+import {
+  msToNextMinute,
+  notFoundDeskTemplate,
+  trayClock,
+  type NotFoundLink as DeskLink,
+  type NotFoundPickHow,
+} from "@verticopolis/components/windows/notFoundDesk";
 import { injectPageTelemetry } from "./telemetry";
 import { trackAppAction } from "./analyticsActions";
 import { BACK_NOTE_ID, backToOpenGame, takeFromGameFlag } from "./ui/fromGame";
@@ -13,10 +19,11 @@ import { GAME_HOME, HELP_ORIGIN, helpUrl } from "./helpAddress";
  * serves the same file, so the page tells the two apart ({@link notFoundSite})
  * and puts the manual first there.
  *
- * It looks like the game on a computer: a message box on the teal 1994 desk,
- * with the sunrise skyline from the startup screen and a taskbar. One tower in
- * the skyline is missing a floor, tagged 404. No game code runs here, and the
- * page is kept out of the offline precache.
+ * It looks like the game on a computer: the components' 404 desk
+ * (`notFoundDeskTemplate`), a message box on the teal 1994 desk with the
+ * sunrise skyline from the startup screen and a taskbar. This file picks the
+ * words and the links, and reports each pick. No game code runs here, and
+ * the page is kept out of the offline precache.
  */
 
 /** Which site the missing address belongs to. */
@@ -80,156 +87,40 @@ export interface NotFoundView {
   clock?: string;
 }
 
-/** `MouseEvent.button` for the middle (wheel) button, the one that opens a
- *  link in a new tab; the right button's `auxclick` opens a menu instead. */
-export const MIDDLE_BUTTON = 1;
-
-/** The taskbar clock's text for `now`, as the 1995 tray showed it: "4:34 PM". */
-export function trayClock(now: Date): string {
-  const h = now.getHours();
-  const m = String(now.getMinutes()).padStart(2, "0");
-  return `${h % 12 || 12}:${m} ${h < 12 ? "AM" : "PM"}`;
-}
-
-/** How long from `now` until the clock's minute turns over, a little after
- *  it so the redraw reads the new minute. */
-export function msToNextMinute(now: Date): number {
-  return (60 - now.getSeconds()) * 1000 - now.getMilliseconds() + 50;
-}
-
-/** The Windows 95 warning icon of the message box, drawn on a 32 by 32 grid. */
-const WARNING_ICON = html`<svg
-  class="nf-icon"
-  viewBox="0 0 32 32"
-  width="32"
-  height="32"
-  aria-hidden="true"
->
-  <path
-    d="M15 2h2v2h1v3h1v3h1v3h1v3h1v3h1v3h1v3h1v3h1v3H5v-3h1v-3h1v-3h1v-3h1v-3h1v-3h1v-3h1V7h1V4h1z"
-    fill="#000"
-  />
-  <path
-    d="M15.5 5h1v3h1v3h1v3h1v3h1v3h1v3h1v3h1v2H7v-2h1v-3h1v-3h1v-3h1v-3h1v-3h1V8h1V5z"
-    fill="#ffd400"
-  />
-  <path d="M15 10h2v9h-2zM15 21h2v2h-2z" fill="#000" />
-</svg>`;
-
-/** The sunrise skyline from the startup screen, with one tower missing a floor. */
-const SKYLINE = html`<div class="nf-sky" aria-hidden="true">
-  <span class="nf-star" style="left:12%;top:18%"></span>
-  <span class="nf-star" style="left:34%;top:9%"></span>
-  <span class="nf-star" style="left:71%;top:14%"></span>
-  <span class="nf-star" style="left:88%;top:30%"></span>
-  <span class="nf-sun"></span>
-  <span class="nf-bldg" style="left:3%;width:15%;height:52%;--lit:0.35"></span>
-  <span class="nf-bldg" style="left:20%;width:11%;height:70%;--lit:0.6"></span>
-  <span class="nf-tower">
-    <span class="nf-tower-top"></span>
-    <span class="nf-gap"><span class="nf-tag">404</span></span>
-    <span class="nf-tower-base"></span>
-  </span>
-  <span class="nf-bldg" style="left:63%;width:13%;height:62%;--lit:0.45"></span>
-  <span class="nf-bldg" style="left:80%;width:17%;height:44%;--lit:0.3"></span>
-</div>`;
-
-/** The page: a message box on the desk, and the taskbar. Pure, so the test
- *  renders it directly. */
+/** The page: the components' 404 desk with this site's words and links.
+ *  Pure, so the test renders it directly. */
 export function notFoundPageTemplate(view: NotFoundView): TemplateResult {
   const { path, site = "game", fromGame = false, clock = "" } = view;
-  const links = notFoundLinks(site);
-  const title = site === "help" ? "Verticopolis Player's Manual" : "Verticopolis";
-  const heading = site === "help" ? "Page 404 isn't in the manual." : "Floor 404 hasn't been built yet.";
   // Every pick reports where it went: a click, keyboard Enter, or a
   // middle-click that opens it in a new tab. A way back to the game closes a
   // game-opened tab instead, as the manual's Back to game does.
-  const toGame = (code: NotFoundPick) => (e: MouseEvent) => {
-    trackAppAction("not_found_pick", code);
-    if (fromGame) backToOpenGame(e);
-  };
-  const noted = (code: NotFoundPick) => () => trackAppAction("not_found_pick", code);
-  const middle = (code: NotFoundPick) => (e: MouseEvent) => {
-    if (e.button === MIDDLE_BUTTON) trackAppAction("not_found_pick", code);
-  };
-  const button = (l: NotFoundLink, primary: boolean): TemplateResult =>
-    l.code === "game"
-      ? html`<a
-          class="btn ${primary ? "primary" : ""}"
-          href=${l.href}
-          data-act="back-to-game"
-          @click=${toGame(l.code)}
-          @auxclick=${middle(l.code)}
-          >${l.label}</a
-        >`
-      : html`<a
-          class="btn ${primary ? "primary" : ""}"
-          href=${l.href}
-          @click=${noted(l.code)}
-          @auxclick=${middle(l.code)}
-          >${l.label}</a
-        >`;
-  return html`
-    <div class="nf-desk">
-      <main class="nf-win win" aria-labelledby="nf-heading">
-        <div class="win-title">
-          <span class="nf-title-icon" aria-hidden="true"
-            >${iconTemplate("brand", { size: 16 })}</span
-          >
-          <span class="nf-title-text">${title}</span>
-          <a
-            class="btn xs nf-close"
-            href=${GAME_HOME}
-            data-act="back-to-game"
-            aria-label="Close and go to the game"
-            @click=${toGame("close")}
-            @auxclick=${middle("close")}
-            >✕</a
-          >
-        </div>
-        ${SKYLINE}
-        <div class="nf-body">
-          ${
-            fromGame
-              ? html`<p
-                id=${BACK_NOTE_ID}
-                class="page-note"
-                tabindex="-1"
-                hidden
-              ></p>`
-              : nothing
-          }
-          <div class="nf-msg">
-            ${WARNING_ICON}
-            <div>
-              <h1 id="nf-heading">${heading}</h1>
-              <p>There is no page at <code>${path}</code>.</p>
-              <p>The link may be mistyped, or the page may have moved.</p>
-            </div>
-          </div>
-          <nav class="nf-buttons" aria-label="Pages">
-            ${links.map((l, i) => button(l, i === 0))}
-          </nav>
-        </div>
-      </main>
-    </div>
-    <footer class="nf-taskbar">
-      <a
-        class="nf-start"
-        href=${GAME_HOME}
-        data-act="back-to-game"
-        @click=${toGame("taskbar")}
-        @auxclick=${middle("taskbar")}
-        >${iconTemplate("brand", { size: 16 })}<span>Verticopolis</span></a
-      >
-      <span class="nf-task" aria-hidden="true"
-        >${iconTemplate("warning", { size: 14 })}<span
-          >Page not found</span
-        ></span
-      >
-      <span class="nf-tray"><time>${clock}</time></span>
-    </footer>
-  `;
+  const onPick =
+    (code: NotFoundPick, toGame: boolean) =>
+    (e: MouseEvent, how: NotFoundPickHow): void => {
+      trackAppAction("not_found_pick", code);
+      if (toGame && fromGame && how === "click") backToOpenGame(e);
+    };
+  const backToGame = (code: NotFoundPick, label: string): DeskLink => ({
+    href: GAME_HOME,
+    label,
+    act: "back-to-game",
+    onPick: onPick(code, true),
+  });
+  const links = notFoundLinks(site).map((l): DeskLink =>
+    l.code === "game" ? backToGame(l.code, l.label) : { href: l.href, label: l.label, onPick: onPick(l.code, false) },
+  );
+  return notFoundDeskTemplate({
+    title: site === "help" ? "Verticopolis Player's Manual" : "Verticopolis",
+    heading: site === "help" ? "Page 404 isn't in the manual." : "Floor 404 hasn't been built yet.",
+    path,
+    lines: ["The link may be mistyped, or the page may have moved."],
+    links,
+    close: backToGame("close", "Close and go to the game"),
+    start: backToGame("taskbar", "Verticopolis"),
+    task: "Page not found",
+    clock,
+    ...(fromGame ? { note: html`<p id=${BACK_NOTE_ID} class="page-note" tabindex="-1" hidden></p>` } : {}),
+  });
 }
 
 function main(): void {
