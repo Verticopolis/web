@@ -3,7 +3,10 @@ import type { MenuBar } from "@verticopolis/components/windows/menuBar";
 import { drawnBar, onMenuItem, setMenuState, type MenuEntryState } from "./menuBarHost";
 import { MovableWindow, WITHIN_PARENT } from "@verticopolis/components/windows/movableWindow";
 import { browserStorage } from "@verticopolis/components/windows/overviewMapPrefs";
-import { PALETTE_COLLAPSE_BUTTON_ID, PALETTE_COLLAPSED_CLASS } from "../ui/paletteCollapse";
+import {
+  PALETTE_COLLAPSE_BUTTON_ID,
+  PALETTE_COLLAPSED_CLASS,
+} from "@verticopolis/components/windows/palette/paletteCollapse";
 import { trackAppAction } from "../analytics";
 import {
   menuItemCodeOf,

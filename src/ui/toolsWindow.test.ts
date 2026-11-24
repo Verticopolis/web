@@ -14,12 +14,14 @@ import {
 } from "./toolsWindow";
 import type { Tool, UI } from "./UI";
 
-// The desktop fit reads layout, which happy-dom does not have; paletteFit.test.ts
-// covers it. Here a spy stands in for the window's refit.
+// The desktop fit reads layout, which happy-dom does not have; the components
+// package tests it. Here a spy stands in for the window's refit.
 const refit = vi.hoisted(() => vi.fn());
-vi.mock("./paletteFit", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./paletteFit")>()),
-  watchPaletteFit: () => refit,
+vi.mock("@verticopolis/components/windows/palette/paletteFit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@verticopolis/components/windows/palette/paletteFit")>()),
+  PaletteFit: class {
+    refit = refit;
+  },
 }));
 
 /**

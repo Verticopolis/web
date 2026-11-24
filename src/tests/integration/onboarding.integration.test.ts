@@ -14,11 +14,10 @@ import {
 } from "../../ui/Onboarding";
 import {
   PALETTE_COLLAPSED_CLASS,
-  PALETTE_COLLAPSED_STORAGE_KEY,
   PALETTE_COLLAPSED_VALUE,
-  wirePaletteCollapse,
-} from "../../ui/paletteCollapse";
-import { PALETTE_FIT_MQ } from "../../ui/paletteFit";
+} from "@verticopolis/components/windows/palette/paletteCollapse";
+import { PALETTE_FIT_MQ } from "@verticopolis/components/windows/palette/paletteFit";
+import { PALETTE_COLLAPSED_STORAGE_KEY, wireToolsCollapse } from "../../ui/toolsWindow";
 
 const C = Math.floor(LOT_WIDTH / 2);
 
@@ -494,7 +493,7 @@ describeEngines("Onboarding — tick advances and finishes on real progress", (l
       getItem: (k: string) => stored[k] ?? null,
       setItem: (k: string, v: string) => void (stored[k] = v),
     };
-    wirePaletteCollapse(win, store, () => {});
+    wireToolsCollapse(win, store, () => {});
     expect(win.classList.contains(PALETTE_COLLAPSED_CLASS)).toBe(true);
     // The page is on the desktop layout, where the fold shows.
     vi.stubGlobal("matchMedia", (query: string) => ({ matches: query === PALETTE_FIT_MQ }));

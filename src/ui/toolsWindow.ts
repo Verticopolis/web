@@ -9,8 +9,8 @@ import {
   type PaletteView,
 } from "@verticopolis/components/windows/palette/toolPalette";
 import type { Tool, UI } from "./UI";
-import { watchPaletteFit } from "./paletteFit";
-import { wirePaletteCollapse } from "./paletteCollapse";
+import { PaletteFit } from "@verticopolis/components/windows/palette/paletteFit";
+import { PaletteCollapse } from "@verticopolis/components/windows/palette/paletteCollapse";
 import { browserStorage } from "@verticopolis/components/windows/overviewMapPrefs";
 import { showHintInStatusBar } from "./statusBar";
 import { TOOL_DESCRIPTION } from "./templates/toolInfo";
@@ -72,6 +72,12 @@ interface ToolsState {
 
 const states = new WeakMap<UI, ToolsState>();
 
+/** Where the player's fold of the desktop Tools window is kept. */
+export const PALETTE_COLLAPSED_STORAGE_KEY = "vc-tools-collapsed-desktop";
+
+/** Each Tools window's fold button, for {@link openFoldedToolsAround}. */
+const collapses = new WeakMap<Element, PaletteCollapse>();
+
 /** The Tools window (`#palette`), the window around the list. */
 export function paletteWindow(ui: UI): HTMLElement | null {
   return ui.el.palette.closest<HTMLElement>("#palette");
@@ -86,9 +92,10 @@ export function buildPalette(ui: UI): void {
   const storage = browserStorage();
   const win = paletteWindow(ui);
   // On the desktop layout the window picks compact rows or two columns when
-  // the list would not fit (paletteFit); a fold or a tool shown or hidden
+  // the list would not fit (PaletteFit); a fold or a tool shown or hidden
   // refits it. Its title bar's button folds the window into a strip.
-  const refit = win ? watchPaletteFit(win) : () => {};
+  const fit = win ? new PaletteFit(win) : null;
+  const refit = (): void => void fit?.refit();
   const palette = new ToolPalette({
     list: ui.el.palette,
     tabs: ui.el.paletteTabs,
@@ -104,7 +111,26 @@ export function buildPalette(ui: UI): void {
   ui.paletteCatalog = catalog;
   states.set(ui, { palette, refit, catalog, star: null, money: 0, active: activeKey(ui.tool), scanKey: null });
   draw(ui);
-  if (win) wirePaletteCollapse(win, storage, refit);
+  if (win) wireToolsCollapse(win, storage, refit);
+}
+
+/** Draw the fold button on the Tools window `win`, start the window as the
+ *  player last left it, and call `toggled` after each fold or open. */
+export function wireToolsCollapse(
+  win: HTMLElement,
+  storage: Pick<Storage, "getItem" | "setItem"> | null,
+  toggled: () => void,
+): PaletteCollapse {
+  const collapse = new PaletteCollapse(win, { store: { key: PALETTE_COLLAPSED_STORAGE_KEY, storage }, toggled });
+  collapses.set(win, collapse);
+  return collapse;
+}
+
+/** Open the Tools window when `tool` sits in it while it is folded, so a
+ *  Getting Started pointer at the tool is in view (desktop layout only). */
+export function openFoldedToolsAround(tool: Element): void {
+  const win = tool.closest("#palette");
+  if (win) collapses.get(win)?.openAround(tool);
 }
 
 /** The game's tool for a pressed button. */

@@ -14,12 +14,14 @@ import { buildPalette } from "./toolsWindow";
 import { html } from "lit-html";
 import { mountPage, drawElement } from "./testing/litTestUtils";
 // The lock scan asks the Tools window to refit when it shows or hides a tool.
-// The fit itself reads layout, which jsdom does not have; paletteFit.test.ts
-// covers it. Here a spy stands in for the window's refit.
+// The fit itself reads layout, which jsdom does not have; the components
+// package tests it. Here a spy stands in for the window's refit.
 const refit = vi.hoisted(() => vi.fn());
-vi.mock("./paletteFit", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./paletteFit")>()),
-  watchPaletteFit: () => refit,
+vi.mock("@verticopolis/components/windows/palette/paletteFit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@verticopolis/components/windows/palette/paletteFit")>()),
+  PaletteFit: class {
+    refit = refit;
+  },
 }));
 
 /**

@@ -1,5 +1,5 @@
 /**
- * Gallery scenes for the desktop Tools window's fit (src/ui/paletteFit.ts),
+ * Gallery scenes for the desktop Tools window's fit (the components package's PaletteFit),
  * written into docs/screenshots/features/. Part of the SCENES manifest
  * (screenshot-scenes.ts). A Modern tower at five stars lists every tool, the
  * longest list there is: on a 1280x800 window it takes two columns of compact
