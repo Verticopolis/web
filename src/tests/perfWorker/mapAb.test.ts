@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAP_OPEN_STORAGE_KEY, MAP_OPEN_VALUE } from "../../ui/overviewMapPrefs";
+import { MAP_OPEN_STORAGE_KEY, MAP_OPEN_VALUE } from "@verticopolis/components/windows/overviewMapPrefs";
 import {
   checkMapAb,
   checkMapAbFolder,

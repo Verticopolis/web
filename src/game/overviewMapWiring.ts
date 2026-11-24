@@ -13,7 +13,7 @@
  * full height (#308). A tap on any other view opens the card of what it shows
  * there (`overviewMapCard.ts`).
  * The player drags the window by its title bar, and the spot they choose is
- * kept per layout class (`ui/overviewMapSpot.ts`).
+ * kept per layout class (the components package's `windows/overviewMapSpot`).
  */
 import type { GameApp } from "../main";
 import type { FacilityKind } from "@verticopolis/engine/model/types";
@@ -21,13 +21,17 @@ import { findViewKind } from "@verticopolis/components/presentation/viewKinds";
 import { NO_ROOM_TIERS, RoomTierReader, type RoomTiers } from "@verticopolis/engine/port/roomTiers";
 import { lobbyHalls, type HallRun } from "@verticopolis/components/render/lobbyHalls";
 import { FLOOR, TILE } from "@verticopolis/components/render/scale";
-import { browserStorage, type MapLayoutClass } from "../ui/overviewMapPrefs";
-import { rememberMapSpot, storedMapSpot } from "../ui/overviewMapSpot";
+import { browserStorage, type MapLayoutClass } from "@verticopolis/components/windows/overviewMapPrefs";
+import { rememberMapSpot, storedMapSpot } from "@verticopolis/components/windows/overviewMapSpot";
 import { MovableWindow, WITHIN_PARENT } from "@verticopolis/components/windows/movableWindow";
 import { DESK_CHANGE_EVENT, deskActive } from "../ui/desk/deskController";
 import { MOVABLE_TITLE, wireMapWindowAnalytics } from "./movableWindows";
-import { OverviewMapWindow, type MutableMapCamera, type OverviewMapSource } from "../ui/overviewMapWindow";
-import { OverviewMapViews, type MapHeatSource } from "../ui/overviewMapViews";
+import {
+  OverviewMapWindow,
+  type MutableMapCamera,
+  type OverviewMapSource,
+} from "@verticopolis/components/windows/overviewMapWindow";
+import { OverviewMapViews, type MapHeatSource } from "@verticopolis/components/windows/overviewMapViews";
 import { viewWorld, viewWorldBound } from "@verticopolis/components/presentation/viewWorld";
 import { engineTrapped, noteEngineThrow } from "./engineFault";
 import { isEngineStopped } from "./interactionState";

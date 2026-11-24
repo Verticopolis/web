@@ -38,5 +38,4 @@ src/tests/perfWorker/main.ts
 src/tests/perfWorker/runner.ts
 src/ui/Onboarding.ts
 src/ui/fileDialog.ts
-src/ui/overviewMapWindow.ts
 src/ui/uiElevatorSchedule.ts

@@ -10,7 +10,7 @@ import type { RustEngineHandle } from "@verticopolis/engine/host/rustEngine";
 import type { Engine as ToolingBinding } from "@verticopolis/engine/tooling";
 import type { ToolingTower, ToolingTowerClass } from "./src/game/toolingTower";
 import type { GameApp } from "./src/main";
-import type { OverviewMapWindow } from "./src/ui/overviewMapWindow";
+import type { OverviewMapWindow } from "@verticopolis/components/windows/overviewMapWindow";
 
 /** The app as a tooling build runs it: its harness tower is always there
  *  (with the constructors that make a detached one, which `sim =` adopts),

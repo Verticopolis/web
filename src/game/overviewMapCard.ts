@@ -1,6 +1,6 @@
 /**
  * A tap on the overview MAP opens the card of what the selected view shows
- * there (`ui/overviewMapPick.ts`): a room's card on Eval, Pricing, Hotel and
+ * there (the components package's `windows/overviewMapPick`): a room's card on Eval, Pricing, Hotel and
  * Occupancy, and on Traffic the card of a shaft serving the tapped floor. The
  * tap has already moved the view there.
  *
@@ -14,8 +14,13 @@
 import type { FacilityKind } from "@verticopolis/engine/model/types";
 import type { MapViewId } from "@verticopolis/components/render/overviewMap/views";
 import { trackAppAction } from "../analyticsActions";
-import type { MapTap } from "../ui/overviewMapDeps";
-import { mapPick, type MapPickRoom, type MapPickShaft, type MapPicked } from "../ui/overviewMapPick";
+import type { MapTap } from "@verticopolis/components/windows/overviewMapDeps";
+import {
+  mapPick,
+  type MapPickRoom,
+  type MapPickShaft,
+  type MapPicked,
+} from "@verticopolis/components/windows/overviewMapPick";
 import { engineTrapped } from "./engineFault";
 import { isEngineStopped } from "./interactionState";
 

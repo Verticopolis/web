@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { fitLayout } from "@verticopolis/components/render/overviewMap/geometry";
-import type { MapTap } from "../ui/overviewMapDeps";
-import type { MapPickRoom, MapPickShaft } from "../ui/overviewMapPick";
+import type { MapTap } from "@verticopolis/components/windows/overviewMapDeps";
+import type { MapPickRoom, MapPickShaft } from "@verticopolis/components/windows/overviewMapPick";
 
 const fault = vi.hoisted(() => ({ trapped: false, stopped: false }));
 const trackAppAction = vi.hoisted(() => vi.fn());
