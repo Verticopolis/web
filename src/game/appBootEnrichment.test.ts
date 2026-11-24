@@ -85,7 +85,7 @@ describe("runBootFlow analytics enrichment wiring (S4)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     sessionStorage.clear();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     window.location.href = "https://verticopolis.com/";
   });
   afterEach(() => {

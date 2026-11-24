@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { showEngineFailure } from "./bootstrap";
 
+import { html } from "lit-html";
+import { mountPage } from "./ui/testing/litTestUtils";
 vi.mock("@vercel/speed-insights", () => ({ injectSpeedInsights: vi.fn() }));
 vi.mock("@vercel/analytics", () => ({ inject: vi.fn() }));
 vi.mock("virtual:pwa-register", () => ({ registerSW: () => () => {} }));
@@ -28,10 +30,10 @@ const unverifiable = {
 describe("showEngineFailure, the secure-context wiring (#985)", () => {
   const original = Object.getOwnPropertyDescriptor(window, "isSecureContext");
   beforeEach(() => {
-    document.body.innerHTML = `<div id="stage"></div>`;
+    mountPage(html`<div id="stage"></div>`);
   });
   afterEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     if (original) Object.defineProperty(window, "isSecureContext", original);
     else Reflect.deleteProperty(window, "isSecureContext");
   });

@@ -28,7 +28,7 @@ afterEach(() => {
   // Reset DOM + focus so a guard element (crash-screen / splash / modal) or a
   // focused field from one test can't leak into the next.
   (document.activeElement as HTMLElement | null)?.blur?.();
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 describe("undo / redo", () => {

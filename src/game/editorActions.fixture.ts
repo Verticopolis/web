@@ -5,6 +5,8 @@ import { LAYOUT, mockPort } from "../tests/portKit/mockPort";
 import type { CardKit } from "./cardKit";
 import { EditorActions, type EditorActionsDeps } from "./editorActions";
 
+import { html, nothing, type TemplateResult } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 /** The editor actions over a mock port and card kit, for
  *  `editorActions.test.ts` and `editorActionsSchedule.test.ts`. */
 export const CATALOG = catalogFor("classic");
@@ -93,8 +95,6 @@ export function setup(
 }
 
 /** A root holding the editor card's inputs. */
-export function root(html: string): HTMLElement {
-  const el = document.createElement("div");
-  el.innerHTML = html;
-  return el;
+export function root(inputs: TemplateResult | typeof nothing = nothing): HTMLElement {
+  return drawElement(html`<div>${inputs}</div>`);
 }

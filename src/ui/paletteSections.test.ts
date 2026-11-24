@@ -7,16 +7,20 @@ import {
   wireSectionFolds,
 } from "./paletteSections";
 
+import { html, render } from "lit-html";
 /** The palette's item container as buildPalette lays it out: the pinned Tools
  *  cluster, then a section per category, one with a Modern sub-band. */
 function paletteRoot(): HTMLElement {
   const root = document.createElement("div");
-  root.innerHTML = `
+  render(
+    html`
     <div class="pal-pinned"><div class="pal-group-title">Tools</div><div class="pal-item" data-tool="inspect"></div></div>
     <div class="pal-groups">
       <section class="pal-group" data-group="Structure"><div class="pal-group-title" data-group="Structure">Structure</div><div class="pal-item" data-kind="lobby"></div></section>
       <section class="pal-group" data-group="Leisure"><div class="pal-group-title" data-group="Leisure">Leisure</div><div class="pal-item" data-kind="cinema"></div><div class="pal-group-title pal-sub" data-sub-group="Leisure">Modern</div><div class="pal-item pal-mod" data-kind="spa"></div></section>
-    </div>`;
+    </div>`,
+    root,
+  );
   document.body.append(root);
   return root;
 }

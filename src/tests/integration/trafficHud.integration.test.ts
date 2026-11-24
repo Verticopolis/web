@@ -15,6 +15,8 @@ import type { EnginePort } from "@verticopolis/engine/port/enginePort";
 import { hasWasmPackage, wasm } from "../conformance/wasmEngine";
 import { PortCodes } from "@verticopolis/engine/port/portCodes";
 
+import { html } from "lit-html";
+import { mountPage } from "../../ui/testing/litTestUtils";
 vi.mock("../../analytics", () => ({ trackAppAction: vi.fn() }));
 
 /**
@@ -47,7 +49,9 @@ function rawLines(engine: EnginePort): Array<[number, number, number, LineWaitTi
 
 describe.skipIf(!hasWasmPackage())("the traffic chip on the engine", () => {
   it("names the engine's worst line all day, not the floors' remembered waits, and a tap lands on it", () => {
-    document.body.innerHTML = `<div id="traffic"><span id="traffic-glyph"></span><span id="traffic-label"></span><span id="traffic-floor"></span></div>`;
+    mountPage(
+      html`<div id="traffic"><span id="traffic-glyph"></span><span id="traffic-label"></span><span id="traffic-floor"></span></div>`,
+    );
     const engine = wasm().Engine.fromVctower(readFileSync(TOWER, "utf8")) as unknown as EnginePort & {
       free(): void;
       tick(m: number): void;

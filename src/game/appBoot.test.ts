@@ -10,6 +10,8 @@ import { rebuildEngine } from "./engineWiring";
 import { gameplaySession } from "../analytics";
 import { portCodes } from "./frameLoop.fixture";
 
+import { html } from "lit-html";
+import { mountPage } from "../ui/testing/litTestUtils";
 // The default adapter sends every custom event to the PostHog relay. This suite
 // drives gameplaySession on a deployed host in places, so stub the relay to keep a
 // real beacon from firing (the note methods are also spied; belt-and-braces).
@@ -344,7 +346,7 @@ describe("runBootFlow", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     sessionStorage.clear();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
   afterEach(() => {
     vi.clearAllTimers();
@@ -391,10 +393,10 @@ describe("runBootFlow", () => {
     // Splash path, then resume path: the startup screen starts its dawn and
     // fade (bootCover.test.ts follows it out), uncovering what is underneath.
     const ending = () => document.getElementById("boot-cover")?.classList.contains(BOOT_READY_CLASS);
-    document.body.innerHTML = `<div id="boot-cover"></div>`;
+    mountPage(html`<div id="boot-cover"></div>`);
     runBootFlow(makeApp({ hadReadableSave: false }));
     expect(ending()).toBe(true);
-    document.body.innerHTML = `<div id="boot-cover"></div>`;
+    mountPage(html`<div id="boot-cover"></div>`);
     sessionStorage.setItem(RESUME_AFTER_UPDATE_KEY, String(Date.now()));
     runBootFlow(makeApp({ hadReadableSave: true }));
     expect(ending()).toBe(true);
@@ -489,7 +491,7 @@ describe("runBootFlow", () => {
   });
 
   it("skips autosave while the splash is up", () => {
-    document.body.innerHTML = `<div id="splash"></div>`;
+    mountPage(html`<div id="splash"></div>`);
     const app = makeApp({ hadReadableSave: true });
 
     runBootFlow(app);

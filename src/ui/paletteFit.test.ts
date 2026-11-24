@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fitPalette, PALETTE_FIT, PALETTE_FIT_MQ, refitPalette, watchPaletteFit } from "./paletteFit";
 
+import { html, render } from "lit-html";
 /**
  * jsdom lays nothing out, so each test gives the Tools window a height and a
  * list height per layout. The list height reads the window's classes at the
@@ -200,9 +201,10 @@ describe("watchPaletteFit", () => {
   it("refits when a tool under a folded category is chosen or pointed at, and not for other class changes", async () => {
     stubPage();
     const win = windowWith(1150, MODERN);
-    win.innerHTML =
-      '<section class="pal-group pal-folded" data-group="Leisure"><div class="pal-item" data-kind="cinema"></div></section>' +
-      '<section class="pal-group" data-group="Structure"><div class="pal-item" data-kind="lobby"></div></section>';
+    render(
+      html`<section class="pal-group pal-folded" data-group="Leisure"><div class="pal-item" data-kind="cinema"></div></section><section class="pal-group" data-group="Structure"><div class="pal-item" data-kind="lobby"></div></section>`,
+      win,
+    );
     const folded = win.querySelector<HTMLElement>('[data-kind="cinema"]')!;
     const open = win.querySelector<HTMLElement>('[data-kind="lobby"]')!;
     // The list is too tall for normal rows whenever any tool is chosen or

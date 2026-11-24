@@ -39,7 +39,7 @@ const up = (target: EventTarget, pointerId = MOUSE, type = "pointerup") =>
 let stop: AbortController | null = null;
 afterEach(() => {
   stop?.abort();
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 describe("watchLostRelease", () => {

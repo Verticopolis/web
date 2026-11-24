@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { drawElement, mountPage } from "../ui/testing/litTestUtils";
+import { drawFragment, drawElement, mountPage } from "../ui/testing/litTestUtils";
 import { html } from "lit-html";
 import type { GameApp } from "../main";
 
@@ -278,7 +278,7 @@ describe("wireMenus", () => {
     const { app } = fakeApp();
     const bar = wireMenus(app)!;
     const files = ["mb-close", "mb-import", "mb-quick-save", "mb-export"];
-    document.body.insertAdjacentHTML("beforeend", '<div id="engine-failure"></div>');
+    document.body.append(drawFragment(html`<div id="engine-failure"></div>`));
     bar.open($("mb-file") as HTMLButtonElement, false);
     expect(files.map((id) => $(id).getAttribute("aria-disabled"))).toEqual(["true", "true", "true", "true"]);
     bar.close(false);

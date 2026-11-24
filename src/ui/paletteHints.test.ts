@@ -1,20 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { descriptionId, wirePaletteHints } from "./paletteHints";
 
+import { html } from "lit-html";
+import { mountPage } from "./testing/litTestUtils";
 /** A Tools window with one facility button, and the status bar's two cells. */
 beforeEach(() => {
-  document.body.innerHTML = `
+  mountPage(html`
     <div id="pal">
       <div class="pal-item" id="office" tabindex="0" aria-describedby="${descriptionId("office")}">
         <span class="pal-name">Office</span><span class="pal-desc" id="${descriptionId("office")}" hidden>Rents to a company.</span>
       </div>
       <div id="gap"></div>
     </div>
-    <div id="sb-hint" hidden></div><div id="tool-info">Lobby</div>`;
+    <div id="sb-hint" hidden></div><div id="tool-info">Lobby</div>`);
   wirePaletteHints(document.getElementById("pal")!);
 });
 afterEach(() => {
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 const $ = (id: string) => document.getElementById(id)!;

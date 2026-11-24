@@ -4,6 +4,8 @@ import { trafficSpotlightFloor } from "@verticopolis/components/render/excalibur
 import type { TransportView } from "@verticopolis/engine/port/view";
 import type { GameApp } from "../main";
 
+import { html } from "lit-html";
+import { mountPage } from "../ui/testing/litTestUtils";
 const track = vi.hoisted(() => vi.fn());
 vi.mock("../analytics", () => ({ trackAppAction: track }));
 const spot = vi.hoisted(() => vi.fn());
@@ -59,7 +61,7 @@ function fakeApp(tier: number, rows: Row[], stretches: Record<string, [number, n
 beforeEach(() => {
   track.mockClear();
   spot.mockClear();
-  document.body.innerHTML = `<span id="traffic" role="button" tabindex="0"></span>`;
+  mountPage(html`<span id="traffic" role="button" tabindex="0"></span>`);
 });
 
 describe("jumpToTraffic", () => {

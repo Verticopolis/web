@@ -3,6 +3,8 @@ import { showEngineFailure } from "./bootstrap";
 import { runEngineRepair } from "./engineRepairControl";
 import type { RepairResult } from "./engineHost/engineRepair";
 
+import { html } from "lit-html";
+import { mountPage } from "./ui/testing/litTestUtils";
 vi.mock("virtual:pwa-register", () => ({ registerSW: () => () => {} }));
 
 const mismatch = {
@@ -21,10 +23,10 @@ function setController(controller: object | null) {
 
 describe("Repair engine files button", () => {
   beforeEach(() => {
-    document.body.innerHTML = `<div id="stage"></div>`;
+    mountPage(html`<div id="stage"></div>`);
   });
   afterEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     Reflect.deleteProperty(navigator, "serviceWorker");
   });
 
@@ -70,7 +72,9 @@ describe("Repair engine files button", () => {
 
 describe("runEngineRepair", () => {
   function mount() {
-    document.body.innerHTML = `<p><button data-act="repair-engine">Repair engine files</button><span class="engine-failure-repair-status"></span></p>`;
+    mountPage(
+      html`<p><button data-act="repair-engine">Repair engine files</button><span class="engine-failure-repair-status"></span></p>`,
+    );
     const button = document.querySelector("button")!;
     const status = document.querySelector<HTMLElement>(".engine-failure-repair-status")!;
     const click = (repair: () => Promise<RepairResult>) => {

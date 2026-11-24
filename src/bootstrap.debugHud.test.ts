@@ -40,7 +40,7 @@ function stubWebGL(): void {
 describe("the ?debug=fps overlay (#645)", () => {
   afterEach(() => {
     vi.restoreAllMocks();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     delete (window as unknown as { game?: unknown }).game;
     vi.unstubAllEnvs();
     history.replaceState(null, "", "/");

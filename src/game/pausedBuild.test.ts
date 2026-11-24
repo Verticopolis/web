@@ -3,6 +3,8 @@ import { catalogFor } from "../tests/catalogFixture";
 import { KeyboardPlay, type KeyboardPlayDeps } from "./keyboardPlay";
 import { nudgePlayButton, placementRefusedWhilePaused, refusePausedPlacement, UNPAUSE_TO_BUILD } from "./pausedBuild";
 
+import { html } from "lit-html";
+import { mountPage } from "../ui/testing/litTestUtils";
 /**
  * Building while paused (#1936): the catalog's `buildsWhilePaused` rule and
  * the host's speed decide whether a new placement is refused, and a refusal
@@ -50,11 +52,11 @@ describe("refusePausedPlacement", () => {
 describe("nudgePlayButton", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    document.body.innerHTML = '<div id="speed"><button data-speed="0"></button><button data-speed="1"></button></div>';
+    mountPage(html`<div id="speed"><button data-speed="0"></button><button data-speed="1"></button></div>`);
   });
   afterEach(() => {
     vi.useRealTimers();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   it("highlights Play alone for a moment, and a second refusal restarts the moment", () => {
@@ -72,7 +74,7 @@ describe("nudgePlayButton", () => {
   });
 
   it("does nothing on a page without a speed bar", () => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     expect(() => nudgePlayButton()).not.toThrow();
   });
 });

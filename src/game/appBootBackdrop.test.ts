@@ -47,7 +47,7 @@ describe("runBootFlow: the boot backdrop's events", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     sessionStorage.clear();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
   afterEach(() => {
     vi.clearAllTimers();

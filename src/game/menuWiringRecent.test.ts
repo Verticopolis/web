@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mountPage } from "../ui/testing/litTestUtils";
+import { drawFragment, mountPage } from "../ui/testing/litTestUtils";
 import { html } from "lit-html";
 import type { GameApp } from "../main";
 
@@ -105,7 +105,7 @@ describe("wireMenus: File > Open Recent", () => {
 
   it("grays Open Recent with the other File commands once the game stopped on its engine", () => {
     const bar = wireMenus(fakeApp())!;
-    document.body.insertAdjacentHTML("beforeend", '<div id="engine-failure"></div>');
+    document.body.append(drawFragment(html`<div id="engine-failure"></div>`));
     bar.open($("mb-file") as HTMLButtonElement, false);
     expect($("mb-recent").getAttribute("aria-disabled")).toBe("true");
     $("mb-recent").dispatchEvent(new PointerEvent("pointerover", { pointerType: "mouse", bubbles: true }));

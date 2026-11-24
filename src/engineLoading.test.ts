@@ -7,17 +7,19 @@ import {
   showEngineLoading,
 } from "./engineLoading";
 
+import { html } from "lit-html";
+import { mountPage } from "./ui/testing/litTestUtils";
 const line = () => document.querySelector("#boot-cover .boot-loading");
 const live = () => document.getElementById("a11y-live")?.textContent;
 
 describe("showEngineLoading", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    document.body.innerHTML = '<div id="boot-cover" aria-hidden="true"></div><div id="a11y-live" role="status"></div>';
+    mountPage(html`<div id="boot-cover" aria-hidden="true"></div><div id="a11y-live" role="status"></div>`);
   });
   afterEach(() => {
     vi.useRealTimers();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   it("shows nothing for a load that settles within the wait", () => {

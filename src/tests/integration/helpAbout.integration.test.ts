@@ -70,7 +70,7 @@ describe("About… (About this game)", () => {
     vi.mocked(trackAppAction).mockClear();
   });
   afterEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     vi.restoreAllMocks();
   });
 
@@ -109,7 +109,7 @@ describe("About… (About this game)", () => {
     const esc = openAbout(3);
     dialog().dispatchEvent(new Event("cancel", { cancelable: true }));
     expect(esc.speed.now()).toBe(3);
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     mountAppDom();
     const backdrop = openAbout(1);
     dialog().dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -166,7 +166,7 @@ describe("About… (About this game)", () => {
 
   it("keeps Help open, and the speed it owes, on a Ctrl or Cmd click that opens a background tab", () => {
     for (const mod of [{ ctrlKey: true }, { metaKey: true }]) {
-      document.body.innerHTML = "";
+      document.body.replaceChildren();
       mountAppDom();
       const { speed } = openAbout(3);
       const a = inDialog<HTMLAnchorElement>('a[data-act="privacy"]');
@@ -375,7 +375,7 @@ describe("About… in the installed app", () => {
     standalone.isInstalledStandalone.mockReturnValue(true);
   });
   afterEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     vi.restoreAllMocks();
   });
 

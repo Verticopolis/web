@@ -27,6 +27,8 @@ import { resetEngineStatus } from "./analyticsEngineStatus";
 import { EngineBootError, type PackageFailure } from "./engineHost/engineBoot";
 import { MISMATCH_RELOAD_KEY, MISMATCH_RELOAD_LINE, reloadForMatchingFiles } from "./engineCrash/mismatchReload";
 
+import { html } from "lit-html";
+import { mountPage } from "./ui/testing/litTestUtils";
 /** Make hasWebGL() see a real GL context (happy-dom canvas returns null). */
 function stubWebGL(): void {
   const real = document.createElement.bind(document);
@@ -69,7 +71,7 @@ describe("bootGame with engine files from another build", () => {
     vi.unstubAllGlobals();
     sessionStorage.clear();
     vi.mocked(reloadForMatchingFiles).mockClear();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     window.location.href = "http://localhost:3000/";
     loadStub.error = null;
     delete (globalThis as { __vcEngineBoot?: unknown }).__vcEngineBoot;
@@ -85,7 +87,7 @@ describe("bootGame with engine files from another build", () => {
   it("reloads once, says so, and reports the reload instead of an exception", async () => {
     stubWebGL();
     vi.spyOn(console, "error").mockImplementation(() => {});
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     loadStub.error = refused("mismatch");
     const { create, run } = boot();
     await expect(run).resolves.toBeUndefined();
@@ -106,7 +108,7 @@ describe("bootGame with engine files from another build", () => {
   it("stops with the engine screen when the page comes back as the same build", async () => {
     stubWebGL();
     vi.spyOn(console, "error").mockImplementation(() => {});
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     loadStub.error = refused("mismatch");
     sessionStorage.setItem(MISMATCH_RELOAD_KEY, JSON.stringify([__APP_SHA__]));
     await expect(boot().run).rejects.toThrow(/did not start \(load\): package-mismatch, mismatch/);
@@ -121,7 +123,7 @@ describe("bootGame with engine files from another build", () => {
   it("stops without a reload on a page a service worker controls", async () => {
     stubWebGL();
     vi.spyOn(console, "error").mockImplementation(() => {});
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     loadStub.error = refused("mismatch", true);
     await expect(boot().run).rejects.toThrow(/did not start \(load\): package-mismatch, mismatch/);
     expect(reloadForMatchingFiles).not.toHaveBeenCalled();
@@ -131,7 +133,7 @@ describe("bootGame with engine files from another build", () => {
   it("never reloads for files that did not arrive", async () => {
     stubWebGL();
     vi.spyOn(console, "error").mockImplementation(() => {});
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     loadStub.error = refused("load-failed");
     await expect(boot().run).rejects.toThrow(/did not start/);
     expect(reloadForMatchingFiles).not.toHaveBeenCalled();

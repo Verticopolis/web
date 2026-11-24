@@ -10,6 +10,8 @@ vi.mock("./fileSpaceCommands", () => files);
 vi.mock("../analyticsActions", () => ({ trackAppAction: vi.fn() }));
 import { trackAppAction } from "../analyticsActions";
 
+import { html } from "lit-html";
+import { mountPage } from "../ui/testing/litTestUtils";
 /** The app File > Close and the title screen talk to, as spies. */
 function makeApp(save: () => void = () => {}): GameApp {
   return {
@@ -30,10 +32,10 @@ const splashOpts = (app: GameApp) => vi.mocked(app.onboarding.showSplash).mock.c
 
 describe("File > Close", () => {
   beforeEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
   afterEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   it("saves the tower silently, then shows the title screen with Continue", () => {
@@ -68,7 +70,7 @@ describe("File > Close", () => {
   });
 
   it("does nothing on the title screen", () => {
-    document.body.innerHTML = '<div id="splash"></div>';
+    mountPage(html`<div id="splash"></div>`);
     const app = makeApp();
     expect(closeTower(app)).toBe(false);
     expect(app.saveLoad.save).not.toHaveBeenCalled();
@@ -76,7 +78,7 @@ describe("File > Close", () => {
   });
 
   it("never writes a tower the game stopped on", () => {
-    document.body.innerHTML = `<div id="${ENGINE_FAILURE_ID}"></div>`;
+    mountPage(html`<div id="${ENGINE_FAILURE_ID}"></div>`);
     const app = makeApp();
     expect(closeTower(app)).toBe(false);
     expect(app.saveLoad.save).not.toHaveBeenCalled();

@@ -4,6 +4,7 @@ import { priceOptionsFor } from "../ui/catalogPricing";
 import { catalogFor } from "../tests/catalogFixture";
 import { CATALOG, lift, office, rec, root, setup } from "./editorActions.fixture";
 
+import { html } from "lit-html";
 vi.mock("../engineHost/headerClock", () => ({
   clockOf: () => ({ hour: 9, isWeekend: true }),
 }));
@@ -19,7 +20,7 @@ vi.mock("../engineHost/headerClock", () => ({
 describe("EditorActions: unit card", () => {
   it("sells through the shared refund path, then closes the step and the selection", async () => {
     const { actions, deps } = setup();
-    await actions.handleEditAction("sell", root(""));
+    await actions.handleEditAction("sell", root());
     expect(deps.captureUndo).toHaveBeenCalledExactlyOnceWith("Sell");
     expect(deps.build.tryRemoveUnit).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ id: office.id }),
@@ -33,7 +34,7 @@ describe("EditorActions: unit card", () => {
   it("a refused sale plays nothing and keeps the selection", async () => {
     const { actions, deps } = setup();
     deps.build.tryRemoveUnit.mockReturnValue(false);
-    await actions.handleEditAction("sell", root(""));
+    await actions.handleEditAction("sell", root());
     expect(deps.audio.sfx).not.toHaveBeenCalled();
     expect(deps.commitUndo).not.toHaveBeenCalled();
     expect(deps.clearSelection).not.toHaveBeenCalled();
@@ -41,10 +42,10 @@ describe("EditorActions: unit card", () => {
 
   it("clears a selection whose unit is gone, and does nothing with no selection", async () => {
     const gone = setup({}, { type: "unit", id: 99 });
-    await gone.actions.handleEditAction("rename", root(""));
+    await gone.actions.handleEditAction("rename", root());
     expect(gone.deps.clearSelection).toHaveBeenCalledOnce();
     const none = setup({}, null);
-    await none.actions.handleEditAction("rename", root(""));
+    await none.actions.handleEditAction("rename", root());
     expect(none.deps.captureUndo).not.toHaveBeenCalled();
   });
 
@@ -52,7 +53,7 @@ describe("EditorActions: unit card", () => {
     const { actions, deps, port } = setup({
       labelUnit: () => rec("labelUnit", true),
     });
-    await actions.handleEditAction("rename", root('<input id="ed-name" value="Acme">'));
+    await actions.handleEditAction("rename", root(html`<input id="ed-name" value="Acme">`));
     expect(port.labelUnit).toHaveBeenCalledExactlyOnceWith(office.id, "Acme");
     expect(deps.audio.sfx).toHaveBeenCalledExactlyOnceWith("click");
     expect(deps.refreshEditor).toHaveBeenCalledOnce();
@@ -62,7 +63,7 @@ describe("EditorActions: unit card", () => {
     // port, and its refusal is what the player hears about.
     const longName = "x".repeat(MAX_TEXT + 1);
     const long = setup({ labelUnit: () => rec("labelUnit", false) });
-    await long.actions.handleEditAction("rename", root(`<input id="ed-name" value="${longName}">`));
+    await long.actions.handleEditAction("rename", root(html`<input id="ed-name" value="${longName}">`));
     expect(long.port.labelUnit).toHaveBeenCalledExactlyOnceWith(office.id, longName);
     expect(long.deps.audio.sfx).toHaveBeenCalledExactlyOnceWith("error");
   });
@@ -71,7 +72,7 @@ describe("EditorActions: unit card", () => {
     const { actions, deps } = setup({
       labelUnit: () => rec("labelUnit", false),
     });
-    await actions.handleEditAction("rename", root('<input id="ed-name" value="Acme">'));
+    await actions.handleEditAction("rename", root(html`<input id="ed-name" value="Acme">`));
     expect(deps.ui.toast).toHaveBeenCalledExactlyOnceWith("The engine said no.", "bad");
     expect(deps.commitUndo).not.toHaveBeenCalled();
   });
@@ -80,8 +81,8 @@ describe("EditorActions: unit card", () => {
     const { actions, deps, port } = setup({
       stepRent: (_id: number, dir: number) => rec("buildAt", dir > 0),
     });
-    await actions.handleEditAction("rentUp", root(""));
-    await actions.handleEditAction("rentDown", root(""));
+    await actions.handleEditAction("rentUp", root());
+    await actions.handleEditAction("rentDown", root());
     expect(port.stepRent).toHaveBeenNthCalledWith(1, office.id, 1);
     expect(port.stepRent).toHaveBeenNthCalledWith(2, office.id, -1);
     expect(deps.audio.sfx).toHaveBeenCalledOnce();
@@ -96,14 +97,17 @@ describe("EditorActions: unit card", () => {
       setRent: () => rec("buildAt", true),
       noRate: () => rec("buildAt", true),
     });
-    await actions.handleEditAction("rung", root('<select id="ed-rung"><option value="1" selected></option></select>'));
+    await actions.handleEditAction(
+      "rung",
+      root(html`<select id="ed-rung"><option value="1" selected></option></select>`),
+    );
     expect(port.setRent).toHaveBeenCalledExactlyOnceWith(office.id, rungs.rungs[1].value);
     expect(deps.announce).toHaveBeenCalledWith(
       expect.stringMatching(new RegExp(`^Rent set to ${rungs.rungs[1].label} \\(\\$`)),
     );
     await actions.handleEditAction(
       "rung",
-      root('<select id="ed-rung"><option value="noRate" selected></option></select>'),
+      root(html`<select id="ed-rung"><option value="noRate" selected></option></select>`),
     );
     expect(port.noRate).toHaveBeenCalledExactlyOnceWith(office.id);
     expect(deps.announce).toHaveBeenLastCalledWith("No Rate: off the market. Charges nothing; no one moves in.");
@@ -123,7 +127,7 @@ describe("EditorActions: unit card", () => {
       });
       await s.actions.handleEditAction(
         "rung",
-        root('<select id="ed-rung"><option value="0" selected></option></select>'),
+        root(html`<select id="ed-rung"><option value="0" selected></option></select>`),
       );
       expect(s.deps.announce).toHaveBeenCalledWith(expect.stringMatching(new RegExp(`^${what} set to `)));
     }
@@ -131,7 +135,10 @@ describe("EditorActions: unit card", () => {
 
   it("a refused rung still refreshes the card, so the picker snaps back", async () => {
     const { actions, deps } = setup({ setRent: () => rec("buildAt", false) });
-    await actions.handleEditAction("rung", root('<select id="ed-rung"><option value="0" selected></option></select>'));
+    await actions.handleEditAction(
+      "rung",
+      root(html`<select id="ed-rung"><option value="0" selected></option></select>`),
+    );
     expect(deps.announce).not.toHaveBeenCalled();
     expect(deps.refreshEditor).toHaveBeenCalledOnce();
   });
@@ -155,7 +162,7 @@ describe("EditorActions: unit card", () => {
         kind: "cinema",
         filmPolicy: now,
       });
-      await actions.handleEditAction("filmPolicy", root(""));
+      await actions.handleEditAction("filmPolicy", root());
       expect(port.setFilm).toHaveBeenLastCalledWith(office.id, codes.code("filmPolicies", next), 0);
     }
   });
@@ -163,7 +170,7 @@ describe("EditorActions: unit card", () => {
   it("leaves the film policy alone where the mode never rebooks (Classic)", async () => {
     const { actions, cards, deps, port } = setup({ setFilm: () => rec("buildAt", true) });
     cards.unit.mockReturnValueOnce({ id: office.id, kind: "cinema", filmPolicy: "feature" });
-    await actions.handleEditAction("filmPolicy", root(""));
+    await actions.handleEditAction("filmPolicy", root());
     expect(port.setFilm).not.toHaveBeenCalled();
     expect(deps.refreshEditor).not.toHaveBeenCalled();
   });
@@ -182,7 +189,7 @@ describe("EditorActions: unit card", () => {
         undefined,
         catalogFor(mode),
       );
-      await actions.handleEditAction(action, root(""));
+      await actions.handleEditAction(action, root());
       expect(port.changeFilm).toHaveBeenCalledExactlyOnceWith(office.id, codes.code("filmTiers", tier), 0);
       expect(deps.captureUndo).toHaveBeenCalledExactlyOnceWith("Film change");
       expect(deps.audio.sfx).toHaveBeenCalledExactlyOnceWith("build");
@@ -193,7 +200,7 @@ describe("EditorActions: unit card", () => {
 
   it("shows no film the mode's catalog does not list (a blockbuster in Classic)", async () => {
     const { actions, deps, port } = setup({ changeFilm: () => rec("changeFilm", true, { cost: 1 }) });
-    await actions.handleEditAction("blockbusterFilm", root(""));
+    await actions.handleEditAction("blockbusterFilm", root());
     expect(port.changeFilm).not.toHaveBeenCalled();
     expect(deps.captureUndo).toHaveBeenCalledExactlyOnceWith("Edit");
   });
@@ -203,7 +210,7 @@ describe("EditorActions: unit card", () => {
       changeFilm: () => rec("changeFilm", false, { cost: 300000 }),
       lastReason: () => "funds",
     });
-    await broke.actions.handleEditAction("newFilm", root(""));
+    await broke.actions.handleEditAction("newFilm", root());
     expect(broke.deps.ui.toast).toHaveBeenCalledExactlyOnceWith(
       "Not enough funds to show that film ($300,000).",
       "bad",
@@ -214,7 +221,7 @@ describe("EditorActions: unit card", () => {
       changeFilm: () => rec("changeFilm", false),
       lastReason: () => "closed",
     });
-    await closed.actions.handleEditAction("classicFilm", root(""));
+    await closed.actions.handleEditAction("classicFilm", root());
     expect(closed.deps.ui.toast).toHaveBeenCalledExactlyOnceWith("That film can't be shown now.", "bad");
     expect(closed.deps.announce).not.toHaveBeenCalled();
   });
@@ -223,8 +230,8 @@ describe("EditorActions: unit card", () => {
     const { actions, deps, port } = setup({
       rerollUnit: vi.fn().mockReturnValueOnce(rec("buildAt", true)).mockReturnValueOnce(rec("buildAt", false)),
     });
-    await actions.handleEditAction("changeVariety", root(""));
-    await actions.handleEditAction("changeVariety", root(""));
+    await actions.handleEditAction("changeVariety", root());
+    await actions.handleEditAction("changeVariety", root());
     expect(port.rerollUnit).toHaveBeenCalledTimes(2);
     expect(deps.audio.sfx).toHaveBeenCalledOnce();
   });
@@ -234,7 +241,7 @@ describe("EditorActions: unit card", () => {
     const { actions, deps, port, codes, kit } = setup({
       rentBatch: () => rec("rentBatch", true, counts),
     });
-    await actions.handleEditAction("batchKind", root(""));
+    await actions.handleEditAction("batchKind", root());
     const [ctx, cb] = deps.ui.showBatchPricingDialog.mock.calls[0] as unknown as [
       { kind: string; kindLabel: string },
       Record<string, (...a: unknown[]) => unknown>,
@@ -256,7 +263,7 @@ describe("EditorActions: unit card", () => {
     const { actions, deps } = setup({
       rentBatch: () => rec("rentBatch", false),
     });
-    await actions.handleEditAction("batchKind", root(""));
+    await actions.handleEditAction("batchKind", root());
     const cb = deps.ui.showBatchPricingDialog.mock.calls[0][1] as unknown as {
       apply(t: unknown, o: object): Promise<unknown>;
     };
@@ -270,7 +277,7 @@ describe("EditorActions: shaft card", () => {
 
   it("sells a shaft through the shared refund path", async () => {
     const { actions, deps } = setup({}, onLift);
-    await actions.handleEditAction("sell", root(""));
+    await actions.handleEditAction("sell", root());
     expect(deps.build.removeTransportWithRefund).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ id: lift.id }),
       "sell",
@@ -279,14 +286,14 @@ describe("EditorActions: shaft card", () => {
     expect(deps.clearSelection).toHaveBeenCalledOnce();
     const refused = setup({}, onLift);
     refused.deps.build.removeTransportWithRefund.mockReturnValue(false);
-    await refused.actions.handleEditAction("sell", root(""));
+    await refused.actions.handleEditAction("sell", root());
     expect(refused.deps.audio.sfx).not.toHaveBeenCalled();
     expect(refused.deps.clearSelection).toHaveBeenCalledOnce();
   });
 
   it("clears a selection whose shaft is gone", async () => {
     const { actions, deps } = setup({}, { type: "transport", id: 99 });
-    await actions.handleEditAction("addcar", root(""));
+    await actions.handleEditAction("addcar", root());
     expect(deps.clearSelection).toHaveBeenCalledOnce();
   });
 
@@ -297,8 +304,8 @@ describe("EditorActions: shaft card", () => {
       },
       onLift,
     );
-    await actions.handleEditAction("addcar", root(""));
-    await actions.handleEditAction("removecar", root(""));
+    await actions.handleEditAction("addcar", root());
+    await actions.handleEditAction("removecar", root());
     expect(port.changeCars).toHaveBeenNthCalledWith(1, lift.id, true);
     expect(port.changeCars).toHaveBeenNthCalledWith(2, lift.id, false);
     expect(deps.audio.sfx.mock.calls).toEqual([["build"], ["click"]]);
@@ -311,7 +318,7 @@ describe("EditorActions: shaft card", () => {
       },
       onLift,
     );
-    await broke.actions.handleEditAction("addcar", root(""));
+    await broke.actions.handleEditAction("addcar", root());
     expect(broke.deps.ui.toast).toHaveBeenCalledExactlyOnceWith(NOT_ENOUGH_MONEY, "bad");
     const capped = setup(
       {
@@ -320,15 +327,15 @@ describe("EditorActions: shaft card", () => {
       },
       onLift,
     );
-    await capped.actions.handleEditAction("addcar", root(""));
+    await capped.actions.handleEditAction("addcar", root());
     expect(capped.deps.ui.toast).not.toHaveBeenCalled();
     expect(capped.deps.audio.sfx).not.toHaveBeenCalled();
   });
 
   it("the extend buttons ask for one floor past the shaft's end", async () => {
     const { actions, deps, port } = setup({ extendShaft: () => rec("extendShaft", true) }, onLift);
-    await actions.handleEditAction("extendUp", root(""));
-    await actions.handleEditAction("extendDown", root(""));
+    await actions.handleEditAction("extendUp", root());
+    await actions.handleEditAction("extendDown", root());
     expect(port.extendShaft).toHaveBeenNthCalledWith(1, lift.id, true, lift.top + 1);
     expect(port.extendShaft).toHaveBeenNthCalledWith(2, lift.id, false, lift.bottom - 1);
     expect(deps.audio.sfx.mock.calls).toEqual([["build"], ["build"]]);
@@ -343,7 +350,7 @@ describe("EditorActions: shaft card", () => {
       },
       onLift,
     );
-    await blocked.actions.handleEditAction("extendUp", root(""));
+    await blocked.actions.handleEditAction("extendUp", root());
     expect(blocked.deps.audio.sfx).toHaveBeenCalledExactlyOnceWith("error");
     expect(blocked.deps.ui.toast).toHaveBeenCalledExactlyOnceWith("Another shaft is in the way.", "bad");
     expect(blocked.deps.commitUndo).toHaveBeenCalledOnce();
@@ -354,14 +361,14 @@ describe("EditorActions: shaft card", () => {
       },
       onLift,
     );
-    await broke.actions.handleEditAction("extendUp", root(""));
+    await broke.actions.handleEditAction("extendUp", root());
     expect(broke.deps.ui.toast).toHaveBeenCalledExactlyOnceWith(NOT_ENOUGH_MONEY, "bad");
     expect(broke.deps.commitUndo).not.toHaveBeenCalled();
   });
 
   it("the schedule button opens the shaft's schedule dialog", async () => {
     const { actions, deps } = setup({}, onLift);
-    await actions.handleEditAction("schedule", root(""));
+    await actions.handleEditAction("schedule", root());
     expect(deps.ui.showElevatorScheduleDialog).toHaveBeenCalledOnce();
   });
 });

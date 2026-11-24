@@ -11,6 +11,8 @@ import { useGermanDefaultLocale } from "../tests/localeStub";
 import { SAVE_WARNING_ID, showSaveWarning } from "./saveWarning";
 import { refitPalette } from "./paletteFit";
 
+import { html } from "lit-html";
+import { mountPage } from "./testing/litTestUtils";
 // The lock scan asks the Tools window to refit when it shows or hides a tool.
 // The fit itself reads layout, which jsdom does not have; paletteFit.test.ts
 // covers it. Here a spy records the calls.
@@ -209,7 +211,7 @@ function hud(header: Partial<typeof HEADER> = {}) {
 
 describe("resetLog", () => {
   it("opens the Bulletin with the arrival line on top of an empty engine log, and shows it in the status bar", () => {
-    document.body.innerHTML = `<span id="sb-news"></span>`;
+    mountPage(html`<span id="sb-news"></span>`);
     const { ui, el } = hud();
     resetLog(ui, source().src, "Loaded Skyspire.");
     expect(el.log.textContent).toBe("Loaded Skyspire.");
@@ -218,7 +220,7 @@ describe("resetLog", () => {
     expect(document.getElementById("sb-news")!.textContent).toBe("Loaded Skyspire.");
     resetLog(ui, source().src);
     expect(el.log.childElementCount).toBe(0); // an undo step adds no line
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   it("leaves a log the engine already wrote (a new tower's welcome) as its own words", () => {
@@ -306,7 +308,7 @@ describe("the Undo and Redo buttons", () => {
   const grayed = (...bs: HTMLButtonElement[]) => bs.map((b) => b.getAttribute("aria-disabled") === "true");
 
   afterEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   it("gray out while the engine holds no step that way, and come back when it does", () => {

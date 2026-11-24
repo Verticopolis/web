@@ -13,7 +13,7 @@ vi.mock("./audioPrefs", () => ({ flushPrefsSave: vi.fn() }));
 
 afterEach(() => {
   (document.activeElement as HTMLElement | null)?.blur?.();
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 /** Send a Space release and say whether the game canceled it. */
@@ -76,7 +76,7 @@ describe("focus and Space", () => {
       expect(heard, `the ${name} hears its own repeat`).toHaveBeenCalledTimes(1);
       expect(releaseIsCanceled(), `the ${name}'s own release`).toBe(false);
       expect(app.keyboard.commitCursor, `the ${name}'s own Space builds nothing`).not.toHaveBeenCalled();
-      document.body.innerHTML = "";
+      document.body.replaceChildren();
     }
   });
 
@@ -97,7 +97,7 @@ describe("focus and Space", () => {
       expect(repeatIsCanceled(init.key, control, init.code), `its own repeat of Space known by ${name}`).toBe(false);
       expect(releaseIsCanceled(init), `its own release of Space known by ${name}`).toBe(false);
       expect(app.keyboard.commitCursor, `Space known by ${name} builds nothing`).not.toHaveBeenCalled();
-      document.body.innerHTML = "";
+      document.body.replaceChildren();
     }
   });
 
@@ -122,7 +122,7 @@ describe("focus and Space", () => {
       expect(repeatIsCanceled(" ", button), `a Space ${name}: its repeat`).toBe(true);
       expect(releaseIsCanceled(), `a Space ${name}: its release`).toBe(true);
       expect(app.keyboard.commitCursor, `a Space ${name} builds nothing`).not.toHaveBeenCalled();
-      document.body.innerHTML = "";
+      document.body.replaceChildren();
     }
   });
 
@@ -138,7 +138,7 @@ describe("focus and Space", () => {
         if (firstSeen === "a press") press(" ");
         field.focus();
         expect(repeatIsCanceled(" ", field), `the ${name}, Space first seen as ${firstSeen}`).toBe(false);
-        document.body.innerHTML = "";
+        document.body.replaceChildren();
       }
     }
   });
@@ -166,7 +166,7 @@ describe("focus and Space", () => {
       expect(repeatIsCanceled(" ", opener), `Space first seen as ${firstSeen}: its repeat`).toBe(true);
       expect(releaseIsCanceled(), `Space first seen as ${firstSeen}: its release`).toBe(true);
       expect(app.keyboard.commitCursor).not.toHaveBeenCalled();
-      document.body.innerHTML = "";
+      document.body.replaceChildren();
     }
   });
 
@@ -197,7 +197,7 @@ describe("focus and Space", () => {
       expect(releaseIsCanceled(), `a ${name}`).toBe(false);
       // Only blocksGameKey's focused-control rule keeps this build out.
       expect(app.keyboard.commitCursor, `nor builds past the ${name}`).not.toHaveBeenCalled();
-      document.body.innerHTML = "";
+      document.body.replaceChildren();
     }
   });
 
@@ -208,7 +208,7 @@ describe("focus and Space", () => {
     expect(repeatIsCanceled("Spacebar"), "a repeat reported as Spacebar").toBe(true);
     expect(repeatIsCanceled("\u00a0", window, "Space"), "a no-break space known by its physical key").toBe(true);
     release(" ");
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     tap("Spacebar"); // with nothing focused, each builds
     tap("\u00a0", { code: "Space" });
     expect(app.keyboard.commitCursor, "each is a Space").toHaveBeenCalledTimes(2);
@@ -233,7 +233,7 @@ describe("focus and Space", () => {
     release("Enter");
     openDialog();
     expect(repeatIsCanceled("Enter"), "released before the cover came up").toBe(false);
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     press("Backspace"); // its release is lost
     openDialog();
     press("Backspace"); // pressed again, on the cover

@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { refreshTraffic, updateTraffic } from "./trafficHud";
 import type { GameApp } from "../main";
 
+import { html } from "lit-html";
+import { mountPage } from "../ui/testing/litTestUtils";
 /**
  * The traffic chip over the renderer's queue projection (the engine's
  * `queueView`): it reads the projection once per refresh, walks a projection
@@ -30,12 +32,12 @@ const label = () => document.getElementById("traffic-label")!.textContent;
 const floor = () => document.getElementById("traffic-floor")!.textContent;
 
 beforeEach(() => {
-  document.body.innerHTML = `
+  mountPage(html`
     <div id="traffic">
       <span id="traffic-glyph"></span>
       <span id="traffic-label"></span>
       <span id="traffic-floor"></span>
-    </div>`;
+    </div>`);
 });
 
 afterEach(() => vi.restoreAllMocks());

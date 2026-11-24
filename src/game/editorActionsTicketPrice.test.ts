@@ -26,7 +26,7 @@ describe("EditorActions: ticket price", () => {
       ["premium", "low", "Low"],
     ] as const) {
       cards.unit.mockReturnValueOnce({ id: office.id, kind: "cinema", ticketPrice: now });
-      await actions.handleEditAction("ticketPrice", root(""));
+      await actions.handleEditAction("ticketPrice", root());
       expect(port.setTicketPrice).toHaveBeenLastCalledWith(office.id, codes.code("ticketPrices", next));
       expect(deps.announce).toHaveBeenLastCalledWith(`Ticket price set to ${label}.`);
     }
@@ -41,7 +41,7 @@ describe("EditorActions: ticket price", () => {
       catalogFor("modern"),
     );
     cards.unit.mockReturnValueOnce({ id: office.id, kind: "cinema", ticketPrice: "normal" });
-    await actions.handleEditAction("ticketPrice", root(""));
+    await actions.handleEditAction("ticketPrice", root());
     expect(port.setTicketPrice).toHaveBeenCalledOnce();
     expect(deps.audio.sfx).not.toHaveBeenCalled();
     expect(deps.announce).not.toHaveBeenCalled();
@@ -51,7 +51,7 @@ describe("EditorActions: ticket price", () => {
   it("sends nothing where the mode has no ticket price (Classic)", async () => {
     const { actions, cards, deps, port } = setup({ setTicketPrice: () => rec("setTicketPrice", true) });
     cards.unit.mockReturnValueOnce({ id: office.id, kind: "cinema", ticketPrice: null });
-    await actions.handleEditAction("ticketPrice", root(""));
+    await actions.handleEditAction("ticketPrice", root());
     expect(port.setTicketPrice).not.toHaveBeenCalled();
     expect(deps.refreshEditor).not.toHaveBeenCalled();
   });

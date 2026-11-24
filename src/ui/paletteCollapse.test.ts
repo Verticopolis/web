@@ -9,11 +9,15 @@ import {
   wirePaletteCollapse,
 } from "./paletteCollapse";
 
+import { html, render } from "lit-html";
 /** The Tools window as index.html writes it. */
 function toolsWindow(): HTMLElement {
   const win = document.createElement("aside");
   win.id = "palette";
-  win.innerHTML = `<div class="win-title">Tools</div><div class="palette-tabs" id="palette-tabs"></div><div class="palette-scroll" id="palette-scroll"></div>`;
+  render(
+    html`<div class="win-title">Tools</div><div class="palette-tabs" id="palette-tabs"></div><div class="palette-scroll" id="palette-scroll"></div>`,
+    win,
+  );
   return win;
 }
 

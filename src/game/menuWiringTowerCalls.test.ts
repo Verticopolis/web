@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { drawElement, mountPage } from "../ui/testing/litTestUtils";
+import { drawFragment, drawElement, mountPage } from "../ui/testing/litTestUtils";
 import { html } from "lit-html";
 import type { GameApp } from "../main";
 
@@ -131,7 +131,7 @@ describe("wireMenus: the Tower menu's calls for help", () => {
     expect($("mb-exterminator").hidden).toBe(true);
     bar.close(false);
     calls.towerCalls.mockClear();
-    document.body.insertAdjacentHTML("beforeend", '<div id="engine-failure"></div>');
+    document.body.append(drawFragment(html`<div id="engine-failure"></div>`));
     bar.open($("mb-tower") as HTMLButtonElement, false);
     expect(calls.towerCalls).not.toHaveBeenCalled();
     expect($("mb-fire-rescue").getAttribute("aria-disabled")).toBe("true");

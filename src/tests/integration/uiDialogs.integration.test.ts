@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from "vites
 import { HudTower, pump, rebaseLog } from "../../ui/hud.fixture";
 import { towerCatalog, useTowerCatalogSource } from "../../engineHost/towerCatalog";
 import { catalogFor } from "../catalogFixture";
-import { html, type TemplateResult } from "lit-html";
+import { render, html, type TemplateResult } from "lit-html";
 import type { ModalView } from "@verticopolis/components/windows/uiModal";
 import type { UI } from "../../ui/UI";
 import { openImport } from "../../ui/uiImport";
@@ -168,7 +168,7 @@ describe("wireActions — the anti-dead-button contract", () => {
     // this one contract is exercised by direct call.
     const { ui } = makeUI();
     const box = document.createElement("div");
-    box.innerHTML = '<button data-act="close">Close</button>';
+    render(html`<button data-act="close">Close</button>`, box);
     expect(() => (ui as any).wireActions(box, { apply: () => {} })).toThrow();
   });
 
@@ -3110,7 +3110,7 @@ describe.skipIf(noEngine)("showElevatorScheduleDialog — the per-shaft Schedule
 
 describe("mode badge (uiStatus.setMode) follows the live rule-set", () => {
   beforeEach(() => mountAppDom());
-  afterEach(() => (document.body.innerHTML = ""));
+  afterEach(() => document.body.replaceChildren());
 
   const badge = (): HTMLButtonElement => document.getElementById("btn-mode") as HTMLButtonElement;
 
@@ -3152,7 +3152,7 @@ function speedAt(start: number) {
 
 describe("Compare modal (showCompare) pauses the tower and restores speed", () => {
   beforeEach(() => mountAppDom());
-  afterEach(() => (document.body.innerHTML = ""));
+  afterEach(() => document.body.replaceChildren());
 
   it("opens the shared comparison through the single #modal", () => {
     const { ui } = makeUI();
@@ -3200,7 +3200,7 @@ describe("Compare modal (showCompare) pauses the tower and restores speed", () =
 
   it("leaves the tower running on a Ctrl or Cmd click on the mode badge, which opens a background tab", () => {
     for (const mod of [{ ctrlKey: true }, { metaKey: true }]) {
-      document.body.innerHTML = "";
+      document.body.replaceChildren();
       mountAppDom();
       const open = vi.spyOn(window, "open").mockReturnValue({ opener: {} } as unknown as Window);
       const { onSpeed, getSpeed } = speedAt(2);
@@ -3227,7 +3227,7 @@ describe("Compare modal (showCompare) pauses the tower and restores speed", () =
 describe("the mode badge in the installed app", () => {
   beforeEach(() => mountAppDom());
   afterEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     vi.restoreAllMocks();
   });
 

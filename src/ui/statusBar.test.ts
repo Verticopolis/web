@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { showNewsInStatusBar, showTowerInStatusBar } from "./statusBar";
 
+import { html } from "lit-html";
+import { mountPage } from "./testing/litTestUtils";
 beforeEach(() => {
-  document.body.innerHTML = `<span id="sb-tower"></span><span id="sb-news"></span>`;
+  mountPage(html`<span id="sb-tower"></span><span id="sb-news"></span>`);
 });
 afterEach(() => {
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 describe("status bar", () => {
@@ -43,7 +45,7 @@ describe("status bar", () => {
   });
 
   it("does nothing on a page without the bar", () => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     expect(() => {
       showTowerInStatusBar("T", "classic");
       showNewsInStatusBar("x");

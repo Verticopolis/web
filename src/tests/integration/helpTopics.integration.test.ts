@@ -58,7 +58,7 @@ describe("the problem lines' Help links", () => {
     sent.trackAppAction.mockClear();
   });
   afterEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     vi.restoreAllMocks();
   });
 

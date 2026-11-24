@@ -57,6 +57,8 @@ import { EngineBootError } from "./engineHost/engineBoot";
 import { engineTrapped, noteEngineThrow, watchEngineTraps } from "./game/engineFault";
 import { CRASH_FRESH_CROWD_KEY, countRustCrash, reloadSoon } from "./engineCrash/crashReload";
 
+import { html } from "lit-html";
+import { mountPage } from "./ui/testing/litTestUtils";
 /** A save's text for the export calls: the writer under test is a stub that
  *  never reads it, so a hand-written save stands in for an engine's. */
 const SAVE_TEXT = JSON.stringify({ towerName: "Boot Test Tower", mode: "classic", minutes: 0 });
@@ -115,7 +117,7 @@ describe("bootGame engine", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     delete (window as unknown as { game?: unknown }).game;
     resetStubs();
   });
@@ -139,7 +141,7 @@ describe("bootGame engine", () => {
   });
 
   it("says why the game did not start when a boot step after the engine throws", async () => {
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     requestWasm();
     vi.spyOn(console, "error").mockImplementation(() => {});
     const blocked = new DOMException("The operation is insecure.", "SecurityError");
@@ -198,7 +200,7 @@ describe("bootGame engine", () => {
 
   it("reloads the game at the running engine's first trap, with the writer off and the reason shown", async () => {
     const encodeVctower = requestWasm();
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const setSpeed = vi.fn();
     await bootGame(vi.fn(() => ({ onUpdateAvailable: vi.fn(), setSpeed })));
@@ -238,7 +240,7 @@ describe("bootGame engine", () => {
       }),
     };
     wasmStub.module = { Engine, encodeVctower: () => "" };
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     vi.spyOn(console, "error").mockImplementation(() => {});
     await bootGame(vi.fn(() => ({ onUpdateAvailable: vi.fn(), setSpeed: vi.fn() })));
     expect(() => slotPopulation("a save")).toThrow("unreachable");
@@ -261,7 +263,7 @@ describe("bootGame engine", () => {
       throw new WebAssembly.RuntimeError("unreachable");
     });
     wasmStub.module = { Engine: class {}, encodeVctower };
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const setSpeed = vi.fn();
     await bootGame(vi.fn(() => ({ onUpdateAvailable: vi.fn(), setSpeed })));
@@ -296,7 +298,7 @@ describe("bootGame engine", () => {
         throw new Error("a refusal, not a trap");
       },
     };
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     vi.spyOn(console, "error").mockImplementation(() => {});
     await bootGame(vi.fn(() => ({ onUpdateAvailable: vi.fn(), setSpeed: vi.fn() })));
     await SaveGame.export(SAVE_TEXT);
@@ -308,7 +310,7 @@ describe("bootGame engine", () => {
 
   it("stops the game at the tab's second trap instead of reloading again", async () => {
     requestWasm();
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     vi.spyOn(console, "error").mockImplementation(() => {});
     countRustCrash(sessionStorage, __APP_SHA__);
     await bootGame(vi.fn(() => ({ onUpdateAvailable: vi.fn(), setSpeed: vi.fn() })));
@@ -319,7 +321,7 @@ describe("bootGame engine", () => {
 
   it("stops the game at a trap whose count storage did not keep", async () => {
     requestWasm();
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     vi.spyOn(console, "error").mockImplementation(() => {});
     fullTabStore();
     await bootGame(vi.fn(() => ({ onUpdateAvailable: vi.fn(), setSpeed: vi.fn() })));
@@ -378,7 +380,7 @@ describe("bootGame engine_status", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     delete (window as unknown as { game?: unknown }).game;
     window.location.href = "http://localhost:3000/";
     resetStubs();
@@ -482,7 +484,7 @@ describe("bootGame engine_status", () => {
       onUpdate = opts.onUpdateAvailable as typeof onUpdate;
     });
     const prompt = vi.fn();
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     await boot({ onUpdateAvailable: prompt, setSpeed: vi.fn() });
     const activate = vi.fn(() => Promise.resolve());
     onUpdate!(activate);
@@ -508,7 +510,7 @@ describe("bootGame engine_status", () => {
     stubWebGL();
     vi.spyOn(console, "error").mockImplementation(() => {});
     wasmStub.module = { Engine: class {}, encodeVctower: () => "VCTOWER1\n" };
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     await boot({ setSpeed: vi.fn() });
     expect(noteEngineThrow(new WebAssembly.RuntimeError("unreachable"))).toBe(true);
     expect(reloadSoon).toHaveBeenCalledOnce();
@@ -531,7 +533,7 @@ describe("bootGame engine_status", () => {
         throw new WebAssembly.RuntimeError("memory access out of bounds");
       },
     };
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     await boot({ setSpeed: vi.fn() });
     await SaveGame.export(SAVE_TEXT);
     expect(reloadSoon).toHaveBeenCalledOnce();
@@ -553,7 +555,7 @@ describe("bootGame engine_status", () => {
       },
       encodeVctower: () => "VCTOWER1\n",
     };
-    document.body.innerHTML = '<div id="stage"></div>';
+    mountPage(html`<div id="stage"></div>`);
     await boot({ setSpeed: vi.fn() });
     expect(() => slotPopulation("a save")).toThrow("unreachable");
     expect(lastRow(engineRows())).toMatchObject({

@@ -34,7 +34,7 @@ const PART_STAFFED = { activeCars: { weekday: row(1), weekend: row(0) } };
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 const bars = (): HTMLButtonElement[] => Array.from(dialog().querySelectorAll<HTMLButtonElement>(".es-bar"));
