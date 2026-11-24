@@ -1,0 +1,26 @@
+---
+// The front page's hero: the game's title screen from @verticopolis/components
+// (the same one the engine docs draw), filled from the page's `hero` front
+// matter. Starlight renders it in place of its own hero (astro.config.mjs,
+// components.Hero). Each link goes through siteHref, which points it at this
+// build's address, and the button that starts the game (link "/") is marked
+// as a game link, so in a tab the game opened it reads Back to game and closes
+// the tab (Header.astro).
+import TitleScreen from "@verticopolis/components/astro/TitleScreen.astro";
+import { siteHref } from "../../site.mjs";
+
+const { tagline, actions = [] } = Astro.locals.starlightRoute.entry.data.hero || {};
+---
+
+<TitleScreen
+  label="Verticopolis: How to Play"
+  caption="THE VERTICAL METROPOLIS"
+  premise={tagline}
+  trademark
+  actions={actions.map((action) => ({
+    text: action.text,
+    href: siteHref(action.link),
+    primary: action.variant === "primary",
+    gameLink: action.link === "/",
+  }))}
+/>

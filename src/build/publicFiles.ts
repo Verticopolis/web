@@ -51,12 +51,6 @@ export const PUBLIC_FILES: readonly PublicFile[] = [
   { path: "robots.txt", license: "MIT", source: "written for the project" },
   { path: "sitemap.xml", license: "MIT", source: "written for the project" },
   {
-    path: "splash-skyline.svg",
-    license: "CC-BY-4.0",
-    source:
-      "the title screen's skyline, drawn for the project (the components package's titleSkyline, written by scripts/gen-splash-skyline.ts)",
-  },
-  {
     path: "sw-navigation-fallback.js",
     license: "MIT",
     source: "written for the project (service worker helper, #1345)",

@@ -49,6 +49,9 @@ export function siteHref(href, base = HELP_BASE, gameOrigin = GAME_ORIGIN) {
  *  rules as code. */
 export const ENGINE_DOCS = "https://docs.verticopolis.com/";
 
+/** The game's source, linked from the title bar and the phone's menu. */
+export const GITHUB = "https://github.com/Verticopolis/web";
+
 export const GITHUB_ISSUES = "https://github.com/Verticopolis/web/issues/new/choose";
 
 /** The owner's GitHub Sponsors page, the tip jar the game's splash also links

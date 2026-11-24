@@ -42,7 +42,7 @@ describe.skipIf(process.platform === "win32")("scripts/vercel-ignore-build.sh", 
       "docs/screenshots/00-splash.png",
       "docs/screenshots/features/stats-tenancy-modern.png",
       "help-site/src/content/docs/keyboard.md",
-      "help-site/title-bar.mjs",
+      "help-site/site.mjs",
       "help-site/astro.config.mjs",
       // Build inputs and configs.
       "CHANGELOG.md",
@@ -462,12 +462,11 @@ describe.skipIf(process.platform === "win32")("scripts/vercel-ignore-build.sh", 
         "scripts/engine-install.ts",
         "scripts/gen-third-party-notices.ts",
         // The help site: its config, its header and title screen (the config
-        // names them by path), its theme and its pages.
+        // names them by path) and its pages.
         "help-site/astro.config.mjs",
         "help-site/src/components/Header.astro",
-        "help-site/src/components/TitleScreen.astro",
+        "help-site/src/components/Hero.astro",
         "help-site/src/pages/changelog.astro",
-        "help-site/src/styles/theme.css",
         ...sourceFiles("help-site/src/content/docs", [".md"]).map(repoRel),
         ...sourceFiles("scripts", [".ts"])
           .map(repoRel)

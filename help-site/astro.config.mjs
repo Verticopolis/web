@@ -3,9 +3,9 @@
 // in src/content/docs/. The game shows one of its pages itself, the Classic and
 // Modern summary when you found a tower (src/ui/templates/compare.ts, compiled by
 // src/build/helpMarkdown.ts), so the two never disagree. The look is the
-// engine docs site's Windows 3.1 theme (src/styles/theme.css) over the game's
-// retro-tokens.css from @verticopolis/components, with a few help-only rules
-// in src/styles/help.css.
+// docs sites' shared Starlight theme, title bar and title screen from
+// @verticopolis/components (the engine docs draw the same), over the game's
+// retro-tokens.css, with a few help-only rules in src/styles/help.css.
 //
 // It builds into the game's dist/help/ (scripts/vercel-build.sh runs it after
 // the game's own build), so the manual ships with every deploy of the game.
@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import { satteri } from "@astrojs/markdown-satteri";
-import { GITHUB } from "./title-bar.mjs";
+import { GITHUB } from "./site.mjs";
 import {
   HELP_BASE,
   OLD_ANCHORS,
@@ -98,14 +98,16 @@ export default defineConfig({
       components: {
         Head: "./src/components/Head.astro",
         Header: "./src/components/Header.astro",
-        Hero: "./src/components/TitleScreen.astro",
+        Hero: "./src/components/Hero.astro",
       },
       customCss: [
-        // The game's chrome tokens and menu bar, from the components package
-        // the game installs (the help site builds after the game's npm ci).
+        // The game's chrome tokens, the docs sites' theme (with the title
+        // screen and its skyline), the title bar and the menu bar, from the
+        // components package the game installs (the help site builds after
+        // the game's npm ci).
         join(components, "lib/styles/retro-tokens.css"),
-        "./src/styles/theme.css",
-        "./src/styles/title-bar.css",
+        join(components, "lib/styles/starlight-theme.css"),
+        join(components, "lib/styles/title-bar.css"),
         join(components, "lib/styles/menu-bar.css"),
         "./src/styles/help.css",
         "./src/styles/help-schemes.css",
