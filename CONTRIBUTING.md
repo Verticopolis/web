@@ -271,6 +271,14 @@ For the exact twice-render determinism check used by the drift workflow, replace
 node scripts/screenshot-determinism-check.ts --all
 ```
 
+The Help window shots (the `desk-help` shard) frame the Player's Manual. Run
+`npm ci --prefix help-site && npm run build --prefix help-site` (it writes
+`dist/help`) before the determinism check, which serves that copy beside each
+leg's build. `npm run screenshots` rebuilds `dist` and drops it, so render that
+shard with the determinism check; without the manual its window is empty.
+Drop the `--tmpfs /work/dist` mount for that run: the manual's build moves
+files into `dist` from another disk, which a tmpfs refuses.
+
 To regenerate `e2e/visual.spec.ts-snapshots` in the same pinned image (its
 `npm run build` needs the engine packages, which `npm install` on the host
 puts in `src/public/engine/` and `node_modules/@verticopolis/engine/tooling/`

@@ -178,6 +178,10 @@ export const SHARDS: Record<string, string[]> = {
   // README's day and night pair on a second one, the title window, and the
   // startup screen on a computer and a phone.
   desk: ["desk", "desk-hero", "desk-title", "startup-sunrise", "startup-sunrise-phone"],
+  // The Player's Manual window on the desk (owner, 2026-11-21): opened, on a
+  // linked page, its File menu, and dark; its own shard, as new features get.
+  // The capture builds the manual (help-site) for this shard only.
+  "desk-help": ["desk-help"],
   // The pocket desk on a phone held each way (owner, 2026-11-20), with the Map
   // open and closed; its own shard, as new features get.
   "pocket-desk": ["desk-pocket-phone", "desk-pocket-landscape"],

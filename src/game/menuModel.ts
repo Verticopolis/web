@@ -182,7 +182,8 @@ function gameMenus({ sponsorUrl, onSponsor }: Omit<GameMenuOptions, "pick">): Me
         label: "Help",
         mnemonic: 0,
         items: [
-          // Player's Manual opens the Help site in a new tab.
+          // Player's Manual opens the manual: in its own window on the full
+          // desk, otherwise in a new tab.
           { id: "btn-help", label: "Player's Manual" },
           { id: "mb-compare", label: "Classic vs Modern" },
           { id: "mb-replay", label: "Replay Getting Started" },
