@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { expectEngineHosted } from "./helpers";
 
@@ -134,7 +135,7 @@ test.describe("the desk on a computer", () => {
     expect(after.y).toBeCloseTo(moved.y, 0);
   });
 
-  test("the Verticopolis menu opens, moves by arrow keys and closes on Escape", async ({ page }) => {
+  test("the Start menu opens, moves by arrow keys and closes on Escape", async ({ page }) => {
     await load(page);
     await enterTower(page);
     const menu = page.locator("#desk-start-menu");
@@ -241,12 +242,15 @@ test.describe("the desk on a computer-sized touch screen", () => {
 test.describe("the desk on a touch phone", () => {
   test.use({ viewport: PHONE, hasTouch: true });
 
-  test("a phone gets the pocket desk: the tower window holds Info, Tools and the tower, the Map floats in the tower's view", async ({
+  test("a phone gets the title screen in a window on the pocket desk, then the pocket desk: the tower window holds Info, Tools and the tower, the Map floats in the tower's view", async ({
     page,
   }) => {
     await load(page);
-    await expect(body(page)).not.toHaveClass(/\bdesk-title\b/);
+    await expect(body(page)).toHaveClass(/\bdesk-title\b/);
+    await expect(body(page)).toHaveClass(/\bdesk-title-pocket\b/);
+    await expect(page.locator(".desk-title-bar")).toBeVisible();
     await enterTower(page);
+    await expect(body(page)).not.toHaveClass(/\bdesk-title\b/);
     await expect(body(page)).toHaveClass(/\bdesk-pocket\b/);
     await expect(body(page)).toHaveClass(/\bdesk-touch\b/);
     const grid = page.locator("#desk-win-tower .desk-pocket-body");
@@ -283,6 +287,57 @@ test.describe("the pocket desk in the installed app on a phone", () => {
     await expect(page.locator("#mb-fullscreen")).toBeHidden();
   });
 });
+
+/** Site storage the live 4.2.0 game wrote, so the title screen offers Continue. */
+const SAVED: Record<string, string> = JSON.parse(
+  readFileSync(new URL("./fixtures/storage-4.2.json", import.meta.url), "utf8"),
+);
+
+/** True when a tap at the control's center lands on it, after scrolling it into view. */
+async function reachable(control: Locator): Promise<boolean> {
+  await control.scrollIntoViewIfNeeded();
+  return control.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    if (r.width === 0 || x < 0 || y < 0 || x > innerWidth || y > innerHeight) return false;
+    const hit = document.elementFromPoint(x, y);
+    return !!hit && (hit === el || el.contains(hit));
+  });
+}
+
+// A phone's screen under the browser's own bars: upright and sideways.
+for (const viewport of [
+  { width: 411, height: 796 },
+  { width: 852, height: 330 },
+]) {
+  test.describe(`the title screen on a ${viewport.width} by ${viewport.height} phone`, () => {
+    test.use({ viewport, hasTouch: true });
+
+    test("every control on the title screen can be reached and tapped", async ({ page }) => {
+      await page.addInitScript((seeded) => {
+        if (sessionStorage.getItem("seeded")) return;
+        sessionStorage.setItem("seeded", "1");
+        for (const [key, value] of Object.entries(seeded)) localStorage.setItem(key, value);
+      }, SAVED);
+      await load(page);
+      await expect(page.locator("body")).toHaveClass(/desk-title-pocket/);
+      await expect(page.locator('#splash [data-splash="continue"]')).toBeVisible();
+      const controls = [
+        ...(await page.locator("#splash [data-splash]").all()),
+        ...(await page.locator(".menubar .mb-title:visible").all()),
+        page.getByRole("button", { name: "Start" }),
+      ];
+      expect(controls.length).toBeGreaterThanOrEqual(10);
+      for (const control of controls) {
+        const name = (await control.getAttribute("data-splash")) ?? (await control.textContent())?.trim();
+        expect(await reachable(control), `${name} can be tapped`).toBe(true);
+      }
+      await page.locator("#splash .splash-attrib").scrollIntoViewIfNeeded();
+      await expect(page.locator("#splash .splash-attrib")).toBeInViewport();
+    });
+  });
+}
 
 test.describe("the desk on other screens", () => {
   test("a phone-sized window with a mouse never gets the desk", async ({ page }) => {
