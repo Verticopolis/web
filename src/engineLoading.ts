@@ -1,3 +1,5 @@
+import { html, type TemplateResult } from "lit-html";
+import { renderDetached, type Detached } from "@verticopolis/components/windows/detached";
 import { announceLive } from "./game/liveRegion";
 
 /**
@@ -15,22 +17,25 @@ export const ENGINE_SLOW_AFTER_MS = 6000;
 export const ENGINE_LOADING_TEXT = "Loading the game engine...";
 export const ENGINE_SLOW_TEXT = "This can take a while on a slow connection or device.";
 
+/** The wait's line on the boot cover. */
+const loadingTemplate = (text: string): TemplateResult => html`<p class="boot-loading">${text}</p>`;
+
 /** Start the wait; the returned function ends it and removes anything shown. */
 export function showEngineLoading(doc: Document = document): () => void {
-  let line: HTMLElement | null = null;
+  let line: Element | null = null;
+  let drawn: Detached | null = null;
   const timers: ReturnType<typeof setTimeout>[] = [];
   const show = () => {
     const cover = doc.getElementById("boot-cover");
     if (!cover) return;
-    line = doc.createElement("p");
-    line.className = "boot-loading";
-    line.textContent = ENGINE_LOADING_TEXT;
+    drawn = renderDetached(doc, loadingTemplate(ENGINE_LOADING_TEXT));
+    line = drawn.elements[0];
     cover.appendChild(line);
     announceLive(ENGINE_LOADING_TEXT);
   };
   const slow = () => {
     if (!line) return;
-    line.textContent = `${ENGINE_LOADING_TEXT} ${ENGINE_SLOW_TEXT}`;
+    drawn?.update(loadingTemplate(`${ENGINE_LOADING_TEXT} ${ENGINE_SLOW_TEXT}`));
     announceLive(ENGINE_SLOW_TEXT);
   };
   timers.push(setTimeout(show, ENGINE_LOADING_DELAY_MS), setTimeout(slow, ENGINE_SLOW_AFTER_MS));

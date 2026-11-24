@@ -1,3 +1,6 @@
+import { html } from "lit-html";
+import { renderDetached } from "@verticopolis/components/windows/detached";
+
 /**
  * Hand the player a file as a browser download: a blob URL clicked through an
  * anchor with `download` set. Shared by the tower export (`UI.downloadFile`)
@@ -10,9 +13,7 @@ export function downloadFile(filename: string, contents: string | Uint8Array, mi
   const part = typeof contents === "string" ? contents : new Uint8Array(contents);
   const blob = new Blob([part], { type: mime });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
+  const [a] = renderDetached(document, html`<a href=${url} download=${filename}></a>`).elements as [HTMLAnchorElement];
   a.click();
   // Revoking in the same task can abort the download on engines that fetch
   // the blob URL asynchronously (Safari/Firefox), and this is the ONLY way

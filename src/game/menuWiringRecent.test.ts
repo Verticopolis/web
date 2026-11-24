@@ -29,8 +29,8 @@ vi.mock("../ui/splashTemplate", () => ({
   sponsorOffered: () => sponsor.offered,
 }));
 vi.mock("../analytics", () => ({ trackAppAction: sponsor.track }));
-const recent = vi.hoisted(() => ({ fill: vi.fn(), wire: vi.fn() }));
-vi.mock("./recentMenu", () => ({ fillRecentMenu: recent.fill, wireRecentMenu: recent.wire }));
+const recent = vi.hoisted(() => ({ fill: vi.fn(() => ({})), wire: vi.fn() }));
+vi.mock("./recentMenu", () => ({ recentMenuStates: recent.fill, wireRecentMenu: recent.wire }));
 const menus = vi.hoisted(() => ({ open: vi.fn(), pick: vi.fn(), dismiss: vi.fn() }));
 vi.mock("../analyticsMenus", async (real) => ({
   ...(await real<typeof import("../analyticsMenus")>()),

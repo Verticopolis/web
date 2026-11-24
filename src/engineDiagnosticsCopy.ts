@@ -1,3 +1,5 @@
+import { html } from "lit-html";
+import { renderDetached } from "@verticopolis/components/windows/detached";
 import { gameDiagnostics } from "./ui/aboutDiagnostics";
 import { copyText } from "./ui/copyText";
 
@@ -16,13 +18,16 @@ export function copyEngineDiagnostics(e: Event): void {
     // Nothing reached the clipboard, so show the report where it can be selected.
     let area = host.querySelector<HTMLTextAreaElement>(".engine-failure-copy-text");
     if (!area) {
-      area = document.createElement("textarea");
-      area.className = "engine-failure-copy-text";
-      area.readOnly = true;
-      area.rows = 12;
-      area.setAttribute("aria-label", "Engine diagnostics");
-      area.style.cssText =
-        "width:min(48em,100%);box-sizing:border-box;font:12px/1.4 ui-monospace,monospace;text-align:left";
+      [area] = renderDetached(
+        document,
+        html`<textarea
+          class="engine-failure-copy-text"
+          readonly
+          rows="12"
+          aria-label="Engine diagnostics"
+          style="width:min(48em,100%);box-sizing:border-box;font:12px/1.4 ui-monospace,monospace;text-align:left"
+        ></textarea>`,
+      ).elements as [HTMLTextAreaElement];
       status?.closest("p")?.insertAdjacentElement("afterend", area);
     }
     area.value = text;

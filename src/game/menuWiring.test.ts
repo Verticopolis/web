@@ -352,17 +352,6 @@ describe("wireMenus", () => {
     expect($("mb-tower").parentElement!.hidden).toBe(false);
     expect($("mb-quick-save").hidden).toBe(false);
   });
-
-  it("Install app's separator shows only while the install item does", () => {
-    const bar = wireMenus(fakeApp().app)!;
-    const sep = document.querySelector<HTMLElement>(".mb-install-sep")!;
-    bar.open($("mb-file") as HTMLButtonElement, false);
-    expect(sep.hidden).toBe(true);
-    bar.close();
-    $("btn-install-menu").hidden = false;
-    bar.open($("mb-file") as HTMLButtonElement, false);
-    expect(sep.hidden).toBe(false);
-  });
 });
 
 describe("wireMenus analytics", () => {

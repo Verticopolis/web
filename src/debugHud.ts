@@ -16,6 +16,9 @@
  * clear.
  */
 
+import { html, type TemplateResult } from "lit-html";
+import { renderDetached } from "@verticopolis/components/windows/detached";
+
 /** The fields of an Excalibur frame statistics record the overlay reads. */
 export interface FrameStatsLike {
   fps: number;
@@ -57,50 +60,37 @@ export function debugHudText(frame: FrameStatsLike | undefined): string {
  *  stops the timer and removes the overlay. */
 export function mountDebugHud(source: StatsSource, doc: Document = document): () => void {
   stopActive?.();
-  const box = doc.createElement("pre");
-  box.id = DEBUG_HUD_ID;
-  box.setAttribute("aria-hidden", "true");
-  Object.assign(box.style, {
-    position: "fixed",
-    left: "4px",
-    bottom: "4px",
-    zIndex: "10000",
-    margin: "0",
-    padding: "4px 6px",
-    font: "11px/1.3 monospace",
-    color: "#fff",
-    background: "rgba(0, 0, 0, 0.7)",
-    pointerEvents: "none",
-    whiteSpace: "pre",
-    width: "max-content",
-    maxWidth: "none",
-  });
-  const refresh = (): void => {
-    box.textContent = debugHudText(source()?.stats.prevFrame);
-    placeOnView(box, doc);
-  };
-  refresh();
-  doc.body.append(box);
+  const template = () => hudTemplate(debugHudText(source()?.stats.prevFrame), corner(doc));
+  const drawn = renderDetached(doc, template());
+  const refresh = (): void => drawn.update(template());
+  doc.body.append(...drawn.elements);
   const timer = setInterval(refresh, DEBUG_HUD_REFRESH_MS);
   const stop = (): void => {
     clearInterval(timer);
-    box.remove();
+    for (const el of drawn.elements) el.remove();
     if (stopActive === stop) stopActive = undefined;
   };
   stopActive = stop;
   return stop;
 }
 
-/** Move the box to the view's bottom-left corner; with no laid-out view it
- *  stays in the page's bottom-left corner. */
-function placeOnView(box: HTMLElement, doc: Document): void {
+/** The overlay: a fixed monospace box at `place`, which takes no pointer. */
+function hudTemplate(text: string, place: { left: number; bottom: number }): TemplateResult {
+  return html`<pre
+    id=${DEBUG_HUD_ID}
+    aria-hidden="true"
+    style="position:fixed;left:${place.left}px;bottom:${place.bottom}px;z-index:10000;margin:0;padding:4px 6px;font:11px/1.3 monospace;color:#fff;background:rgba(0,0,0,0.7);pointer-events:none;white-space:pre;width:max-content;max-width:none"
+  >${text}</pre>`;
+}
+
+/** The view's bottom-left corner, as the box's `left` and `bottom`; with no
+ *  laid-out view, the page's bottom-left corner. */
+function corner(doc: Document): { left: number; bottom: number } {
   const view = doc.getElementById(DEBUG_HUD_VIEW_ID)?.getBoundingClientRect();
   const pageHeight = doc.documentElement.clientHeight;
-  if (!view || view.width === 0 || view.height === 0) {
-    box.style.left = `${CORNER_GAP_PX}px`;
-    box.style.bottom = `${CORNER_GAP_PX}px`;
-    return;
-  }
-  box.style.left = `${Math.round(view.left) + CORNER_GAP_PX}px`;
-  box.style.bottom = `${Math.max(0, Math.round(pageHeight - view.bottom)) + CORNER_GAP_PX}px`;
+  if (!view || view.width === 0 || view.height === 0) return { left: CORNER_GAP_PX, bottom: CORNER_GAP_PX };
+  return {
+    left: Math.round(view.left) + CORNER_GAP_PX,
+    bottom: Math.max(0, Math.round(pageHeight - view.bottom)) + CORNER_GAP_PX,
+  };
 }
