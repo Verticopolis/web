@@ -5,7 +5,7 @@ import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * Where focus goes during a Space press, two of the places the game tells
- * Space apart from other keys (the palette's is in `uiPalette.test.ts`), the
+ * Space apart from other keys (the Tools window's is in `inputKeysSpace.test.ts`), the
  * order of the context-menu ender, the record of other keys held with
  * nothing covering the world, and where a held Enter's repeats go. The rest of the Space hold is in
  * `inputKeysSpace.test.ts` and `inputKeysSpaceHold.test.ts`.

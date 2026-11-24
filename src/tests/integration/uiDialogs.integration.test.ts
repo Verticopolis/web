@@ -10,6 +10,7 @@ import type { UI } from "../../ui/UI";
 import { openImport } from "../../ui/uiImport";
 import { mountAppDom, makeUI } from "../uiFixture";
 import { patchTopBar } from "../../ui/topBar";
+import { ToolPalette } from "@verticopolis/components/windows/palette/toolPalette";
 import { setMode } from "../../ui/uiStatus";
 import { priceOptionsFor } from "../../ui/catalogPricing";
 import { scheduleDialogUX } from "../../ui/scheduleDialogRules";
@@ -1421,17 +1422,17 @@ describe("build palette — locked-tier visibility (SimTower parity)", () => {
   });
 
   it("dirty-gates the lock/afford scan: rescans only on a star or affordability crossing", () => {
-    // E5-S3: the ~6 Hz pump must not walk the palette DOM when neither the star
-    // nor any kind's affordability changed. The scan is observable through the
-    // palette's querySelectorAll walks.
+    // E5-S3: the ~6 Hz pump must not redraw the Tools window when neither the
+    // star nor any kind's affordability changed. A redraw is a call to the
+    // window's update.
     const { ui } = makeUI();
     const sim = new HudTower();
     sim.star = 1;
     // Mid-band funds: the costliest kinds sit at 1M and 3M, so 2M puts every
     // affordability comparison well away from a boundary.
     sim.money = 2_000_000;
-    const scans = vi.spyOn(document.getElementById("palette-scroll")!, "querySelectorAll");
-    pump(ui, sim); // first pump after construction: always scans (2 walks)
+    const scans = vi.spyOn(ToolPalette.prototype, "update");
+    pump(ui, sim); // first pump after construction: always scans
     const afterFirst = scans.mock.calls.length;
     expect(afterFirst).toBeGreaterThan(0);
     pump(ui, sim); // identical snapshot: skipped

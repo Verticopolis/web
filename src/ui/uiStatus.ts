@@ -15,10 +15,9 @@ import { ifDefined } from "lit-html/directives/if-defined.js";
 import { renderDetached } from "@verticopolis/components/windows/detached";
 import { messageWithIcons } from "@verticopolis/components/windows/icons";
 import { groupDigits } from "@verticopolis/components/windows/format";
-import { paletteWindow, relabelPalette, syncPaletteTabs } from "./uiPalette";
-import { refitPalette } from "./paletteFit";
+import { relabelPalette, scanTools } from "./toolsWindow";
 import { toolInfoFor } from "./templates/toolInfo";
-import { scanSkyBridgeButton, skyBridgeUnlocked } from "./skyBridgePalette";
+import { skyBridgeUnlocked } from "./skyBridgePalette";
 import { towerStatsTemplate, type TowerStatsSnapshot } from "./templates/towerStats";
 import { bindViewWorld } from "@verticopolis/components/presentation/viewWorld";
 import { bindViewKinds } from "@verticopolis/components/presentation/viewKinds";
@@ -127,47 +126,10 @@ export function update(ui: UI, src: HudSource): void {
     if (ui.tool.type === "build") showToolInStatusBar(toolInfoFor(catalog, ui.tool.kind, ui.lobbyPicker()));
   }
 
-  // Dirty-gate the palette lock/afford scan (E5-S3): its DOM pass depends on the
-  // star, the catalog (`unlocked` is star-vs-minStar plus the catalog's
-  // `available`, which keeps a Modern-only kind like the Food Hall out of
-  // Classic) and on which kinds the current funds can afford, so it reruns only
-  // when the star, the catalog or an affordability boundary changed since the
-  // last scan. A new catalog clears the key in `relabelPalette`. The mode in the
-  // key is redundant with that (a New Tower swap brings the other mode's
-  // catalog) and stays as a cheap guard.
-  // Money moves every pump; the bitmask below changes only at a crossing, so the
-  // ~6 Hz pump skips the two querySelectorAll walks and the class writes almost
-  // always. The key is a cheap string over engine data (no DOM reads).
-  let scanKey = mode + ":" + star;
-  for (const f of catalog.facilities) scanKey += money >= f.cost ? "1" : "0";
-  const bridge = catalog.rules.skyBridge;
-  if (bridge) scanKey += money >= bridge.tileCost ? "b" : "-";
-  if (scanKey !== ui.paletteScanKey) {
-    ui.paletteScanKey = scanKey;
-    // Palette unlock state. Parity with the original: a locked facility is HIDDEN
-    // (`.locked` -> display:none, out of layout and tab order), not shown dimmed ,
-    // the palette grows as stars are earned. Only affordability dims
-    // (`.unaffordable`); an unlocked-but-unaffordable tool stays visible.
-    let shownToolsChanged = false;
-    ui.el.palette.querySelectorAll<HTMLElement>(".pal-item[data-kind]").forEach((item) => {
-      const kind = item.dataset.kind as FacilityKind;
-      const locked = !unlocked(catalog, kind, star);
-      const affordable = money >= catalogFacility(catalog, kind).cost;
-      if (item.classList.contains("locked") !== locked) shownToolsChanged = true;
-      item.classList.toggle("locked", locked);
-      item.classList.toggle("unaffordable", !locked && !affordable);
-    });
-    if (scanSkyBridgeButton(ui.el.palette, bridge, star, money)) shownToolsChanged = true;
-    // Reads the `.locked` classes just written: hides a category section and its
-    // tab when everything beneath is still locked (e.g. Leisure below 3★, no
-    // dangling section title), hides the Modern sub-band until a Modern venue
-    // unlocks, pips a tab whose tools just grew, and keeps a valid mobile tab
-    // selected.
-    syncPaletteTabs(ui);
-    // A tool shown or hidden changes the Tools window's height: refit it so a
-    // desktop window shows every tool without scrolling (paletteFit). A change
-    // in affordability alone only dims a row, so it reads no layout.
-    if (shownToolsChanged) refitPalette(paletteWindow(ui));
+  // The Tools window's locks and dimming (toolsWindow.scanTools), redrawn only
+  // when the mode, the star or an affordability boundary moved. A locked tool
+  // is hidden, as in the 1994 game; one the funds cannot reach is dimmed.
+  if (scanTools(ui, mode, star, money)) {
     // If the active build tool just became locked, loading, founding, or undoing
     // into a lower-star tower while a higher-star tool was selected, its palette
     // button is now hidden, leaving no visible active tool while canvas clicks
@@ -177,7 +139,7 @@ export function update(ui: UI, src: HudSource): void {
     // (a key change) or a new catalog withholds its kind (which clears the key).
     const toolLocked =
       ui.tool.type === "skyBridge"
-        ? !skyBridgeUnlocked(bridge, star)
+        ? !skyBridgeUnlocked(catalog.rules.skyBridge, star)
         : ui.tool.type === "build" && !unlocked(catalog, ui.tool.kind, star);
     if (toolLocked) {
       ui.selectTool({ type: "inspect" });

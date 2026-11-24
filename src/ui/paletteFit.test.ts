@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fitPalette, PALETTE_FIT, PALETTE_FIT_MQ, refitPalette, watchPaletteFit } from "./paletteFit";
+import { fitPalette, PALETTE_FIT, PALETTE_FIT_MQ, watchPaletteFit } from "./paletteFit";
 
 import { html, render } from "lit-html";
 import { drawElement } from "./testing/litTestUtils";
@@ -181,7 +181,7 @@ describe("watchPaletteFit", () => {
     expect(fitClasses(win)).toEqual([PALETTE_FIT.compact, PALETTE_FIT.columns]);
   });
 
-  it("watches a window once, and refitPalette refits a watched window on demand", () => {
+  it("watches a window once, and its refit refits the window on demand", () => {
     stubPage();
     let normal = 1100;
     const win = windowWith(1150, MODERN);
@@ -195,7 +195,7 @@ describe("watchPaletteFit", () => {
     expect(fitClasses(win)).toEqual([]);
     // More tools unlocked: the normal rows no longer fit.
     normal = 1300;
-    refitPalette(win);
+    refit();
     expect(fitClasses(win)).toEqual([PALETTE_FIT.compact]);
   });
 
@@ -240,12 +240,5 @@ describe("watchPaletteFit", () => {
     folded.classList.add("tt-pulse");
     await settle();
     expect(fitClasses(win)).toEqual([PALETTE_FIT.compact]);
-  });
-
-  it("leaves an unwatched window alone, and accepts none", () => {
-    const win = windowWith(400, MODERN);
-    refitPalette(win);
-    refitPalette(null);
-    expect(fitClasses(win)).toEqual([]);
   });
 });

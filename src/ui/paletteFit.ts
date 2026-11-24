@@ -24,7 +24,8 @@
  * once the page's fonts are ready. Never per frame.
  */
 
-import { PALETTE_FOLDED_CLASS } from "./paletteSections";
+/** The class the components package puts on a folded category. */
+const PALETTE_FOLDED_CLASS = "pal-folded";
 
 /** The desktop layout: every viewport at least this wide docks the palette as
  *  a plain vertical list. The phone, landscape-phone and tablet media blocks
@@ -138,10 +139,4 @@ export function watchPaletteFit(win: HTMLElement): () => void {
   void document.fonts?.ready.then(refit);
   refit();
   return refit;
-}
-
-/** Refit a watched window now (the lock scan calls this after it shows or
- *  hides tools). A window nobody watches is left alone. */
-export function refitPalette(win: HTMLElement | null): void {
-  if (win) watches.get(win)?.refit();
 }
