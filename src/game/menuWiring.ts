@@ -17,7 +17,7 @@ import { isEngineStopped, isSplashUp } from "./interactionState";
 import { closeTower } from "./titleScreen";
 import { wireFileShortcuts, type FileCommands } from "./fileShortcuts";
 import { showOpenDialog, showSaveAsDialog } from "./fileSpaceCommands";
-import { fillRecentMenu, wireRecentMenu } from "./recentMenu";
+import { recentMenuStates, wireRecentMenu } from "./recentMenu";
 import { overviewMapOpen, setOverviewMapOpen } from "./overviewMapWiring";
 import { callFireRescue } from "./fireRescueCall";
 import { confirmExterminate } from "./appModals";
@@ -317,7 +317,6 @@ export function wireMenus(app: GameApp): MenuBar | null {
 
   /** Read the menus' check marks, grayed and hidden items as `menu` opens. */
   function fitMenus(menu: HTMLElement): void {
-    if (menu.id === "mb-file-menu") fillRecentMenu();
     const noTower = titleScreenUp();
     // A tower the game stopped on cannot be saved, so it cannot be closed either.
     // Nor can it be opened over, saved or saved as (the File keys refuse them too).
@@ -325,6 +324,7 @@ export function wireMenus(app: GameApp): MenuBar | null {
     const states: Record<string, MenuEntryState> = {};
     // One entry can take states from several of the rules below.
     const put = (id: string, state: MenuEntryState) => (states[id] = { ...states[id], ...state });
+    if (menu.id === "mb-file-menu") for (const [id, state] of Object.entries(recentMenuStates())) put(id, state);
     put("mb-win-tools", { checked: !document.getElementById("palette")?.classList.contains(PALETTE_COLLAPSED_CLASS) });
     put("mb-win-map", { checked: overviewMapOpen(app) });
     for (const w of floating) put(w.item, { checked: !!w.win && !w.win.hidden });
@@ -355,9 +355,6 @@ export function wireMenus(app: GameApp): MenuBar | null {
     // The Tools fold exists on the desktop layout only, and in a tower.
     // On the 1994 desk Tools never folds; its Window menu brings it up.
     put("mb-win-tools", { hidden: noTower || !document.getElementById(PALETTE_COLLAPSE_BUTTON_ID)?.offsetParent });
-    // Install app's separator shows with it (installAffordance.ts shows the item).
-    const install = document.getElementById("btn-install-menu");
-    put("mb-install-sep", { hidden: !install || install.hidden });
     setMenuState(states);
   }
   return bar;

@@ -45,6 +45,8 @@ function mountDom(): void {
 
 const chip = () => document.getElementById("btn-install") as HTMLButtonElement;
 const menu = () => document.getElementById("btn-install-menu") as HTMLButtonElement;
+/** Install app's separator, which shows and hides with it. */
+const sep = () => document.getElementById("mb-install-sep") as HTMLElement;
 
 /** Dispatch a fake beforeinstallprompt so the seam becomes installable. */
 function makeInstallable(): void {
@@ -89,8 +91,10 @@ describe("passive menu entry (CAP-1)", () => {
   it("stays hidden for a plain browser with no captured event, appears when installable", () => {
     initInstallAffordance(makeApp());
     expect(menu().hidden).toBe(true);
+    expect(sep().hidden).toBe(true);
     makeInstallable(); // onChange -> refreshMenu
     expect(menu().hidden).toBe(false);
+    expect(sep().hidden).toBe(false);
   });
 
   it("shows for iOS (the how-to path is still an offer)", () => {

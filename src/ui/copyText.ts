@@ -1,3 +1,6 @@
+import { html } from "lit-html";
+import { renderDetached } from "@verticopolis/components/windows/detached";
+
 /**
  * Put text on the clipboard. The async Clipboard API is tried first; a page
  * without it (an insecure context, an older browser) or one that refuses the
@@ -22,11 +25,10 @@ export async function copyText(
     // fall through to the selection copy
   }
   const previous = doc.activeElement as HTMLElement | null;
-  const area = doc.createElement("textarea");
-  area.value = text;
-  area.setAttribute("readonly", "");
-  area.style.position = "fixed";
-  area.style.opacity = "0";
+  const [area] = renderDetached(
+    doc,
+    html`<textarea readonly style="position:fixed;opacity:0" .value=${text}></textarea>`,
+  ).elements as [HTMLTextAreaElement];
   container.appendChild(area);
   try {
     area.focus();

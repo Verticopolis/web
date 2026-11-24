@@ -6,7 +6,7 @@ import { dropRecentTower, keepRecentTowers, recentTowers, RECENT_MAX, type Recen
 import { openTowersFile } from "./fileSpaceCommands";
 import { openLinkedRow } from "./linkedFolderCommands";
 import { html } from "lit-html";
-import { onMenuItem, setMenuState, type MenuEntryState } from "./menuBarHost";
+import { onMenuItem, type MenuEntryState } from "./menuBarHost";
 
 /**
  * File > Open Recent (owner, 2026-11-16): the last towers opened or saved,
@@ -65,13 +65,14 @@ function standing(t: RecentTower): "show" | "hide" | "gone" {
 }
 
 /**
- * Fill File > Open Recent as the File menu opens: one localStorage read, then
+ * File > Open Recent's lines as the File menu opens, for the menu's one
+ * `setMenuState`: one localStorage read, then
  * for each of at most {@link RECENT_MAX} lines one check of where it stands
  * and one for its label (a find in the My Towers list already in memory, or
  * a read of the kept link id). Lines whose files are gone come off the list
  * for good; a line from another tab's newer link is hidden, never dropped.
  */
-export function fillRecentMenu(doc: Document = document): void {
+export function recentMenuStates(): Record<string, MenuEntryState> {
   const list = recentTowers();
   const standings = list.map(standing);
   const kept = list.filter((_, i) => standings[i] !== "gone");
@@ -88,7 +89,7 @@ export function fillRecentMenu(doc: Document = document): void {
         }
       : { hidden: true };
   }
-  setMenuState(states, doc);
+  return states;
 }
 
 /** A file found gone at its pick: off the list, counted. */

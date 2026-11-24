@@ -1,3 +1,5 @@
+import { html } from "lit-html";
+import { renderDetached } from "@verticopolis/components/windows/detached";
 import type { ModalView } from "@verticopolis/components/windows/uiModal";
 import type { UI } from "./UI";
 import { HelpPause, PAUSED_FOR_HELP } from "./helpPause";
@@ -60,7 +62,8 @@ export function helpPause(ui: UI): HelpPause {
   return pause;
 }
 
-/** The attribute that marks a Help dialog's own status line. */
+/** The attribute that marks a Help dialog's own status line (its template
+ *  in `addStatusLine` writes it). */
 const HELP_STATUS_ATTR = "data-help-status";
 
 /**
@@ -90,10 +93,7 @@ function announceHelp(ui: UI, text: string): void {
  *  The buttons stay the box's last child, which the sticky footer's cover
  *  under them depends on (src/styles/game/dialogs.css). */
 function addStatusLine(box: HTMLElement): void {
-  const p = document.createElement("p");
-  p.className = "visually-hidden";
-  p.setAttribute("role", "status");
-  p.setAttribute(HELP_STATUS_ATTR, "");
+  const [p] = renderDetached(document, html`<p class="visually-hidden" role="status" data-help-status></p>`).elements;
   box.insertBefore(p, box.querySelector(":scope > .modal-actions"));
 }
 

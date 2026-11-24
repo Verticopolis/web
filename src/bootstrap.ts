@@ -1,4 +1,5 @@
 import { html, nothing, render, type TemplateResult } from "lit-html";
+import { renderDetached } from "@verticopolis/components/windows/detached";
 import { registerPWA, type UpdateInfo } from "./pwa";
 import { injectPageTelemetry } from "./telemetry";
 import { startGameplaySession, trackAppAction, trackAppActionOnce } from "./analytics";
@@ -108,8 +109,7 @@ export function showBootMessage(content: TemplateResult | string, withReload = f
   if (!stage) return;
   let host = document.getElementById("boot-fallback-host");
   if (!host) {
-    host = document.createElement("div");
-    host.id = "boot-fallback-host";
+    [host] = renderDetached(document, html`<div id="boot-fallback-host"></div>`).elements as [HTMLElement];
     document.body.appendChild(host);
   }
   // Render through lit-html (the app's renderer): an interpolated string is

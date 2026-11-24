@@ -80,7 +80,9 @@ function hasReallyPlayed(app: GameApp): boolean {
 /** Toggle the permanent passive menu entry to match live offerability. Cheap;
  *  called on init and on every install-seam change. */
 function refreshMenu(): void {
-  setMenuState({ "btn-install-menu": { hidden: installAvailability() === "none" } });
+  // Its separator shows and hides with it.
+  const hidden = installAvailability() === "none";
+  setMenuState({ "btn-install-menu": { hidden }, "mb-install-sep": { hidden } });
 }
 
 function hideChip(): void {

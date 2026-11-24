@@ -1,3 +1,5 @@
+import { html } from "lit-html";
+import { renderDetached } from "@verticopolis/components/windows/detached";
 import type { TowerFileEntry } from "../storage/fileSpace";
 import { linkedFileKind, type LinkedFolderState } from "../storage/linkedFolder";
 import type { FileNote } from "./fileDialog";
@@ -65,15 +67,12 @@ export function whereWords(): "computer" | "device" {
 /** Let the player pick a folder and answer its tower files (by extension),
  *  for From a folder…; nothing when they cancel. */
 export function pickFolderFiles(take: (files: File[]) => void): void {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.multiple = true;
-  input.setAttribute("webkitdirectory", "");
-  input.addEventListener(
-    "change",
-    () => take(Array.from(input.files ?? []).filter((f) => linkedFileKind(f.name) !== null)),
-    { once: true },
-  );
+  const pick = {
+    handleEvent: () => take(Array.from(input.files ?? []).filter((f) => linkedFileKind(f.name) !== null)),
+    once: true,
+  };
+  const [input] = renderDetached(document, html`<input type="file" multiple webkitdirectory @change=${pick} />`)
+    .elements as [HTMLInputElement];
   input.click();
 }
 
