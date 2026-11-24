@@ -178,6 +178,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # The Help window shots frame the Player's Manual, so a job rendering
+      # them builds it into dist/help, which the determinism check serves
+      # beside each leg's game build. Other jobs skip it.
+      - name: Build the Player's Manual for the Help window shots
+        if: contains(matrix.shards, 'desk-help')
+        run: |
+          npm ci --prefix help-site --no-audit --no-fund
+          npm run build --prefix help-site
+
       # Render the shard TWICE from two independent builds and byte-compare the
       # renders (the whole determinism guard). The logic lives in a standalone
       # script (scripts/screenshot-determinism-check.ts) so a person or an agent can

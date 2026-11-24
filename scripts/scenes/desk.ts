@@ -3,7 +3,7 @@
  * screen, written into docs/screenshots/features/ for the Help site and the
  * PR review, plus the README's day and night pair (`desk-hero`), written into
  * docs/screenshots/. Every other scene turns the desk off; these keep it on
- * (`desk`). The pocket desk scenes show a phone held each way, with the Map
+ * (`desk`). `desk-help` shows the Player's Manual window. The pocket desk scenes show a phone held each way, with the Map
  * floating over the tower and then closed to its pill.
  * The shots in a scene share one page, so each setup starts from the last
  * one's state and leaves the next a known one. Part of the SCENES manifest
@@ -106,6 +106,77 @@ function pocketShots(suffix: string): Shot[] {
   ];
 }
 
+/** The Player's Manual window's frame. */
+const MANUAL_FRAME = "#desk-win-help iframe";
+
+/** Wait until the manual window shows `title` and its page has drawn. */
+async function manualShows(page: Page, title: string): Promise<void> {
+  await page.waitForFunction(
+    (want) => document.querySelector("#desk-win-help .desk-title-text")?.textContent === `${want} - Player's Manual`,
+    title,
+  );
+  await page.frameLocator(MANUAL_FRAME).locator("main h1").first().waitFor();
+}
+
+/** Pick `item` from the manual window's `menu`. */
+async function manualMenu(page: Page, menu: string, item: string): Promise<void> {
+  await page
+    .getByRole("navigation", { name: "Player's Manual menu" })
+    .getByRole("button", { name: menu, exact: true })
+    .click();
+  await press(page, `#desk-win-help [data-help-item="${item}"]`);
+}
+
+/**
+ * The Player's Manual in its desk window (owner, 2026-11-21): opened from
+ * Help, on another page after a link inside it, with its File menu open, and
+ * dark from its Options menu. The capture's server serves the manual's build
+ * beside the game (scripts/screenshot-determinism-check.ts copies dist/help).
+ */
+const HELP_SHOTS: Shot[] = [
+  {
+    name: "desk-help",
+    clock: 11,
+    wait: 800,
+    setup: async (page) => {
+      await press(page, "#mb-help");
+      await press(page, "#btn-help");
+      await manualShows(page, "How to Play");
+      await park(page);
+    },
+  },
+  {
+    name: "desk-help-page",
+    clock: 11,
+    wait: 800,
+    setup: async (page) => {
+      await page.frameLocator(MANUAL_FRAME).locator('main a[href$="/building/elevators/"]').first().click();
+      await manualShows(page, "Elevators");
+      await park(page);
+    },
+  },
+  {
+    name: "desk-help-menu",
+    clock: 11,
+    setup: (page) =>
+      page
+        .getByRole("navigation", { name: "Player's Manual menu" })
+        .getByRole("button", { name: "File", exact: true })
+        .click(),
+  },
+  {
+    name: "desk-help-dark",
+    clock: 11,
+    wait: 800,
+    setup: async (page) => {
+      await closeMenus(page);
+      await manualMenu(page, "Options", "theme_dark");
+      await page.frameLocator(MANUAL_FRAME).locator('html[data-theme="dark"]').waitFor({ state: "attached" });
+      await park(page);
+    },
+  },
+];
+
 export const DESK_SCENES: Scene[] = [
   {
     id: "desk",
@@ -205,6 +276,15 @@ export const DESK_SCENES: Scene[] = [
       { name: "03b-desk-day", clock: 11, wait: 1200, setup: heroFrame },
       { name: "04b-desk-night", clock: 22, setup: heroFrame },
     ],
+  },
+  {
+    // The Player's Manual window over the canon tower (HELP_SHOTS).
+    id: "desk-help",
+    outDir: "features",
+    desk: true,
+    build: buildCanonTower,
+    assertUnits: 50,
+    shots: HELP_SHOTS,
   },
   {
     // The title screen in its Verticopolis window, and the start menu over it.

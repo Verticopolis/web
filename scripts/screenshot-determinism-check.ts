@@ -37,7 +37,7 @@
  * via native type-stripping, and import siblings with an explicit `.ts` extension.
  */
 import { spawn, execFileSync, type ChildProcess, type SpawnOptions } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -191,6 +191,11 @@ async function runLeg(leg: { tag: string; dest: string; outDir: string; port: nu
     return buildRc || 1;
   }
   process.stdout.write(`[${tag}] build: ${(buildMs / 1000).toFixed(1)}s\n`);
+  // The Player's Manual, when the job built it (`npm run build --prefix
+  // help-site` writes dist/help), is served beside the game for the Help
+  // window shots. Both legs get the same copy: the guard is for the game.
+  const manual = join(ROOT, "dist", "help");
+  if (existsSync(manual)) cpSync(manual, join(outDir, "help"), { recursive: true });
 
   const server = spawn(
     process.execPath,
