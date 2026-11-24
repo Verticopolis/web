@@ -36,7 +36,7 @@ vi.mock("../analyticsMenus", async (real) => ({
   trackMenuPick: menus.pick,
   trackMenuDismiss: menus.dismiss,
 }));
-vi.mock("../ui/overviewMapPrefs", () => ({
+vi.mock("@verticopolis/components/windows/overviewMapPrefs", () => ({
   browserStorage: () => ({
     getItem: (k: string) => store.get(k) ?? null,
     setItem: (k: string, v: string) => void store.set(k, v),

@@ -10,7 +10,7 @@ import { isSpaceKey } from "@verticopolis/components/model/inputEvents";
 import { watchPaletteFit } from "./paletteFit";
 import { wirePaletteCollapse } from "./paletteCollapse";
 import { applySectionFolds, wireSectionFolds } from "./paletteSections";
-import { browserStorage } from "./overviewMapPrefs";
+import { browserStorage } from "@verticopolis/components/windows/overviewMapPrefs";
 import { descriptionId, wirePaletteHints } from "./paletteHints";
 import { TOOL_DESCRIPTION } from "./templates/toolInfo";
 import { labelSkyBridgeButton, skyBridgeButton, SKY_BRIDGE_TOOL } from "./skyBridgePalette";
