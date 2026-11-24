@@ -3,7 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const standalone = vi.hoisted(() => ({ isInstalledStandalone: vi.fn(() => false) }));
 vi.mock("../ui/standalone", () => standalone);
 
-import { DISPLAY_SEPARATOR, FULL_SCREEN_ITEM, fullScreenOffered, fullScreenStates } from "./fullScreenItem";
+import {
+  DISPLAY_SEPARATOR,
+  FULL_SCREEN_ITEM,
+  WINDOW_SEPARATOR,
+  fullScreenOffered,
+  fullScreenStates,
+} from "./fullScreenItem";
 
 describe("fullScreenOffered", () => {
   it("leaves Full Screen out of the installed app on a phone", () => {
@@ -35,12 +41,13 @@ describe("fullScreenStates", () => {
     delete (document as { fullscreenElement?: unknown }).fullscreenElement;
   });
 
-  it("hides the item and the line above it in the installed app on a phone", () => {
+  it("hides the item and the line above it, in Options and the desk's Window menu, in the installed app on a phone", () => {
     standalone.isInstalledStandalone.mockReturnValue(true);
     states = fullScreenStates(true);
     expect(standalone.isInstalledStandalone).toHaveBeenCalled();
     expect(states[FULL_SCREEN_ITEM].hidden).toBe(true);
     expect(states[DISPLAY_SEPARATOR].hidden).toBe(true);
+    expect(states[WINDOW_SEPARATOR].hidden).toBe(true);
   });
 
   it("shows both again in a phone's browser tab (the same page, opened outside the app)", () => {
@@ -50,6 +57,7 @@ describe("fullScreenStates", () => {
     states = fullScreenStates(true);
     expect(states[FULL_SCREEN_ITEM].hidden).toBe(false);
     expect(states[DISPLAY_SEPARATOR].hidden).toBe(false);
+    expect(states[WINDOW_SEPARATOR].hidden).toBe(false);
   });
 
   it("keeps both in the installed app on a computer, where Tools and Status Bar sit under the line", () => {

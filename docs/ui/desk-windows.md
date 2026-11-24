@@ -37,15 +37,21 @@ tests.
   minimized, and is checked while it is open. Options drops Tools there,
   and Tower drops Tower Info, Map and Bulletin with the separator under them
   (owner, 2026-11-21; `deskMenus.ts`), so each window has one menu item.
+- One home per command (owner, #2600): on the desk Options keeps Settings
+  and Sound and gains Control Panel…, and Screen Saver and Appearance live in
+  the Control Panel only (`deskOptionStates`, applied as the desk comes up or
+  goes and again each time a menu opens, after Full Screen's states). The
+  Window menu's line (`mb-window-sep`) follows Options' display line: on a
+  phone without Full Screen it goes.
 - A right-click on a window's title bar or taskbar button (or Shift+F10 or the
   context menu key on a taskbar button) opens its window menu: Restore,
   Minimize, Maximize (the tower), Close, each grayed when it does not apply.
 - A minimized window keeps its layout (it is only hidden), so the tower's
   canvas never re-sizes while it waits on the taskbar.
 - A resize draws a dotted outline and sets the size once on release.
-- The taskbar has the Verticopolis button (New, Open, the Player's Manual,
-  Screen Saver, Control Panel, Settings, About, Close; an item whose menu-bar
-  twin is hidden, such as Close on the title screen, is left out), one button
+- The taskbar has the Verticopolis button (New, Open, Control Panel, Close;
+  an item whose menu-bar twin is hidden, such as Close on the title screen,
+  is left out, and the title screen has no Control Panel), one button
   per open window (press to bring it up, press the front one to minimize it)
   and the tray (the monitor that opens the Control Panel, sound, clock).
   The Control Panel's Sounds icon reads Sounds: On or Off, and the tray's
@@ -75,8 +81,8 @@ tests.
   `_min` or `_restore` (`title` on the title screen); `desk_start_open` is the
   Verticopolis button opening its menu (`title` or `tower`) and `desk_start` a
   pick on it, detail the game menu item it ran (`btn-new`, `mb-import`,
-  `btn-help`, `mb-screensaver`, `desk-control-panel`, `btn-settings`,
-  `btn-about`, `mb-close`); `desk_tray` is the tray's `display` or `sound`;
+  `desk-control-panel`, `mb-close`; before #2600 also `btn-help`,
+  `mb-screensaver`, `btn-settings` and `btn-about`); `desk_tray` is the tray's `display` or `sound`;
   `desk_win_menu_open` is a window menu opening from the `taskbar` or a
   `title_bar`, and `desk_win_menu` its pick, `<window>_<command>`;
   `desk_control` is a Control Panel icon, detail `display`, `appearance`,

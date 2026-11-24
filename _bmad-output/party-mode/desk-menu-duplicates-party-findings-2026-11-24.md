@@ -228,10 +228,12 @@ exists, and gets every item back when the desk goes down.
 - `setDeskMenus` (`deskMenus.ts`): on the desk hide `mb-screensaver` and
   `mb-appearance` and show `mb-control-panel`; off the desk the reverse. The
   desk opens the Control Panel for `mb-control-panel` through `onMenuItem`.
-- The Control Panel and the Verticopolis menu run their items with
-  `runMenuItem` instead of `click()` on a menu element, so nothing depends on
-  a hidden element (Theo). Analytics are unchanged: `desk_start` and
-  `desk_control` still report from the desk itself.
+- The Control Panel and the Verticopolis menu keep running their items with
+  `click()` on the menu twin. Theo floated `runMenuItem`, but on the title
+  screen a click on Options > Sound is caught and presses the title screen's
+  own mute button (`menuWiring.ts`), which `runMenuItem` would skip; a hidden
+  item still takes a click. `desk_start` and `desk_control` still report from
+  the desk itself.
 - `analyticsMenus.ts`: `mb-control-panel` reports as `control_panel`;
   `docs/analytics-data-map.md` lists it and the shorter `desk_start` set.
 - Help pages: `help-site/src/content/docs/desktop.mdx` and
@@ -257,14 +259,19 @@ only trims the desk that minor ships.
 5. Control Panel Display, Appearance, Sounds and Settings still open or
    toggle while their Options twins are hidden; the Sound check stays the
    same on Options, the tray speakers and the Sounds label.
-6. Keyboard: Alt+O, Up, Enter opens the Control Panel with focus inside it;
-   Escape closes it and returns focus.
+6. Keyboard: Alt+O, Up, Enter opens the Control Panel with the keyboard on
+   its Display icon.
 7. Screen reader: the menus announce only the items that show; the Control
    Panel's icons keep their names.
 8. Analytics: Options > Control Panel… reports `menu_pick` as
    `control_panel`; the data map matches.
 
-## Open for the owner
+## Owner's pick (2026-11-24)
 
-- Pick D (recommended), A, B or C.
-- Keep or drop the Control Panel's Settings icon (room: keep, 6-4).
+Naftali picked D. The Control Panel's Settings icon stays (the room's 6-4).
+
+He also asked about the installed app on a phone: with Full Screen hidden,
+the line above it still showed. On the pocket desk that line was the last
+thing in the Window menu (and, before D, in Options). The Window menu's line
+now follows Options' display line (`fullScreenStates`), and the desk hides
+Options' display line, so neither menu ends on a line.

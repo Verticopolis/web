@@ -13,16 +13,14 @@ import type { StartItem } from "@verticopolis/components/windows/desk/deskTaskba
 export const CONTROL_PANEL_ITEM = "desk-control-panel";
 
 /** The Verticopolis menu: each item runs the game's menu item with its id,
- *  so it does exactly what its menu twin does. A null is a separator. */
+ *  so it does exactly what its menu twin does. A null is a separator. It
+ *  holds no command another menu holds: the manual and About live in Help,
+ *  Settings in Options, the screen saver in the Control Panel (#2600). */
 const START_ITEMS: readonly (StartItem | null)[] = [
   { id: "btn-new", label: "New…" },
   { id: "mb-import", label: "Open…" },
   null,
-  { id: "btn-help", label: "Player's Manual" },
-  { id: "mb-screensaver", label: "Screen Saver…" },
   { id: CONTROL_PANEL_ITEM, label: "Control Panel…" },
-  { id: "btn-settings", label: "Settings…" },
-  { id: "btn-about", label: "About Verticopolis…" },
   null,
   { id: "mb-close", label: "Close Verticopolis" },
 ];

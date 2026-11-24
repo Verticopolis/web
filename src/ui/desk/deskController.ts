@@ -43,7 +43,7 @@ import {
   type DeskScreen,
 } from "./deskAnalytics";
 import { CONTROL_ITEM, CONTROL_ITEMS, CONTROL_PANEL_ITEM, startItems, towerTitleText, towerName } from "./deskGlue";
-import { setDeskMenus } from "./deskMenus";
+import { setDeskMenus, wireOptionsControlPanel } from "./deskMenus";
 import { addDeskManual, removeDeskManual } from "./deskHelpWindow";
 
 /**
@@ -151,6 +151,7 @@ export class DeskController {
     }
     // The Window menu opens the Bulletin by running Tower's hidden item: the player asking.
     onMenuItem("mb-win-bulletin", () => this.ask("bulletin"), this.doc);
+    wireOptionsControlPanel(this.doc, () => this.openControl());
   }
 
   /** Mark `id` as asked for until the game's answer to the pick has been heard. */

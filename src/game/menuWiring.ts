@@ -28,6 +28,7 @@ import { TOWER_CALL_ITEM, towerCallStates, towerCalls, type TowerCalls } from ".
 import { fullScreenStates } from "./fullScreenItem";
 import { firstDragReporter, reportWindowClose } from "./movableWindows";
 import { deskActive } from "../ui/desk/deskController";
+import { deskOptionStates } from "../ui/desk/deskMenus";
 import { topBarView } from "../ui/topBar";
 
 /**
@@ -337,6 +338,8 @@ export function wireMenus(app: GameApp): MenuBar | null {
     for (const id of ENGINE_FILE_ITEMS) put(id, { disabled: stopped });
     // The installed app on a phone is not offered Full Screen (fullScreenItem.ts).
     for (const [id, state] of Object.entries(fullScreenStates(app.mobileMq?.matches ?? false))) put(id, state);
+    // On the desk the Control Panel holds Screen Saver and Appearance (deskMenus.ts).
+    if (deskActive()) for (const [id, state] of Object.entries(deskOptionStates(true))) put(id, state);
     // Fire Rescue and the exterminator, read from the engine only as the
     // Tower menu opens (towerCallItems.ts). A stopped engine answers
     // nothing, so both stay grayed.

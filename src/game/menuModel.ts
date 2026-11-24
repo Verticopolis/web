@@ -155,7 +155,7 @@ function gameMenus({ sponsorUrl, onSponsor }: Omit<GameMenuOptions, "pick">): Me
           deskItem("mb-dw-map", "map", "Map", false),
           deskItem("mb-dw-bulletin", "bulletin", "Bulletin", false),
           deskItem("mb-dw-tower-info", "towerInfo", "Tower Info", false),
-          sep(),
+          sep("mb-window-sep"),
         ],
       },
       {
@@ -167,6 +167,10 @@ function gameMenus({ sponsorUrl, onSponsor }: Omit<GameMenuOptions, "pick">): Me
           { id: "mb-sound", label: "Sound", checked: true },
           { id: "mb-screensaver", label: "Screen Saver…" },
           { id: "mb-appearance", label: "Appearance…" },
+          // On the desk, Screen Saver and Appearance live in the Control
+          // Panel, and Options opens it from here (deskMenus.ts, #2600).
+          sep("mb-control-sep", undefined, true),
+          { id: "mb-control-panel", label: "Control Panel…", hidden: true },
           sep("mb-display-sep"),
           // Tools and Status Bar exist on a computer's layout only; the Window
           // menu that held them was folded in here (owner, 2026-11-15). Full

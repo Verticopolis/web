@@ -261,6 +261,16 @@ export const DESK_SCENES: Scene[] = [
           await park(page);
         },
       },
+      // Options on the desk: Settings, Sound and the door to the Control
+      // Panel. Last, so the shots above keep their clock and state.
+      {
+        name: "desk-options-menu",
+        clock: 11,
+        setup: async (page) => {
+          await closeMenus(page);
+          await press(page, "#mb-options");
+        },
+      },
     ],
   },
   {
