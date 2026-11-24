@@ -1,30 +1,19 @@
-import { html, nothing, svg, type TemplateResult } from "lit-html";
-import { iconTemplate } from "@verticopolis/components/windows/icons";
+import type { TemplateResult } from "lit-html";
+import {
+  titleScreenTemplate,
+  type TitleAction,
+  type TitleScreenView,
+} from "@verticopolis/components/windows/titleScreen/titleScreen";
 import { versionLine } from "../engineHost/engineLabel";
 import { platformLabel } from "../analyticsEnrichment";
 import { trackAppAction } from "../analytics";
-import {
-  SKYLINE_BUILDINGS,
-  SKYLINE_VIEWBOX,
-  SKYLINE_WINDOWS,
-  SKYLINE_WINDOW_COLOR,
-  SKYLINE_WINDOW_SIZE,
-} from "./splashSkyline";
 
 /**
- * The "Metropolis Dusk" splash/title-screen body, split out of the onboarding
- * controller (`Onboarding.ts`) so the controller stays under its size ceiling and
- * the pure lit template lives on its own. The controller owns everything
- * imperative (mount, focus trap, backdrop/Esc dismissal, the mute glyph flip);
- * this module is just the declarative markup plus its handler contract.
- *
- * Formatting note: the whitespace in this template is load-bearing (see the
- * `splashTemplate` banner). Do NOT run a bulk `prettier --write` over it: the
- * default printer breaks the wordmark `<text>`/`<tspan>` and the glyph buttons
- * across lines, injecting text-node whitespace that shifts the textLength-fitted
- * lettering and changes each button's `textContent`. The repo does not gate on
- * prettier (eslint only uses eslint-config-prettier, which disables format
- * rules), so keep these lines tight by hand.
+ * The game's side of the "Metropolis Dusk" title screen, which the components
+ * package draws (`titleScreenTemplate`): the premise, the buttons and what
+ * they do, the small print, the version, the Ground floor badge, and the mute,
+ * install and sponsor corners. The onboarding controller (`Onboarding.ts`)
+ * owns everything imperative (mount, focus trap, backdrop and Esc dismissal).
  */
 
 const APP_VERSION = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev";
@@ -59,18 +48,13 @@ export function sponsorOffered(storage: () => Storage = () => sessionStorage): b
 }
 
 /** Count a tap on the splash's Sponsor link as the `sponsor_click` app action
- *  (`detail` "splash"): a click, a keyboard Enter, or a middle-click (which
- *  fires `auxclick` instead of `click`). It records the tap only: the link still
- *  opens GitHub Sponsors in a new tab, and nothing about the sponsorship is
- *  known here. */
-function noteSponsorClick(e: MouseEvent): void {
-  if (e.type === "auxclick" && e.button !== MIDDLE_BUTTON) return;
+ *  (`detail` "splash"): a click, a keyboard Enter, or a middle-click (the
+ *  package hears only those). It records the tap only: the link still opens
+ *  GitHub Sponsors in a new tab, and nothing about the sponsorship is known
+ *  here. */
+function noteSponsorClick(): void {
   trackAppAction("sponsor_click", "splash");
 }
-
-/** `MouseEvent.button` for the middle (wheel) button, the one that opens a
- *  link in a new tab; the right button's `auxclick` opens a menu instead. */
-const MIDDLE_BUTTON = 1;
 
 /** Click handlers the splash template binds through lit `@click`. `onToggleMute`
  *  is optional: when a caller can't toggle (no audio port), it is undefined, lit
@@ -92,21 +76,66 @@ export interface SplashHandlers {
   onInstall?: () => void;
 }
 
-/** "Metropolis Dusk" title screen body: an art-deco skyline + setting sun under
- *  an indigo->coral dusk sky, with the Verticopolis wordmark. The wordmark and
- *  tagline are SVG `<text>` with `textLength` so they always fit any screen (no
- *  clipping, no web-font download, offline-safe for the PWA). The skyline and
- *  lighting layers are decorative (`aria-hidden`); the two lettering SVGs carry
- *  `role="img"` + `aria-label` so a screen reader hears the name and tagline.
- *
- *  Whitespace note: this template's indentation adds inter-element whitespace
- *  text nodes the old innerHTML string did not have. That is harmless only
- *  because `#splash` and `.splash-actions` are flex (anonymous whitespace items
- *  are not laid out) and the two lettering SVGs plus the premise are block. Keep
- *  those display rules, or collapse the whitespace here, if either becomes
- *  inline/inline-block. No whitespace is added inside any `<text>`/`<tspan>` (it
- *  would shift the `textLength`-fitted glyphs) or inside a glyph button (it would
- *  change its `textContent`). */
+/** The small print along the bottom of the title screen. */
+const ATTRIBUTION =
+  "An unofficial, from-scratch homage to SimTower (1994). Original code and art; no ripped assets. Not affiliated with or endorsed by Maxis / OPeNBooK / Vivarium.";
+
+/**
+ * What the title screen shows and does. The buttons run Continue (with a
+ * save), Open Tower…, New Tower, then How to Play (SPEC-splash-load-tower
+ * CAP-1): New Tower is the one action that can cost the player something, so
+ * it sits furthest from the default focus. Exactly one amber plate shows,
+ * Continue with a save and New Tower without. The Ground floor badge shows
+ * only when the loaded tower predates 2.0. The mute's name stays "Mute sound"
+ * and `aria-pressed` carries its state; without `onToggleMute` it is inert
+ * (SPEC-splash-mute CAP-2). Install shows only when offered and bound
+ * (SPEC-pwa-install CAP-5), and Sponsor everywhere but the Android app.
+ */
+export function splashView(
+  hasSave: boolean,
+  premise: string,
+  muted: boolean,
+  installOffered: boolean,
+  founder: boolean,
+  h: SplashHandlers,
+): TitleScreenView {
+  const actions: TitleAction[] = [];
+  if (hasSave)
+    actions.push({ id: "continue", label: "Continue", icon: "play", look: "primary", onPress: h.onContinue });
+  actions.push(
+    { id: "load", label: "Open Tower…", icon: "folder", onPress: h.onLoadTower },
+    { id: "new", label: "New Tower", icon: "plus", look: hasSave ? undefined : "primary", onPress: h.onNewTower },
+    { id: "help", label: "How to Play", icon: "help", look: "ghost", onPress: h.onHelp },
+  );
+  const onInstall = h.onInstall;
+  return {
+    premise,
+    actions,
+    attribution: ATTRIBUTION,
+    version: versionLine(APP_VERSION),
+    badge: founder ? "★ Ground floor" : undefined,
+    mute: { muted, label: "Mute sound", onToggle: h.onToggleMute },
+    install:
+      installOffered && onInstall
+        ? {
+            label: "Install",
+            name: "Install Verticopolis",
+            title: "Install Verticopolis: play offline, fullscreen, from your home screen.",
+            onPress: onInstall,
+          }
+        : undefined,
+    sponsor: sponsorOffered()
+      ? {
+          href: SPONSOR_URL,
+          label: "Sponsor",
+          title: "Verticopolis is free. Sponsoring helps keep it going.",
+          onOpen: noteSponsorClick,
+        }
+      : undefined,
+  };
+}
+
+/** The title screen for `splashView`'s arguments. */
 export function splashTemplate(
   hasSave: boolean,
   premise: string,
@@ -115,78 +144,5 @@ export function splashTemplate(
   founder: boolean,
   h: SplashHandlers,
 ): TemplateResult {
-  return html`<div class="splash-stars" aria-hidden="true"></div>
-    <div class="splash-sun" aria-hidden="true"></div>
-    <svg class="splash-skyline" aria-hidden="true" viewBox=${SKYLINE_VIEWBOX} preserveAspectRatio="xMidYMax slice">
-      <g class="buildings" stroke-width="1">${SKYLINE_BUILDINGS.map((d) => svg`<path d=${d} />`)}</g>
-      <g fill=${SKYLINE_WINDOW_COLOR}>${SKYLINE_WINDOWS.map(
-        ([x, y]) => svg`<rect x=${x} y=${y} width=${SKYLINE_WINDOW_SIZE.width} height=${SKYLINE_WINDOW_SIZE.height} />`,
-      )}</g>
-    </svg>
-    <div class="splash-brand">
-      <svg class="splash-word" viewBox="0 0 400 66" role="img" aria-label="Verticopolis">
-        <text x="194" y="52" text-anchor="middle" textLength="380" lengthAdjust="spacingAndGlyphs"><tspan class="a">VERTICO</tspan><tspan class="b">POLIS</tspan></text><text class="tm" x="386" y="24">™</text>
-      </svg>
-      <svg class="splash-tag" viewBox="0 0 360 20" role="img" aria-label="the vertical metropolis">
-        <text x="180" y="15" text-anchor="middle" textLength="330" lengthAdjust="spacingAndGlyphs">THE VERTICAL METROPOLIS</text>
-      </svg>
-      <p class="splash-premise">${premise}</p>
-    </div>
-    <!-- Continue, Open Tower…, New Tower, then How to Play
-         (SPEC-splash-load-tower CAP-1). New Tower comes AFTER Open Tower…
-         because it is the only action here that can cost the player
-         something, so it sits furthest from the default focus and from the
-         Esc/backdrop safe dismiss (both of which resolve toward Continue).
-         Open Tower… never takes the primary class: exactly one amber plate is
-         on screen at a time, Continue when a save exists and New Tower when
-         none does, so the eye always has a single default.
-         NOTE: no backticks in this comment. It sits inside a tagged template
-         literal, so one would end the template. -->
-    <div class="splash-actions">
-      ${hasSave ? html`<button class="splash-btn primary" data-splash="continue" @click=${h.onContinue}>${iconTemplate("play", { size: 14 })}Continue</button>` : nothing}
-      <button class="splash-btn" data-splash="load" @click=${h.onLoadTower}>${iconTemplate("folder", { size: 14 })}Open Tower…</button>
-      <button class="splash-btn ${hasSave ? "" : "primary"}" data-splash="new" @click=${h.onNewTower}>${iconTemplate("plus", { size: 14 })}New Tower</button>
-      <button class="splash-btn ghost" data-splash="help" @click=${h.onHelp}>${iconTemplate("help", { size: 14 })}How to Play</button>
-    </div>
-    <p class="splash-attrib">An unofficial, from-scratch homage to SimTower (1994). Original code and art; no ripped assets. Not affiliated with or endorsed by Maxis / OPeNBooK / Vivarium.</p>
-    <p class="splash-version">${versionLine(APP_VERSION)}</p>
-    <!-- The 2.0 "Ground floor" badge (decision D21 in the Modern rental living
-         GDD decision log, label re-picked 2026-07-28): a quiet, permanent thank-you shown only when the loaded tower
-         predates 2.0 (you got in on the ground floor). A new user never sees it.
-         No title tooltip: .splash-founder is pointer-events:none so it never
-         hit-tests, and a tooltip that can never open is worse than none. The
-         one-time welcome toast carries the explanation instead. -->
-    ${founder ? html`<p class="splash-founder">★ Ground floor</p>` : nothing}
-    <!-- The mute toggle renders LAST so the reading and Tab order run
-         title -> premise -> actions -> utility; it is pinned visually to the
-         top-right corner by .splash-mute (absolute), un-unified per the design
-         system. Following the WAI-ARIA toggle-button pattern, the accessible
-         name is STABLE ("Mute sound") and aria-pressed carries the on/off
-         state; the glyph flips for sighted users. An absent onToggleMute binds
-         no @click, so a caller that can't toggle gets an inert, truthful
-         button. SPEC-splash-mute CAP-1. -->
-    <button class="splash-mute" data-splash="mute" aria-pressed=${muted ? "true" : "false"} aria-label="Mute sound" @click=${h.onToggleMute}>${iconTemplate(muted ? "mute" : "sound", { size: 16 })}</button>
-    <!-- The persistent install button (SPEC-pwa-install CAP-5): a quiet front door
-         shown in a not-standalone browser session, rendered after the mute so the utility
-         cluster sits at the tail of the Tab order. Rendered only when offered AND a
-         handler is bound (never an inert button). It carries a visible "Install"
-         label beside the download glyph (a lone glyph read as nothing on the wide,
-         empty splash): recognizable, and matching the in-game chip's wording. Copy
-         promises an outcome (title), never "one-tap"; a tap degrades to an honest
-         how-to in the shared activation. -->
-    ${
-      installOffered && h.onInstall
-        ? html`<button class="splash-install" data-splash="install" aria-label="Install Verticopolis" title="Install Verticopolis: play offline, fullscreen, from your home screen." @click=${h.onInstall}>${iconTemplate("install", { size: 14 })}Install</button>`
-        : nothing
-    }
-    <!-- The Sponsor link (owner, 2026-11-13): a quiet tip jar pinned to the
-         top-left corner, opposite the mute and install cluster. A plain link
-         that opens GitHub Sponsors in a new tab; it never blocks play, never
-         nags, and unlocks nothing. Rendered last so it ends the Tab order, and
-         left out of the Android app (see sponsorOffered). -->
-    ${
-      sponsorOffered()
-        ? html`<a class="splash-sponsor" data-splash="sponsor" href=${SPONSOR_URL} target="_blank" rel="noopener noreferrer" title="Verticopolis is free. Sponsoring helps keep it going." @click=${noteSponsorClick} @auxclick=${noteSponsorClick}>${iconTemplate("heart", { size: 14 })}Sponsor</a>`
-        : nothing
-    }`;
+  return titleScreenTemplate(splashView(hasSave, premise, muted, installOffered, founder, h));
 }

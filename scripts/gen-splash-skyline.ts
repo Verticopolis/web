@@ -1,7 +1,7 @@
 /**
  * Write `src/public/splash-skyline.svg`, the title screen's skyline as an
  * image for the docs site's landing page, from the shapes the game draws
- * inline (`src/ui/splashSkyline.ts`) and the two splash colors the game
+ * inline (the components package's `windows/titleScreen/titleSkyline`) and the two splash colors the game
  * paints them with (`--splash-building`, `--splash-ink` in the components'
  * `retro-tokens.css`).
  *
@@ -23,7 +23,7 @@ import {
   SKYLINE_WINDOWS,
   SKYLINE_WINDOW_COLOR,
   SKYLINE_WINDOW_SIZE,
-} from "../src/ui/splashSkyline.ts";
+} from "@verticopolis/components/windows/titleScreen/titleSkyline";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = resolve(ROOT, "src/public/splash-skyline.svg");
