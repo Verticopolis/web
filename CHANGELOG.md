@@ -25,6 +25,13 @@ prompt already tells players it is an engine update and shows the new version.
 Entries below 1.51.1 were curated from the commit history after the fact, so they
 are documentation only: no build that a client fetches carries them.
 
+## 4.16.0
+
+- On the desktop, Help opens the Player's Manual in its own window instead of a new browser tab, from Help > Player's Manual, F1 and the Help links in the game. The window has the manual's own File, Edit, Options and Help menus (File > Exit closes it), with Contents, Back, Forward and Open in Browser below them. Search works inside it, links out of the manual open in a browser tab, and your tower pauses until you close it.
+- On a phone, the Bulletin opens across the top of the screen with the tower still in view below it, and the Bulletin, Tower Info and the Control Panel move when you drag their title bars.
+- On a phone held upright, all seven Tools tabs fit across the strip.
+- The Tools strip on a phone held upright no longer shows tools your tower hasn't unlocked yet.
+
 ## 4.15.0
 
 - Phones and tablets get the 1994 desktop: the tower window fills the screen with Info and Tools, the Map floats over the tower at its usual size, and a taskbar sized for a finger. Turn a tablet sideways for the full desktop.
