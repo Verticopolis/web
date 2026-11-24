@@ -35,7 +35,7 @@ import {
  */
 
 afterEach(() => {
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 const WEEKDAY_SIM = "Busiest weekday hour 08:00: 1 staged up-tower, 3 at the lobby, 4 of 4 cars on shift.";
@@ -139,7 +139,7 @@ describe("the advice line", () => {
     open({ facts: withAdvice([9, 13], []) });
     expect(text(".es-advice")).toBe("This shaft is over-staffed 09:00, 13:00 on weekdays.");
     expect(q("details.es-adv")?.hasAttribute("open")).toBe(true);
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     open({ facts: withAdvice([], [7]), initialWeekend: true });
     expect(text(".es-advice")).toBe("This shaft is short at 07:00 on weekends.");
   });
@@ -224,7 +224,7 @@ describe("origin hotspots", () => {
     });
     expect(text(".es-sim")).toBe(`${WEEKDAY_SIM} Most riders board on floors 2–3.`);
     expect(dialog().querySelectorAll(".es-origin")).toHaveLength(2);
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     open({
       autoTune: TUNE_WEEKDAY,
       origins: origins(

@@ -28,7 +28,7 @@ vi.mock("./updateFlow", () => ({ maybeSurfaceUpdatePrompt: vi.fn() }));
 vi.mock("./starUpFlow", () => ({ noteStarUp: vi.fn(), maybeShowStarUp: vi.fn() }));
 
 afterEach(() => {
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 describe("SPEEDS", () => {

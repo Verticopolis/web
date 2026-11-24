@@ -1,17 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { keyId, MapKeyKeeper } from "./overviewMapKeys";
 
+import { html } from "lit-html";
+import { mountPage } from "./testing/litTestUtils";
 let keeper: MapKeyKeeper | null = null;
 afterEach(() => {
   keeper?.dispose();
   keeper = null;
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 /** A window root with a focusable child, the page outside it, and the game's
  *  window listeners. */
 function setup() {
-  document.body.innerHTML = '<div id="root"><canvas id="map" tabindex="0"></canvas></div><button id="out"></button>';
+  mountPage(html`<div id="root"><canvas id="map" tabindex="0"></canvas></div><button id="out"></button>`);
   const root = document.getElementById("root")!;
   const map = document.getElementById("map")!;
   const out = document.getElementById("out")!;

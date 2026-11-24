@@ -24,7 +24,7 @@ import {
  */
 
 afterEach(() => {
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 const autoBox = (): HTMLInputElement | null => q<HTMLInputElement>(".es-auto input");
@@ -43,7 +43,7 @@ describe("the Auto box", () => {
     expect(q(".es-autotune")).not.toBeNull();
     ok();
     expect(saved(apply).autoTune).toBe(false);
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     const classic = open({ ux: CLASSIC_UX, current: { autoTune: true } });
     expect(autoBox()).toBeNull();
     ok();

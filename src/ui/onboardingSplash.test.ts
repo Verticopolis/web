@@ -46,7 +46,7 @@ function mountSplash(o: {
 
 afterEach(() => {
   document.getElementById("splash")?.remove();
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 /**

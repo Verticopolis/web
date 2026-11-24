@@ -23,7 +23,7 @@ describe("announceLive (#541)", () => {
   });
   afterEach(() => {
     win.requestAnimationFrame = orig;
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   const flush = (): void => raf.cb?.(0);
@@ -48,7 +48,7 @@ describe("announceLive (#541)", () => {
   });
 
   it("is a no-op when the live region is absent", () => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     expect(() => announceLive("nothing here")).not.toThrow();
   });
 

@@ -6,6 +6,8 @@ import { ENGINE_LOADING_DELAY_MS, ENGINE_LOADING_TEXT } from "./engineLoading";
 import { resetEngineStatus } from "./analyticsEngineStatus";
 import { MISMATCH_RELOAD_KEY } from "./engineCrash/mismatchReload";
 
+import { html } from "lit-html";
+import { mountPage } from "./ui/testing/litTestUtils";
 vi.mock("@vercel/speed-insights", () => ({ injectSpeedInsights: vi.fn() }));
 vi.mock("@vercel/analytics", () => ({ inject: vi.fn() }));
 vi.mock("virtual:pwa-register", () => ({ registerSW: () => () => {} }));
@@ -31,7 +33,7 @@ describe("bootGame, the engine loading line (#1132)", () => {
     vi.restoreAllMocks();
     sessionStorage.removeItem(MISMATCH_RELOAD_KEY);
     vi.unstubAllGlobals();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     delete (window as unknown as { game?: unknown }).game;
     window.location.href = "http://localhost:3000/";
   });
@@ -40,7 +42,7 @@ describe("bootGame, the engine loading line (#1132)", () => {
     stubWebGL();
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.useFakeTimers();
-    document.body.innerHTML = '<div id="boot-cover"></div><div id="a11y-live"></div><div id="stage"></div>';
+    mountPage(html`<div id="boot-cover"></div><div id="a11y-live"></div><div id="stage"></div>`);
     resetEngineStatus();
     window.location.href = "https://verticopolis.com/";
     try {

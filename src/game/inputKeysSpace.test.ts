@@ -18,7 +18,7 @@ vi.mock("./audioPrefs", () => ({ flushPrefsSave: vi.fn() }));
 
 afterEach(() => {
   (document.activeElement as HTMLElement | null)?.blur?.();
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 describe("Space builds on release, never as the pan key", () => {

@@ -59,7 +59,7 @@ describe("runBootFlow: the Ground floor welcome (2.0)", () => {
     vi.useFakeTimers();
     sessionStorage.clear();
     localStorage.removeItem(LATCH);
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
   afterEach(() => {
     vi.clearAllTimers();

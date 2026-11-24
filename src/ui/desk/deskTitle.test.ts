@@ -5,8 +5,12 @@ vi.mock("../../analyticsActions", () => ({ trackAppAction: vi.fn(), trackAppActi
 import { trackAppAction, trackAppActionOnce } from "../../analyticsActions";
 import { DESK_TITLE_CLASS, DeskTitle } from "./deskTitle";
 
+import { html } from "lit-html";
+import { mountPage } from "../testing/litTestUtils";
 beforeEach(() => {
-  document.body.innerHTML = `<div id="splash"><button class="splash-btn">Open</button><button class="splash-btn primary">New</button></div><button id="btn-about">About</button><button id="mb-close" hidden>Close</button>`;
+  mountPage(
+    html`<div id="splash"><button class="splash-btn">Open</button><button class="splash-btn primary">New</button></div><button id="btn-about">About</button><button id="mb-close" hidden>Close</button>`,
+  );
   document.body.className = "";
   vi.mocked(trackAppAction).mockClear();
   vi.mocked(trackAppActionOnce).mockClear();

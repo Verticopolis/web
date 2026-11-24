@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { copyText } from "./copyText";
 
 afterEach(() => {
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
   vi.restoreAllMocks();
 });
 

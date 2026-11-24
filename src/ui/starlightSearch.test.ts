@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { html } from "lit-html";
 import { openStarlightSearch } from "./starlightSearch";
+import { mountPage } from "./testing/litTestUtils";
 
 /**
  * A stand-in for Starlight's search, as its openModal behaves: the button
@@ -7,13 +9,13 @@ import { openStarlightSearch } from "./starlightSearch";
  * later click on the window outside the dialog's frame. A menu item calls the
  * opener from its own click handler.
  */
-function mountPage(): { item: HTMLButtonElement; dialog: HTMLDialogElement } {
-  document.body.innerHTML = `
+function searchPage(): { item: HTMLButtonElement; dialog: HTMLDialogElement } {
+  mountPage(html`
     <site-search>
       <button data-open-modal>Search</button>
       <dialog><div class="dialog-frame"><input></div></dialog>
     </site-search>
-    <button id="find">Find…</button>`;
+    <button id="find">Find…</button>`);
   const button = document.querySelector<HTMLButtonElement>("button[data-open-modal]")!;
   const dialog = document.querySelector("dialog")!;
   const frame = document.querySelector(".dialog-frame")!;
@@ -39,18 +41,18 @@ describe("openStarlightSearch", () => {
   });
   afterEach(() => {
     vi.useRealTimers();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   it("leaves the search open after the menu item's own click reaches the window", () => {
-    const { item, dialog } = mountPage();
+    const { item, dialog } = searchPage();
     item.click();
     vi.runAllTimers();
     expect(dialog.hasAttribute("open")).toBe(true);
   });
 
   it("opens nothing before the item's click is done", () => {
-    const { item, dialog } = mountPage();
+    const { item, dialog } = searchPage();
     item.click();
     expect(dialog.hasAttribute("open")).toBe(false);
     vi.runAllTimers();
@@ -58,7 +60,7 @@ describe("openStarlightSearch", () => {
   });
 
   it("does nothing on a page without a search box", () => {
-    document.body.innerHTML = "<p>No search here</p>";
+    mountPage(html`<p>No search here</p>`);
     openStarlightSearch(document);
     expect(() => vi.runAllTimers()).not.toThrow();
   });

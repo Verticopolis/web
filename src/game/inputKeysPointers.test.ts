@@ -12,7 +12,7 @@ vi.mock("./audioPrefs", () => ({ flushPrefsSave: vi.fn() }));
 
 afterEach(() => {
   (document.activeElement as HTMLElement | null)?.blur?.();
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 /** `PointerEvent.buttons` values: none held, or the primary button held. */

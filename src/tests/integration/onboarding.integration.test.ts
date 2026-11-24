@@ -133,7 +133,7 @@ describe("Onboarding: step copy", () => {
 import { OnboardingController } from "../../ui/Onboarding";
 
 function makeController(mobile = false) {
-  document.body.innerHTML = '<div id="hint"></div><div id="palette-scroll"></div><div id="speed"></div>';
+  mountPage(html`<div id="hint"></div><div id="palette-scroll"></div><div id="speed"></div>`);
   const mq = { matches: mobile, addEventListener() {}, removeEventListener() {} } as unknown as MediaQueryList;
   return new OnboardingController({ mq, showHelp() {}, pauseForSplash() {}, chime() {} });
 }
@@ -198,9 +198,11 @@ describeEngines("Onboarding — controller lifecycle", (leg: Leg) => {
 
 import { vi, afterEach } from "vitest";
 
+import { html } from "lit-html";
+import { mountPage } from "../../ui/testing/litTestUtils";
 /** A controller wired with spy opts and an mq whose change handler is capturable. */
 function makeSpyController(mobile = false) {
-  document.body.innerHTML = '<div id="hint"></div><div id="palette-scroll"></div><div id="speed"></div>';
+  mountPage(html`<div id="hint"></div><div id="palette-scroll"></div><div id="speed"></div>`);
   let mqHandler: (() => void) | null = null;
   const mq = {
     matches: mobile,
@@ -472,10 +474,9 @@ describeEngines("Onboarding — tick advances and finishes on real progress", (l
   });
 
   it("the active step pulses its palette control", () => {
-    document.body.innerHTML =
-      '<div id="hint"></div><div id="palette-scroll">' +
-      '<div class="pal-item" data-kind="floor"></div><div class="pal-item" data-kind="office"></div>' +
-      '</div><div id="speed"></div>';
+    mountPage(
+      html`<div id="hint"></div><div id="palette-scroll"><div class="pal-item" data-kind="floor"></div><div class="pal-item" data-kind="office"></div></div><div id="speed"></div>`,
+    );
     const mq = { matches: false, addEventListener() {}, removeEventListener() {} } as unknown as MediaQueryList;
     const c = new OnboardingController({ mq, showHelp() {}, pauseForSplash() {}, chime() {} });
     c.arm(new PortSim(leg, newSeededDraft(1)).port); // seeded: arms at step 1, which pulses the Floor palette item
@@ -484,9 +485,9 @@ describeEngines("Onboarding — tick advances and finishes on real progress", (l
   });
 
   it("on a computer, opens a Tools window the player folded before it pulses a tool there", () => {
-    document.body.innerHTML =
-      '<div id="hint"></div><aside id="palette"><div class="win-title">Tools</div><div class="palette-scroll" id="palette-scroll">' +
-      '<div class="pal-item" data-kind="floor"></div></div></aside><div id="speed"></div>';
+    mountPage(
+      html`<div id="hint"></div><aside id="palette"><div class="win-title">Tools</div><div class="palette-scroll" id="palette-scroll"><div class="pal-item" data-kind="floor"></div></div></aside><div id="speed"></div>`,
+    );
     const win = document.getElementById("palette")!;
     const stored: Record<string, string> = { [PALETTE_COLLAPSED_STORAGE_KEY]: PALETTE_COLLAPSED_VALUE.collapsed };
     const store = {

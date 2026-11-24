@@ -14,7 +14,7 @@ vi.mock("./panelAnchoring", () => ({ positionPanels: vi.fn() }));
 vi.mock("./updateFlow", () => ({ maybeSurfaceUpdatePrompt: vi.fn() }));
 
 afterEach(() => {
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 /** Open the shared dialog and have the precedence report that it holds the

@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BOOT_DAWN_REST_MS, BOOT_FADE_MS, BOOT_READY_CLASS, finishBootCover } from "./bootCover";
 
+import { html } from "lit-html";
+import { mountPage } from "./ui/testing/litTestUtils";
 /** A stand-in CSS animation: where it is, where it ends, and a rate spy. */
 const fakeAnimation = (currentTime: number, endTime: number) => ({
   currentTime,
@@ -14,12 +16,12 @@ describe("finishBootCover", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   it("plays what is left of the sunrise in a moment, lets clicks through and removes the cover after the fade", () => {
     vi.useFakeTimers();
-    document.body.innerHTML = `<div id="boot-cover"></div>`;
+    mountPage(html`<div id="boot-cover"></div>`);
     const early = fakeAnimation(700, 2800);
     const nearlyDone = fakeAnimation(2700, 2800);
     cover().getAnimations = vi.fn(() => [early, nearlyDone] as unknown as Animation[]);
@@ -39,7 +41,7 @@ describe("finishBootCover", () => {
   });
 
   it("removes the cover when its fade ends, before the fallback timer", () => {
-    document.body.innerHTML = `<div id="boot-cover"></div>`;
+    mountPage(html`<div id="boot-cover"></div>`);
     cover().getAnimations = vi.fn(() => []);
     finishBootCover();
     const end = new Event("transitionend") as TransitionEvent;
@@ -49,20 +51,20 @@ describe("finishBootCover", () => {
   });
 
   it("removes the cover at once under reduced motion", () => {
-    document.body.innerHTML = `<div id="boot-cover"></div>`;
+    mountPage(html`<div id="boot-cover"></div>`);
     vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("reduce") }));
     finishBootCover();
     expect(document.getElementById("boot-cover")).toBeNull();
   });
 
   it("does nothing a second time or with no cover", () => {
-    document.body.innerHTML = `<div id="boot-cover"></div>`;
+    mountPage(html`<div id="boot-cover"></div>`);
     const spy = vi.fn(() => []);
     cover().getAnimations = spy;
     finishBootCover();
     finishBootCover();
     expect(spy).toHaveBeenCalledTimes(1);
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     expect(() => finishBootCover()).not.toThrow();
   });
 });

@@ -10,6 +10,7 @@ import { isDialogOpen, isSplashUp } from "./interactionState";
 import { ScheduleReview } from "./scheduleReview";
 import type { Acknowledgements, Decision } from "./scheduleRecovery";
 
+import { html, render } from "lit-html";
 vi.mock("./interactionState", () => ({ isDialogOpen: vi.fn(() => false), isSplashUp: vi.fn(() => false) }));
 
 /**
@@ -136,7 +137,7 @@ describe("ScheduleReview", () => {
   it("redraws an open review when an Undo or Redo changes the tower under it, keeping the focused button", () => {
     const { review, deps, engine } = harness();
     const box = document.createElement("div");
-    box.innerHTML = `<button data-act="${reviewAct(9)}"></button>`;
+    render(html`<button data-act="${reviewAct(9)}"></button>`, box);
     document.body.appendChild(box);
     deps.ui.showScheduleReview.mockReturnValueOnce(box);
     review.open();

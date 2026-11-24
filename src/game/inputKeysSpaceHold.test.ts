@@ -15,7 +15,7 @@ const MIDDLE_BUTTON = 1;
 
 afterEach(() => {
   (document.activeElement as HTMLElement | null)?.blur?.();
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 /** Send a Space release and say whether the game canceled it. */
@@ -76,7 +76,7 @@ describe("the Space hold the game follows", () => {
       modal.dispatchEvent(new KeyboardEvent("keydown", { key: " ", repeat: true, bubbles: true, cancelable: true }));
       expect(coverHeard, "nor do the dialog's own listeners hear it").not.toHaveBeenCalled();
       expect(releaseIsCanceled(), "nor does the release click it").toBe(true);
-      document.body.innerHTML = "";
+      document.body.replaceChildren();
     }
     expect(app.keyboard.commitCursor).not.toHaveBeenCalled();
   });
@@ -84,7 +84,7 @@ describe("the Space hold the game follows", () => {
   it("Space typed into a field, a chord, or a press on a dialog that gives way to another is not the new dialog's", () => {
     makeApp();
     const dialogWithButton = (): HTMLButtonElement => {
-      document.body.innerHTML = "";
+      document.body.replaceChildren();
       openDialog();
       const button = document.getElementById("modal")!.appendChild(document.createElement("button"));
       button.focus();

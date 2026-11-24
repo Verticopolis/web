@@ -9,11 +9,10 @@ import {
 } from "./installAffordance";
 import { __resetPwaInstallForTest, canPromptInstall } from "../pwaInstall";
 import * as analytics from "../analytics";
-import { renderToFragment } from "../ui/testing/litTestUtils";
+import { mountPage, drawFragment, renderToFragment } from "../ui/testing/litTestUtils";
 import type { TemplateResult } from "lit-html";
 import { html } from "lit-html";
 import { drawMenuBar } from "./menuBarHost";
-import { mountPage } from "../ui/testing/litTestUtils";
 
 /** The text of the how-to modal the controller opened, for asserting WHICH
  *  variant (iOS Safari steps vs the generic browser-menu steps) it selected. */
@@ -59,7 +58,7 @@ function makeInstallable(): void {
 }
 
 function makeApp(opts: { units?: number; splash?: boolean } = {}): GameApp {
-  if (opts.splash) document.body.insertAdjacentHTML("beforeend", '<div id="splash"></div>');
+  if (opts.splash) document.body.append(drawFragment(html`<div id="splash"></div>`));
   return {
     reader: { rooms: Array.from({ length: opts.units ?? 0 }, () => ({})), structure: [] },
     ui: { openModal: vi.fn(), closeModal: vi.fn() },
@@ -314,7 +313,7 @@ describe("appinstalled (CAP-4 + hide)", () => {
     const trackOnce = vi.spyOn(analytics, "trackAppActionOnce").mockImplementation(() => {});
     // A splash front-door button is up (install accepted while the splash is still
     // mounted): appinstalled must retire it too, or it lingers as a dead control.
-    document.body.insertAdjacentHTML("beforeend", '<button data-splash="install"></button>');
+    document.body.append(drawFragment(html`<button data-splash="install"></button>`));
     const splashInstall = () => document.querySelector('[data-splash="install"]') as HTMLButtonElement;
     initInstallAffordance(makeApp());
     makeInstallable();

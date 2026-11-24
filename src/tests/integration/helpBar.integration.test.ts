@@ -51,7 +51,7 @@ describe("the game's side of the Help bar", () => {
   });
   afterEach(() => {
     bar.close();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     vi.restoreAllMocks();
   });
 

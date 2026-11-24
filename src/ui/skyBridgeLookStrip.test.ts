@@ -14,7 +14,7 @@ describe("the bridge look strip", () => {
   let strip: HTMLElement;
 
   beforeEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     strip = document.createElement("div");
     strip.id = "sky-bridge-look-strip";
     document.body.append(strip);

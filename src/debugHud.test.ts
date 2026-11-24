@@ -18,7 +18,7 @@ const frame = (fps: number, drawCalls: number): FrameStatsLike => ({
 
 afterEach(() => {
   vi.useRealTimers();
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 describe("the debug HUD text (#645)", () => {

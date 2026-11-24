@@ -11,6 +11,8 @@ import {
 } from "./helpBar";
 import { GONE_AFTER_MS, HELLO_EVERY_MS, type BarChannel, type GameStatus } from "./helpBarProtocol";
 
+import { html } from "lit-html";
+import { mountPage } from "./testing/litTestUtils";
 const TAB = "00000000000000aa";
 const OTHER = "00000000000000bb";
 
@@ -31,14 +33,14 @@ const STATUS: GameStatus = {
 
 /** The bar's markup, as HelpBar.astro writes it. */
 function mountBar(): HTMLElement {
-  document.body.innerHTML = `
+  mountPage(html`
     <section id="vc-help-bar" hidden>
       <p><span data-hud="date"></span> <span data-hud="time"></span> <span data-hud="money"></span> <span data-hud="population"></span> <span data-hud="stars"></span></p>
       <p role="status" data-bar-state></p>
       <button type="button" data-bar="run">Keep my tower running</button>
       <button type="button" data-bar="pause" hidden>Pause it</button>
       <a data-bar="back" href="/">Back to game</a>
-    </section>`;
+    </section>`);
   return document.getElementById("vc-help-bar")!;
 }
 
@@ -84,7 +86,7 @@ function bar() {
 }
 
 afterEach(() => {
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
   document.documentElement.classList.remove(BAR_SHOWING_CLASS);
   vi.restoreAllMocks();
 });

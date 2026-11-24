@@ -10,6 +10,7 @@ import {
   wireMovableWindows,
 } from "./movableWindows";
 
+import { html, render } from "lit-html";
 vi.mock("../analytics", () => ({ trackAppAction: vi.fn() }));
 
 /**
@@ -25,7 +26,7 @@ function makeApp() {
   const editor = document.createElement("div");
   editor.id = "editor";
   editor.className = "win win-closable";
-  editor.innerHTML = `<div class="win-title"><span>Office</span><button type="button">✕</button></div>`;
+  render(html`<div class="win-title"><span>Office</span><button type="button">✕</button></div>`, editor);
   stage.append(editor);
   const modal = document.createElement("dialog");
   document.body.append(stage, modal);
@@ -166,7 +167,7 @@ describe("window analytics", () => {
 
   it("wires the Map's ✕ and its first drag off the desk", () => {
     const root = document.createElement("div");
-    root.innerHTML = `<div class="win-title"><button type="button" class="overview-map-close">✕</button></div>`;
+    render(html`<div class="win-title"><button type="button" class="overview-map-close">✕</button></div>`, root);
     let onDesk = true;
     const placed = wireMapWindowAnalytics(root, () => onDesk);
     const close = root.querySelector<HTMLElement>(".overview-map-close")!;

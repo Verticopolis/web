@@ -122,7 +122,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 describe.skipIf(noEngine)("a TOWER save with an open emergency", () => {

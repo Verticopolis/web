@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Page } from "playwright";
 import { mapForShot, restoreMapAfterShot } from "./screenshotMapShot.ts";
 
+import { render, html } from "lit-html";
+import { drawFragment, mountPage } from "../ui/testing/litTestUtils";
 /**
  * The gallery runner's Map check (#343): before each capture, `mapForShot`
  * fails an open Map that has not drawn its tower, and takes the Map off the
@@ -25,7 +27,7 @@ const map = () => document.getElementById("overview-map")!;
 const pill = () => document.getElementById("btn-map")!;
 
 beforeEach(() => {
-  document.body.innerHTML = '<div id="overview-map"></div><button id="btn-map" hidden></button>';
+  mountPage(html`<div id="overview-map"></div><button id="btn-map" hidden></button>`);
   open = true;
   remembered.length = 0;
   (window as unknown as { overviewMap?: typeof win }).overviewMap = win;
@@ -33,7 +35,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete (window as unknown as { overviewMap?: typeof win }).overviewMap;
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 describe("mapForShot", () => {
@@ -89,11 +91,11 @@ describe("mapForShot", () => {
 
   it("counts a crop inside the Map as the Map's, and fails a Map crop that is hidden", async () => {
     map().dataset.mapDrawn = "true";
-    map().innerHTML = '<canvas class="overview-map-view"></canvas>';
+    render(html`<canvas class="overview-map-view"></canvas>`, map());
     await mapForShot(page, "scene/canvas", "#overview-map .overview-map-view");
     expect(open).toBe(true);
     // An id that only starts with the Map's is another element.
-    document.body.insertAdjacentHTML("beforeend", '<div id="overview-map-help"></div>');
+    document.body.append(drawFragment(html`<div id="overview-map-help"></div>`));
     await mapForShot(page, "scene/help", "#overview-map-help");
     expect(open).toBe(false);
     await restoreMapAfterShot(page);

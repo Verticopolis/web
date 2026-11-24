@@ -3,7 +3,7 @@ import { GRAPHICS_RECOVERY_ID, showGraphicsRecovery } from "./graphicsRecovery";
 import { isRecoveringGraphics } from "../game/interactionState";
 
 afterEach(() => {
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 describe("the graphics-recovery card (#321)", () => {

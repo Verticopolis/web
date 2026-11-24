@@ -15,7 +15,7 @@ function choose(picker: MapViewPicker, view: string): void {
 }
 
 beforeEach(() => {
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 describe("the map's View dropdown", () => {

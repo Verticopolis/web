@@ -19,6 +19,8 @@ import type { OverviewMapViews } from "./overviewMapViews";
 import type { MapViewId } from "@verticopolis/components/render/overviewMap/views";
 import { MAP_PICKER_DOM } from "./overviewMapPicker";
 
+import { html } from "lit-html";
+import { mountPage } from "./testing/litTestUtils";
 /** A fake world: a 375-tile lot, floors -9 to 100, a ten-floor tower. */
 export function towerSource(): OverviewMapSource & { view: { tower: { transports: unknown[] } } } {
   return {
@@ -61,7 +63,7 @@ export function rig(
     tapped?: OverviewMapDeps["tapped"];
   } = {},
 ): Rig {
-  document.body.innerHTML = '<section id="stage"><canvas id="view"></canvas></section>';
+  mountPage(html`<section id="stage"><canvas id="view"></canvas></section>`);
   const stage = document.getElementById("stage")!;
   const storage = new MemoryStore();
   if (opts.stored) storage.setItem(MAP_OPEN_STORAGE_KEY[opts.phone ? "phone" : "desktop"], opts.stored);

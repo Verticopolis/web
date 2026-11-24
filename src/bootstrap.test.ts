@@ -3,6 +3,8 @@ import { hasWebGL, showBootMessage, bootGame, hideBootCover, showCrashReload, sh
 import { isEngineStopped } from "./game/interactionState";
 import { autosaveIfLive } from "./game/autosaveSchedule";
 
+import { html } from "lit-html";
+import { mountPage } from "./ui/testing/litTestUtils";
 // The telemetry SDKs are gated on the host and best-effort; stub them so boot
 // never touches the real endpoints (the gate's own tests are in
 // bootstrap.telemetry.test.ts).
@@ -76,10 +78,10 @@ describe("hasWebGL", () => {
 
 describe("showBootMessage", () => {
   beforeEach(() => {
-    document.body.innerHTML = `<div id="stage"></div>`;
+    mountPage(html`<div id="stage"></div>`);
   });
   afterEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   it("mounts the message in its body-level host (gated on #stage being present)", () => {
@@ -104,13 +106,13 @@ describe("showBootMessage", () => {
   });
 
   it("is a no-op when there is no #stage element (and mounts no host)", () => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     expect(() => showBootMessage("nowhere")).not.toThrow();
     expect(document.getElementById("boot-fallback-host")).toBeNull();
   });
 
   it("removes the boot cover so a fallback message is never trapped behind it", () => {
-    document.body.innerHTML = `<div id="boot-cover"></div><div id="stage"></div>`;
+    mountPage(html`<div id="boot-cover"></div><div id="stage"></div>`);
     showBootMessage("no WebGL here");
     expect(document.getElementById("boot-cover")).toBeNull();
     expect(document.getElementById("boot-fallback-host")!.innerHTML).toContain("no WebGL here");
@@ -125,7 +127,9 @@ describe("showBootMessage", () => {
     // layout can never push the message out of view again. The fixture leaves
     // #stage WITHOUT position on purpose: establishing the containing block
     // is the function's job now, so CSS drift cannot re-anchor the overlay.
-    document.body.innerHTML = `<div id="stage" style="height:600px;overflow:hidden"><canvas id="view" style="display:block;width:100%;height:600px"></canvas><div id="hint">Drag to pan</div></div>`;
+    mountPage(
+      html`<div id="stage" style="height:600px;overflow:hidden"><canvas id="view" style="display:block;width:100%;height:600px"></canvas><div id="hint">Drag to pan</div></div>`,
+    );
     showBootMessage("no WebGL here");
     const wrapper = document.getElementById("boot-fallback") as HTMLElement | null;
     // Found by the stable id the screenshot runner and tooling key on.
@@ -169,7 +173,7 @@ describe("showBootMessage", () => {
     // listener, and the autosave interval gates on the splash node's
     // presence, so tearing it out would orphan the listener and reopen the
     // ghost-autosave path the guard exists to close.
-    document.body.innerHTML = `<div id="splash"></div><div id="onboard"></div><div id="stage"></div>`;
+    mountPage(html`<div id="splash"></div><div id="onboard"></div><div id="stage"></div>`);
     showBootMessage("boot failed");
     expect(document.getElementById("splash")).not.toBeNull();
     expect(document.getElementById("onboard")).not.toBeNull();
@@ -182,10 +186,10 @@ describe("showBootMessage", () => {
 
 describe("showEngineFailure", () => {
   beforeEach(() => {
-    document.body.innerHTML = `<div id="stage"></div>`;
+    mountPage(html`<div id="stage"></div>`);
   });
   afterEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   it("stops the game with the stage, the reason, the steps to try and a Reload button", () => {
@@ -245,7 +249,7 @@ describe("showEngineFailure", () => {
       ],
     ];
     for (const [name, failure, reason, firstStep] of causes) {
-      document.body.innerHTML = `<div id="stage"></div>`;
+      mountPage(html`<div id="stage"></div>`);
       showEngineFailure({ build: "wasm-only", engine: "none", failure }, true);
       const box = document.getElementById("engine-failure")!;
       expect(box.textContent, name).toMatch(reason);
@@ -317,7 +321,7 @@ describe("showEngineFailure", () => {
   });
 
   it("leaves only the message reachable: everything behind it goes inert and focus moves to Reload", async () => {
-    document.body.innerHTML = `<div id="stage"><button id="quick-save">Quick Save</button></div><div id="splash"></div>`;
+    mountPage(html`<div id="stage"><button id="quick-save">Quick Save</button></div><div id="splash"></div>`);
     const button = document.getElementById("quick-save") as HTMLButtonElement;
     button.focus();
     showEngineFailure({
@@ -339,7 +343,7 @@ describe("showEngineFailure", () => {
   });
 
   it("stops the game behind a crash's reload line as behind the failure message (#1422)", () => {
-    document.body.innerHTML = `<div id="stage"><button id="quick-save">Quick Save</button></div><dialog id="modal"></dialog>`;
+    mountPage(html`<div id="stage"><button id="quick-save">Quick Save</button></div><dialog id="modal"></dialog>`);
     const dialog = document.getElementById("modal") as HTMLDialogElement;
     dialog.showModal();
     const button = document.getElementById("quick-save") as HTMLButtonElement;
@@ -354,7 +358,7 @@ describe("showEngineFailure", () => {
   });
 
   it("closes an open modal dialog, which would otherwise cover the Reload button", () => {
-    document.body.innerHTML = `<div id="stage"></div><dialog id="modal"></dialog>`;
+    mountPage(html`<div id="stage"></div><dialog id="modal"></dialog>`);
     const dialog = document.getElementById("modal") as HTMLDialogElement;
     dialog.showModal();
     showEngineFailure({
@@ -373,17 +377,17 @@ describe("showEngineFailure", () => {
 
 describe("hideBootCover", () => {
   afterEach(() => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   it("removes the cover element when present", () => {
-    document.body.innerHTML = `<div id="boot-cover"></div>`;
+    mountPage(html`<div id="boot-cover"></div>`);
     hideBootCover();
     expect(document.getElementById("boot-cover")).toBeNull();
   });
 
   it("is a safe no-op when there is no cover (idempotent across boot outcomes)", () => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     expect(() => hideBootCover()).not.toThrow();
   });
 });
@@ -392,7 +396,7 @@ describe("bootGame", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     delete (window as unknown as { game?: unknown }).game;
   });
 
@@ -440,7 +444,7 @@ describe("bootGame", () => {
   });
 
   it("shows the no-WebGL message and never calls create when WebGL is missing", () => {
-    document.body.innerHTML = `<div id="stage"></div>`;
+    mountPage(html`<div id="stage"></div>`);
     // Default happy-dom canvas.getContext returns null, so hasWebGL() is false.
     const create = vi.fn(() => ({ onUpdateAvailable: vi.fn() }));
     bootGame(create);
@@ -456,7 +460,7 @@ describe("bootGame", () => {
   });
 
   it("shows an error and rethrows when create() throws", async () => {
-    document.body.innerHTML = `<div id="stage"></div>`;
+    mountPage(html`<div id="stage"></div>`);
     stubWebGL(); // localhost host, so telemetry is skipped and boot reaches create()
     const create = vi.fn(() => {
       throw new Error("kaboom");
@@ -469,13 +473,13 @@ describe("bootGame", () => {
     // failure is still reported. `bootGame` returns the promise specifically so
     // that is observable here instead of floating.
     await expect(bootGame(create)).rejects.toThrow("kaboom");
-    const html = document.getElementById("boot-fallback-host")!.innerHTML;
-    expect(html).toContain("Something went wrong");
-    expect(html).toContain("kaboom");
+    const shown = document.getElementById("boot-fallback-host")!.innerHTML;
+    expect(shown).toContain("Something went wrong");
+    expect(shown).toContain("kaboom");
   });
 
   it("stops the game behind a boot error so the title screen and autosave stay off (#2282)", async () => {
-    document.body.innerHTML = `<div id="stage"></div><div id="splash"><button id="behind">Continue</button></div>`;
+    mountPage(html`<div id="stage"></div><div id="splash"><button id="behind">Continue</button></div>`);
     stubWebGL();
     const create = vi.fn(() => {
       throw new Error("kaboom");

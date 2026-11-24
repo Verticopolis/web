@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { knownPlayerText, resetPlayerTextForTest } from "../analyticsPlayerText";
 import { office, rec, root, setup } from "./editorActions.fixture";
 
+import { html } from "lit-html";
 vi.mock("../engineHost/headerClock", () => ({
   clockOf: () => ({ hour: 9, isWeekend: true }),
 }));
@@ -22,7 +23,7 @@ describe("EditorActions and the error scrubber (#607)", () => {
   it("remembers a facility's old and new names", async () => {
     const { actions, deps } = setup({ labelUnit: () => rec("labelUnit", true) });
     vi.mocked(deps.kit().cards.unit).mockReturnValue({ ...office, label: "Old Office" } as never);
-    await actions.handleEditAction("rename", root('<input id="ed-name" value="Acme Widgets">'));
+    await actions.handleEditAction("rename", root(html`<input id="ed-name" value="Acme Widgets">`));
     expect(knownPlayerText()).toEqual(expect.arrayContaining(["Acme Widgets", "Old Office"]));
   });
 });

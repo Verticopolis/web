@@ -18,7 +18,7 @@ describe("EditorActions: a theater's second screen", () => {
       undefined,
       catalogFor("modern"),
     );
-    await actions.handleEditAction("blockbusterFilm2", root(""));
+    await actions.handleEditAction("blockbusterFilm2", root());
     expect(port.changeFilm).toHaveBeenCalledExactlyOnceWith(office.id, codes.code("filmTiers", "blockbuster"), 1);
     expect(deps.captureUndo).toHaveBeenCalledExactlyOnceWith("Film change");
     expect(deps.announce).toHaveBeenCalledExactlyOnceWith("Now showing on screen 2: a blockbuster.");
@@ -37,7 +37,7 @@ describe("EditorActions: a theater's second screen", () => {
       filmPolicy: "off",
       screen2: { filmPolicy: "revival", filmDays: 3, filmTier: "classic" },
     });
-    await actions.handleEditAction("filmPolicy2", root(""));
+    await actions.handleEditAction("filmPolicy2", root());
     expect(port.setFilm).toHaveBeenCalledExactlyOnceWith(office.id, codes.code("filmPolicies", "feature"), 1);
     expect(deps.captureUndo).toHaveBeenCalledExactlyOnceWith("Film policy");
     // A second screen with no choice of its own follows the mode's default.
@@ -47,7 +47,7 @@ describe("EditorActions: a theater's second screen", () => {
       filmPolicy: "off",
       screen2: { filmPolicy: null, filmDays: 3, filmTier: "classic" },
     });
-    await actions.handleEditAction("filmPolicy2", root(""));
+    await actions.handleEditAction("filmPolicy2", root());
     expect(port.setFilm).toHaveBeenLastCalledWith(office.id, codes.code("filmPolicies", "blockbuster"), 1);
   });
 
@@ -56,8 +56,8 @@ describe("EditorActions: a theater's second screen", () => {
       changeFilm: () => rec("changeFilm", true, { cost: 1 }),
       setFilm: () => rec("setFilm", true),
     });
-    await actions.handleEditAction("newFilm2", root(""));
-    await actions.handleEditAction("filmPolicy2", root(""));
+    await actions.handleEditAction("newFilm2", root());
+    await actions.handleEditAction("filmPolicy2", root());
     expect(port.changeFilm).not.toHaveBeenCalled();
     expect(port.setFilm).not.toHaveBeenCalled();
     expect(deps.captureUndo).toHaveBeenNthCalledWith(1, "Edit");

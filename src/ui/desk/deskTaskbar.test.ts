@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONTROL_PANEL_ITEM, DeskTaskbar, START_ITEMS, trayClock, type TaskbarHandlers } from "./deskTaskbar";
 
+import { html } from "lit-html";
+import { mountPage } from "../testing/litTestUtils";
 describe("trayClock", () => {
   it("reads the time as the 1995 tray did, with a 12-hour clock", () => {
     expect(trayClock(new Date(2026, 10, 15, 16, 34))).toBe("4:34 PM");
@@ -33,7 +35,7 @@ describe("DeskTaskbar", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 10, 15, 16, 34, 30));
-    document.body.innerHTML = `<button id="mb-sound" aria-checked="true"></button>`;
+    mountPage(html`<button id="mb-sound" aria-checked="true"></button>`);
   });
 
   afterEach(() => {

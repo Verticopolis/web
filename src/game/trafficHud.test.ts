@@ -3,6 +3,8 @@ import { refreshTraffic } from "./trafficHud";
 import { TRAFFIC_LABELS } from "@verticopolis/components/presentation/traffic";
 import type { GameApp } from "../main";
 
+import { html } from "lit-html";
+import { mountPage } from "../ui/testing/litTestUtils";
 /**
  * Unit coverage for the color-blind-safe traffic HUD. `refreshTraffic` (the
  * refresh `updateTraffic` wraps, minus its catch, so a failed draw fails the
@@ -29,12 +31,12 @@ function fakeApp(count: number, lineFloor: number, lastTier: number, waitTier: 0
 }
 
 beforeEach(() => {
-  document.body.innerHTML = `
+  mountPage(html`
     <div id="traffic">
       <span id="traffic-glyph"></span>
       <span id="traffic-label"></span>
       <span id="traffic-floor"></span>
-    </div>`;
+    </div>`);
 });
 
 const level = () => document.getElementById("traffic-glyph")!.dataset.level;
@@ -169,7 +171,7 @@ describe("refreshTraffic", () => {
   });
 
   it("tolerates missing DOM cells without throwing", () => {
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     const app = fakeApp(25, 42, 0);
     // The rejecting refresh: a throw in the draw would surface here.
     expect(() => refreshTraffic(app)).not.toThrow();

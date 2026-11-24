@@ -65,7 +65,7 @@ describe("bootGame telemetry gate", () => {
     vi.mocked(injectSpeedInsights).mockReset();
     vi.mocked(injectWebAnalytics).mockReset();
     window.location.href = localhost; // restore host for the rest of the suite
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
     delete (window as unknown as { game?: unknown }).game;
   });
 

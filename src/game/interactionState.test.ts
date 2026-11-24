@@ -30,7 +30,7 @@ function mount(id: string, tag = "div", open = false): void {
 }
 
 beforeEach(() => {
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
 });
 
 describe("interactionState reads", () => {

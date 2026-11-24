@@ -5,8 +5,10 @@ vi.mock("../analyticsActions", () => ({ trackAppAction: vi.fn() }));
 import { trackAppAction } from "../analyticsActions";
 import { reportTitlePick, titlePickOf, wireTitlePicks } from "./titlePicks";
 
+import { html } from "lit-html";
+import { mountPage } from "../ui/testing/litTestUtils";
 beforeEach(() => {
-  document.body.innerHTML = `
+  mountPage(html`
     <div id="splash">
       <button data-splash="continue">Continue</button>
       <button data-splash="load"><svg></svg>Open Tower…</button>
@@ -16,7 +18,7 @@ beforeEach(() => {
       <button data-splash="install">Install</button>
       <a data-splash="sponsor" href="#">Sponsor</a>
     </div>
-    <button id="elsewhere" data-splash="new">Not the title screen</button>`;
+    <button id="elsewhere" data-splash="new">Not the title screen</button>`);
   delete document.body.dataset.titlePicks;
   vi.mocked(trackAppAction).mockClear();
 });
