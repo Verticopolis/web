@@ -1,6 +1,7 @@
 import { html, nothing, render } from "lit-html";
 import type { Catalog } from "@verticopolis/engine/catalog/catalogTypes";
 import { lobbyHeightButtons, toolInfoFor, type LobbyHeightPicker } from "./templates/toolInfo";
+import { showToolInStatusBar } from "./statusBar";
 import type { UI } from "./UI";
 
 /**
@@ -12,12 +13,12 @@ import type { UI } from "./UI";
 
 /** The Lobby card's and the strip's height picker for `ui`: a pick redraws
  *  the card and the strip. */
-export function lobbyPickerFor(ui: Pick<UI, "cb" | "tool" | "el">): LobbyHeightPicker {
+export function lobbyPickerFor(ui: Pick<UI, "cb" | "tool">): LobbyHeightPicker {
   const choice = ui.cb.lobbyHeight();
   const redraw = (): void => {
     if (ui.tool.type !== "build") return;
     const catalog = ui.cb.getCatalog();
-    render(toolInfoFor(catalog, ui.tool.kind, lobbyPickerFor(ui)), ui.el.toolInfo);
+    showToolInStatusBar(toolInfoFor(catalog, ui.tool.kind, lobbyPickerFor(ui)));
     syncLobbyHeightStrip(ui.tool, catalog, lobbyPickerFor(ui));
   };
   return {

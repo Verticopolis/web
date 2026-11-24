@@ -1,5 +1,6 @@
 import { html, nothing, render } from "lit-html";
 import { bulldozeDragButtons, bulldozeToolInfo, type BulldozeDragPicker } from "./templates/toolInfo";
+import { showToolInStatusBar } from "./statusBar";
 import type { UI } from "./UI";
 
 /**
@@ -12,14 +13,14 @@ import type { UI } from "./UI";
  */
 
 /** The card's and the strip's picker for `ui`: a pick redraws both. */
-export function bulldozePickerFor(ui: Pick<UI, "cb" | "tool" | "el">): BulldozeDragPicker {
+export function bulldozePickerFor(ui: Pick<UI, "cb" | "tool">): BulldozeDragPicker {
   const choice = ui.cb.bulldozeDrag();
   return {
     clears: choice.clears,
     pick: (clears) => {
       choice.pick(clears);
       if (ui.tool.type !== "bulldoze") return;
-      render(bulldozeToolInfo(bulldozePickerFor(ui)), ui.el.toolInfo);
+      showToolInStatusBar(bulldozeToolInfo(bulldozePickerFor(ui)));
       syncBulldozeDragStrip(ui.tool, bulldozePickerFor(ui));
     },
   };

@@ -9,6 +9,7 @@ import type { ModalView } from "@verticopolis/components/windows/uiModal";
 import type { UI } from "../../ui/UI";
 import { openImport } from "../../ui/uiImport";
 import { mountAppDom, makeUI } from "../uiFixture";
+import { patchTopBar } from "../../ui/topBar";
 import { setMode } from "../../ui/uiStatus";
 import { priceOptionsFor } from "../../ui/catalogPricing";
 import { scheduleDialogUX } from "../../ui/scheduleDialogRules";
@@ -1555,30 +1556,29 @@ describe("wireControls — toolbar buttons route to callbacks (no dead buttons)"
     // exists) + a fresh UI initialized from persisted prefs shows the muted
     // glyph immediately, no click and no cross-view sync step.
     mountAppDom();
-    expect(document.querySelectorAll("#audio-toggle")).toHaveLength(1); // no stale toggle survives the reload
     makeUI({ isMuted: () => loadPrefs().muted === true });
+    expect(document.querySelectorAll("#audio-toggle")).toHaveLength(1); // no stale toggle survives the reload
     expect(topbar().querySelector("svg")?.getAttribute("data-icon")).toBe("mute");
     expect(topbar().getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("prepends exactly one static icon into each toolbar control at boot", () => {
-    // mountToolbarIcons injects the chrome glyphs the index.html shell no longer
-    // carries (#721). One construction, one glyph per host, each ahead of any
-    // label text so "[icon] Full Statistics" reads in order. (The minimal test
-    // DOM omits .brand; the three buttons here
-    // exercise the same single injection path.)
+  it("draws one icon into each toolbar control, however often the bar is drawn again", () => {
+    // The components package draws the Information bar's glyphs (#721); a
+    // redraw patches the bar in place and never adds a second icon.
     makeUI();
+    patchTopBar({ funds: "$1", undoOff: true });
+    patchTopBar({ funds: "$2", undoOff: false, speed: 3 });
     const expected: Record<string, string> = {
       "#btn-save-top": "save",
       "#btn-undo": "undo",
       "#btn-redo": "redo",
-      ".menubar-brand": "brand", // the phone menu bar's compact logo
+      ".brand": "brand",
     };
     for (const [sel, name] of Object.entries(expected)) {
       const icons = document.querySelectorAll<SVGElement>(`${sel} > .vc-icon`);
       expect(icons, `${sel} should hold exactly one icon`).toHaveLength(1);
       expect(icons[0].getAttribute("data-icon")).toBe(name);
-      expect(icons[0]).toBe(document.querySelector(sel)!.firstElementChild); // prepended, ahead of the label
+      expect(icons[0]).toBe(document.querySelector(sel)!.firstElementChild); // ahead of the label
     }
     // The speed row swaps its ⏸ ▶ ▶▶ ▶▶▶ text for one icon per level, the
     // fast-speed (level 3) button included (replaceChildren).

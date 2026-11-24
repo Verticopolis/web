@@ -14,13 +14,22 @@ import { drawElement } from "./testing/litTestUtils";
 const catalog = catalogFor("modern");
 let strip: HTMLElement;
 
+/** The status bar, whose `#tool-info` box shows the card. */
+let bar: HTMLElement;
+/** The card's box in the status bar. */
+const toolInfo = (): HTMLElement => document.getElementById("tool-info")!;
+
 beforeEach(() => {
+  bar = drawElement(html`<footer id="statusbar"></footer>`);
   strip = drawElement<HTMLDivElement>(html`<div></div>`);
   strip.id = "lobby-height-strip";
   strip.hidden = true;
-  document.body.append(strip);
+  document.body.append(strip, bar);
 });
-afterEach(() => strip.remove());
+afterEach(() => {
+  strip.remove();
+  bar.remove();
+});
 
 const buttons = () => [...strip.querySelectorAll("button")];
 
@@ -51,11 +60,9 @@ describe("lobbyPickerFor", () => {
       },
       pick: vi.fn((h: number) => (picked = h)),
     };
-    const toolInfo = drawElement<HTMLDivElement>(html`<div></div>`);
     const ui = {
       cb: { lobbyHeight: () => choice, getCatalog: () => catalog },
       tool: { type: "build", kind: "lobby" },
-      el: { toolInfo },
     } as unknown as UI;
     const picker = lobbyPickerFor(ui);
     expect(picker.picked).toBe(1);
@@ -63,7 +70,7 @@ describe("lobbyPickerFor", () => {
     expect(choice.pick).toHaveBeenCalledExactlyOnceWith(3);
     const pressed = (root: ParentNode) =>
       [...root.querySelectorAll("button")].map((b) => b.getAttribute("aria-pressed"));
-    expect(pressed(toolInfo.querySelector(".ti-lobby-height")!)).toEqual(["false", "false", "true"]);
+    expect(pressed(toolInfo().querySelector(".ti-lobby-height")!)).toEqual(["false", "false", "true"]);
     expect(pressed(strip)).toEqual(["false", "false", "true"]);
   });
 });

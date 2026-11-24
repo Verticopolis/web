@@ -3,7 +3,7 @@ import { descriptionId, wirePaletteHints } from "./paletteHints";
 
 import { html } from "lit-html";
 import { mountPage } from "./testing/litTestUtils";
-/** A Tools window with one facility button, and the status bar's two cells. */
+/** A Tools window with one facility button, and the status bar. */
 beforeEach(() => {
   mountPage(html`
     <div id="pal">
@@ -12,7 +12,7 @@ beforeEach(() => {
       </div>
       <div id="gap"></div>
     </div>
-    <div id="sb-hint" hidden></div><div id="tool-info">Lobby</div>`);
+    <footer id="statusbar"></footer>`);
   wirePaletteHints(document.getElementById("pal")!);
 });
 afterEach(() => {

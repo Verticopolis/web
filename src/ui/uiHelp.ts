@@ -21,6 +21,7 @@ import { manualHost, manualSavedFor } from "../manual/manualOffline";
 import { HELP_TOPIC_PATH, isHelpTopic } from "./helpTopics";
 import type { HelpTopicSurface } from "./templates/helpTopicLink";
 import { hostHelpBar } from "./helpBarHost";
+import { topBarView } from "./topBar";
 
 /**
  * The in-game Help: About this game (the game panel's "About…") and the
@@ -283,15 +284,8 @@ export function wireHelpBar(ui: UI): void {
     },
     visible: () => document.visibilityState === "visible",
     hud: () => {
-      const text = (el: HTMLElement) => (el.textContent ?? "").trim();
-      const el = barUi!.el;
-      return {
-        date: text(el.date),
-        time: text(el.time),
-        money: text(el.money),
-        population: text(el.pop),
-        stars: text(el.star),
-      };
+      const bar = topBarView();
+      return { date: bar.date, time: bar.time, money: bar.funds, population: bar.population, stars: bar.rating };
     },
   });
 }

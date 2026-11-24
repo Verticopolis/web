@@ -10,6 +10,8 @@ import { loadPrefs, type Prefs } from "./storage/Prefs";
 import { type TrafficTier } from "@verticopolis/components/presentation/traffic";
 import { UI, type Tool } from "./ui/UI";
 import { setHistoryButtons, showTower } from "./ui/uiStatus";
+import { patchTopBar } from "./ui/topBar";
+import type { TopBarSpeed } from "@verticopolis/components/windows/bars/topBar";
 import { refreshEditorCard } from "./game/editorCard";
 import { type PlaceOutcome } from "./ui/placement";
 import { OnboardingController } from "./ui/Onboarding";
@@ -424,9 +426,7 @@ class GameApp implements GameAppPorts {
   setSpeed(s: number): void {
     applySpeed(this, s);
     this.engine.paused = SPEEDS[s] === 0;
-    document
-      .querySelectorAll("#speed button[data-speed]")
-      .forEach((b) => b.classList.toggle("active", Number((b as HTMLElement).dataset.speed) === s));
+    patchTopBar({ speed: s as TopBarSpeed });
   }
 
   /** The live speed index, so a dialog (the Compare modal) can pause the tower
@@ -557,7 +557,7 @@ class GameApp implements GameAppPorts {
     return this.history.gesture();
   }
   /** @internal */ showSteps(): void {
-    setHistoryButtons(this.ui, this.enginePort);
+    setHistoryButtons(this.enginePort);
   }
   undo(): Promise<void> {
     return this.history.undo();

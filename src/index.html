@@ -107,48 +107,9 @@
            its items. The host lays out as if it were not there, so the bar is
            the page's own row. -->
       <div id="menubar-host" style="display: contents"></div>
-      <header id="topbar">
-        <div class="brand"><span>VERTICO<b>POLIS</b><span class="brand-tm">™</span></span></div>
-        <div id="status">
-          <div class="stat" title="Star rating">
-            <span class="label">RATING</span>
-            <span id="stat-star" class="value stars">★</span>
-          </div>
-          <div class="stat stat-date" title="Date">
-            <span class="label">DATE</span>
-            <span id="stat-date" class="value">1st WD/1Q/1st Year</span>
-          </div>
-          <div class="stat" title="Time of day">
-            <span class="label">TIME</span>
-            <span id="stat-time" class="value">Mon 07:00</span>
-          </div>
-          <div class="stat" title="Cash on hand">
-            <span class="label">FUND</span>
-            <span id="stat-money" class="value money">$2,000,000</span>
-          </div>
-          <div class="stat" title="Total population">
-            <span class="label">POP</span>
-            <span id="stat-pop" class="value">0</span>
-          </div>
-          <div class="stat" title="Vertical transport traffic: the worst waiting line. Tap to go to it">
-            <span class="label">TRAFFIC</span>
-            <span id="traffic" class="value" role="button" tabindex="0" aria-live="polite" aria-label="Traffic: Smooth"
-              ><span id="traffic-glyph" aria-hidden="true" data-level="smooth"></span> <span id="traffic-label">Smooth</span><span id="traffic-floor" aria-hidden="true"></span></span>
-          </div>
-        </div>
-        <div id="speed">
-          <button class="btn" data-speed="0" title="Pause" aria-label="Pause"></button>
-          <button class="btn active" data-speed="1" title="Play (slow speed)" aria-label="Play (slow speed)"></button>
-          <button class="btn" data-speed="2" title="Medium" aria-label="Medium speed"></button>
-          <button class="btn" data-speed="3" title="Fast" aria-label="Fast speed"></button>
-          <button class="btn" id="btn-undo" title="Undo (Ctrl+Z)" aria-label="Undo"></button>
-          <button class="btn" id="btn-redo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo"></button>
-          <button class="btn" id="btn-save-top" title="Save (Ctrl+S)" aria-label="Save"></button>
-          <button class="btn" id="audio-toggle" title="Toggle sound" aria-label="Mute sound" aria-pressed="false"></button>
-          <button class="btn" id="btn-update" title="An update is ready. Tap to review." aria-label="An update is ready. Tap to review." hidden><span class="btn-label">Update</span></button>
-          <button class="btn" id="btn-install" title="Install Verticopolis: play offline, fullscreen, from your home screen." aria-label="Install Verticopolis" hidden><span class="btn-label">Install</span></button>
-        </div>
-      </header>
+      <!-- The Information bar: the components package's topBarTemplate draws it
+           here and src/ui/topBar.ts keeps what it shows. -->
+      <header id="topbar"></header>
 
       <main id="main">
         <aside id="palette" class="win docked">
@@ -190,12 +151,9 @@
       </main>
       <!-- The Win95 status bar: the picked tool, the tower and its rules, and
            the newest bulletin line. Desktop only (Window > Status Bar). -->
-      <footer id="statusbar" class="statusbar">
-        <div id="sb-hint" class="sb-cell sb-grow" aria-hidden="true" hidden></div>
-        <div id="tool-info" class="sb-cell sb-grow">Pick a facility from the left.</div>
-        <div id="sb-tower" class="sb-cell"></div>
-        <div id="sb-news" class="sb-cell sb-news" aria-hidden="true"></div>
-      </footer>
+      <!-- Drawn by the components package's status bar (src/ui/statusBar.ts):
+           the Tools hint, the picked tool's card, the tower and the news. -->
+      <footer id="statusbar" class="statusbar"></footer>
       <!-- The newest bulletin line for a screen reader while the Bulletin
            window is closed (src/ui/statusBar.ts). Outside the status bar, so
            hiding the bar, or a phone, never silences it. -->

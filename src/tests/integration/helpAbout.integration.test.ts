@@ -1,6 +1,8 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mountAppDom, makeUI } from "../uiFixture";
+import { patchTopBar } from "../../ui/topBar";
+import type { TopBarSpeed } from "@verticopolis/components/windows/bars/topBar";
 import { PAUSED_FOR_HELP } from "../../ui/helpPause";
 import { trackAppAction } from "../../analytics";
 import { html } from "lit-html";
@@ -33,11 +35,13 @@ const live = (): string => document.getElementById("a11y-live")!.textContent ?? 
 const status = (): string => dialog().querySelector("[data-help-status]")?.textContent ?? "";
 const pauseButton = (): HTMLElement => document.querySelector<HTMLElement>('#speed button[data-speed="0"]')!;
 
-/** A speed the controller reads back after it sets it, as the game's does. */
+/** A speed the controller reads back after it sets it, and the bar's lit
+ *  button, as the game's do. */
 function speedAt(start: number) {
   let speed = start;
   const onSpeed = vi.fn((s: number) => {
     speed = s;
+    patchTopBar({ speed: s as TopBarSpeed });
   });
   return { onSpeed, getSpeed: () => speed, now: () => speed, playerSets: (s: number) => (speed = s) };
 }
@@ -157,7 +161,7 @@ describe("About… (About this game)", () => {
 
   it("lets go of the pause, and clears the toolbar mark, when the player picks a speed with Help in another tab", async () => {
     const { speed } = openAbout(3);
-    pauseButton().classList.add("active"); // the game marks the speed it set
+    expect(pauseButton().classList.contains("active"), "the game marks the speed it set").toBe(true);
     followNewTab('a[data-act="privacy"]');
     (document.querySelector('#speed button[data-speed="1"]') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(pauseButton().getAttribute("aria-label")).toBe("Pause"));

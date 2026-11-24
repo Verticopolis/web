@@ -3,7 +3,7 @@ import { PortCodes } from "@verticopolis/engine/port/portCodes";
 import type { SimView } from "@verticopolis/engine/port/view";
 import { catalogFor } from "../tests/catalogFixture";
 import { mockPort, record } from "../tests/portKit/mockPort";
-import { clearToasts, onHistoryClick, resetLog, setHistoryButtons, toast, update, type HudSource } from "./uiStatus";
+import { clearToasts, resetLog, setHistoryButtons, toast, update, type HudSource } from "./uiStatus";
 import type { Catalog } from "@verticopolis/engine/catalog/catalogTypes";
 import type { GameMode } from "@verticopolis/engine/model/types";
 import type { UI } from "./UI";
@@ -196,10 +196,7 @@ function source(
  *  already match `header`, so only the status bar, the mode badge, the stats
  *  grid and the Undo and Redo buttons draw. */
 function hud(header: Partial<typeof HEADER> = {}) {
-  const made: Record<string, HTMLElement> = {
-    undo: drawElement<HTMLButtonElement>(html`<button></button>`),
-    redo: drawElement<HTMLButtonElement>(html`<button></button>`),
-  };
+  const made: Record<string, HTMLElement> = {};
   const el = new Proxy(made, {
     get: (target, key: string) => (target[key] ??= drawElement<HTMLDivElement>(html`<div></div>`)),
   });
@@ -222,7 +219,7 @@ function hud(header: Partial<typeof HEADER> = {}) {
 
 describe("resetLog", () => {
   it("opens the Bulletin with the arrival line on top of an empty engine log, and shows it in the status bar", () => {
-    mountPage(html`<span id="sb-news"></span>`);
+    mountPage(html`<footer id="statusbar"></footer>`);
     const { ui, el } = hud();
     resetLog(ui, source().src, "Loaded Skyspire.");
     expect(el.log.textContent).toBe("Loaded Skyspire.");
@@ -261,30 +258,39 @@ describe("resetLog", () => {
 });
 
 describe("update", () => {
+  /** The Information bar's cell `id`, drawn by the status pass. */
+  const cell = (id: string) => document.getElementById(id)!;
+
+  beforeEach(() => {
+    mountPage(html`<header id="topbar"></header>`);
+  });
   afterEach(() => {
     vi.restoreAllMocks();
+    document.body.replaceChildren();
   });
 
   it("reads the stats strip once and labels the population from it", () => {
     const header = { money: 123_456_789 };
-    const { ui, el } = hud(header);
+    const { ui } = hud(header);
     // A population big enough to need a separator, so the grouping shows.
     const { src, port } = source(header, { population: 12_345 });
     // A German default would group with dots; the English UI groups the US way.
     useGermanDefaultLocale();
     update(ui, src);
     expect(port.statsStrip).toHaveBeenCalledOnce();
-    expect(el.pop.textContent).toBe("12,345");
+    expect(cell("stat-pop").textContent).toBe("12,345");
     // Funds are in the hundreds of millions here, so they carry separators.
-    expect(el.money.textContent).toBe("$123,456,789");
+    expect(cell("stat-money").textContent!.trim()).toBe("$123,456,789");
   });
 
   it("shows funds that round to zero as $0 in the funds color, and a bad value as NaN", () => {
-    // A fresh HUD per value, so the reader takes the new funds.
+    // A fresh HUD and bar per value, so the reader takes the new funds.
     const shown = (money: number) => {
-      const { ui, el } = hud({ money });
+      mountPage(html`<header id="topbar"></header>`);
+      const { ui } = hud({ money });
       update(ui, source({ money }).src);
-      return { text: el.money.textContent, color: el.money.style.color };
+      const funds = cell("stat-money");
+      return { text: funds.textContent!.trim(), color: funds.style.color };
     };
     expect(shown(-0.3)).toEqual({ text: "$0", color: "var(--money)" });
     expect(shown(-0.6)).toEqual({ text: "$-1", color: "var(--bad)" });
@@ -294,8 +300,8 @@ describe("update", () => {
   it("grays out Undo and Redo from the engine's steps on every pump", () => {
     // What the engine holds after an edit, an undo, a redo and a load is its
     // own (src/sim_undo_tests.rs); the HUD shows whatever it answers.
-    const { ui, el } = hud();
-    const grayed = () => [el.undo, el.redo].map((b) => b.getAttribute("aria-disabled") === "true");
+    const { ui } = hud();
+    const grayed = () => [cell("btn-undo"), cell("btn-redo")].map((b) => b.getAttribute("aria-disabled") === "true");
     const pumped: boolean[][] = [];
     for (const depths of [
       [0, 0],
@@ -324,9 +330,11 @@ describe("the Undo and Redo buttons", () => {
   const holding = (depths: number[]) => ({ undoDepths: () => Float64Array.from(depths) });
 
   const buttons = () => {
-    const undo = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
-    const redo = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
-    return { undo, redo, ui: { el: { undo, redo } } as unknown as UI };
+    mountPage(html`<header id="topbar"></header>`);
+    setHistoryButtons(holding([1, 1]));
+    const undo = document.getElementById("btn-undo") as HTMLButtonElement;
+    const redo = document.getElementById("btn-redo") as HTMLButtonElement;
+    return { undo, redo };
   };
   const grayed = (...bs: HTMLButtonElement[]) => bs.map((b) => b.getAttribute("aria-disabled") === "true");
 
@@ -335,27 +343,27 @@ describe("the Undo and Redo buttons", () => {
   });
 
   it("gray out while the engine holds no step that way, and come back when it does", () => {
-    const { undo, redo, ui } = buttons();
-    setHistoryButtons(ui, holding([0, 0]));
+    const { undo, redo } = buttons();
+    setHistoryButtons(holding([0, 0]));
     expect(grayed(undo, redo), "a new tower has no steps").toEqual([true, true]);
-    setHistoryButtons(ui, holding([1, 0]));
+    setHistoryButtons(holding([1, 0]));
     expect(grayed(undo, redo), "after an edit").toEqual([false, true]);
-    setHistoryButtons(ui, holding([0, 1]));
+    setHistoryButtons(holding([0, 1]));
     expect(grayed(undo, redo), "after its undo").toEqual([true, false]);
-    setHistoryButtons(ui, holding([0, 0]));
+    setHistoryButtons(holding([0, 0]));
     expect(grayed(undo, redo), "no step either way again").toEqual([true, true]);
   });
 
   it("keep the focus when they gray out, so Enter or Space stays on the button", () => {
-    const { undo, ui } = buttons();
+    const { undo } = buttons();
     undo.focus();
-    setHistoryButtons(ui, holding([0, 0]));
+    setHistoryButtons(holding([0, 0]));
     expect(undo.disabled, "a disabled button would drop the focus to the page").toBe(false);
     expect(document.activeElement).toBe(undo);
   });
 
   it("write the page only when a state flips", () => {
-    const { undo, ui } = buttons();
+    const { undo } = buttons();
     const set = vi.spyOn(undo, "setAttribute");
     const clear = vi.spyOn(undo, "removeAttribute");
     for (const depths of [
@@ -364,39 +372,13 @@ describe("the Undo and Redo buttons", () => {
       [1, 0],
       [1, 0],
     ])
-      setHistoryButtons(ui, holding(depths));
+      setHistoryButtons(holding(depths));
     expect([set.mock.calls.length, clear.mock.calls.length]).toEqual([1, 1]);
   });
 
-  it("do nothing when pressed while grayed out", () => {
-    const { undo, ui } = buttons();
-    const run = vi.fn();
-    onHistoryClick(undo, run);
-    setHistoryButtons(ui, holding([0, 0]));
-    undo.click();
-    expect(run).not.toHaveBeenCalled();
-    setHistoryButtons(ui, holding([1, 0]));
-    undo.click();
-    expect(run).toHaveBeenCalledOnce();
-  });
-
-  it("still undo a gesture left open when Undo is gray", () => {
-    const { undo, ui } = buttons();
-    const run = vi.fn();
-    let open = true; // a release the canvas never saw left the gesture open
-    onHistoryClick(undo, run, () => open);
-    setHistoryButtons(ui, holding([0, 0]));
-    undo.click();
-    expect(run).toHaveBeenCalledOnce();
-    open = false;
-    undo.click();
-    expect(run).toHaveBeenCalledOnce();
-  });
-
-  it("leave a page without the buttons alone", () => {
-    const ui = { el: { undo: null, redo: null } } as unknown as UI;
-    expect(() => setHistoryButtons(ui, holding([1, 1]))).not.toThrow();
-    expect(() => onHistoryClick(null, () => {})).not.toThrow();
+  it("leave a page without the bar alone", () => {
+    document.body.replaceChildren();
+    expect(() => setHistoryButtons(holding([1, 1]))).not.toThrow();
   });
 });
 

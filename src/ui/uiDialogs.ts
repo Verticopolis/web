@@ -16,6 +16,7 @@ import type { UpdateInfo } from "../pwa";
 import { isInstalledStandalone } from "./standalone";
 import { trackAppAction } from "../analytics";
 import { rememberPlayerText } from "../analyticsPlayerText";
+import { onTopBar, patchTopBar } from "./topBar";
 
 /**
  * Dialog and modal controllers for {@link UI}, as friend functions taking the
@@ -333,10 +334,8 @@ export function showUpdatePrompt(
 /** Reveal the persistent "Update" chip in the speed toolbar (idempotent) and
  *  wire its click. Announced politely for screen readers. */
 export function showUpdateChip(_ui: UI, onClick: () => void): void {
-  const btn = document.getElementById("btn-update") as HTMLButtonElement | null;
-  if (!btn) return;
-  btn.onclick = onClick;
-  btn.hidden = false; // reveal (idempotent — safe to call again while shown)
+  onTopBar("update", onClick);
+  if (!patchTopBar({ update: true })) return; // idempotent: safe to call again while shown
   // Announce on EVERY call, not just the first reveal: a newer build arriving
   // while the chip is already visible should still reach screen-reader users.
   // Clear first, then set on the next frame so an identical message re-fires.

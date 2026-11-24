@@ -4,6 +4,8 @@ import { UI, type UICallbacks } from "../ui/UI";
 import { html } from "lit-html";
 import { drawMenuBar } from "../game/menuBarHost";
 import { mountPage } from "../ui/testing/litTestUtils";
+import { patchTopBar } from "../ui/topBar";
+import type { TopBarSpeed } from "@verticopolis/components/windows/bars/topBar";
 
 /**
  * A real `UI` over a hand-written DOM fixture that lists the ids the `UI`
@@ -44,27 +46,15 @@ if (typeof window.matchMedia !== "function") {
 /** Minimal fixture with every id the UI constructor looks up (non-null!). */
 export function mountAppDom(): void {
   mountPage(html`
-    <span id="stat-money"></span><span id="stat-pop"></span><span id="stat-star"></span>
-    <span id="stat-time"></span><span id="stat-date"></span>
-    <div id="speed">
-      <button class="btn" data-speed="0">⏸</button>
-      <button class="btn" data-speed="1">▶</button>
-      <button class="btn" data-speed="2">▶▶</button>
-      <button class="btn" data-speed="3">▶▶▶</button>
-      <button id="btn-update" hidden>Update</button>
-    </div>
-    <button id="audio-toggle">🔊</button>
-    <button id="btn-undo"></button><button id="btn-redo"></button>
-    <span class="menubar-brand"></span>
+    <header id="topbar"></header>
     <div id="a11y-live"></div>
     <div id="palette-tabs"></div>
     <div id="palette-scroll"></div>
-    <div id="tool-info"></div>
+    <footer id="statusbar" class="statusbar"></footer>
     <input id="tower-name" />
     <button id="btn-mode" class="mode-badge is-classic btn">This tower: Classic</button>
     <div id="tower-stats"></div>
     <div id="log"></div>
-    <button id="btn-save-top"></button>
     <div id="menubar-host"></div>
     <div id="inspector" class="win hidden"></div>
     <div id="editor" class="win hidden"></div>
@@ -76,8 +66,8 @@ export function mountAppDom(): void {
 }
 
 export function makeUI(overrides: Partial<UICallbacks> = {}): { ui: UI; cb: UICallbacks } {
-  // The speed follows onSpeed, as the game's does, so a dialog that pauses and
-  // restores reads back the speed it set.
+  // The speed follows onSpeed, and so does the bar's lit button, as the game's
+  // do, so a dialog that pauses and restores reads back the speed it set.
   let speed = 1;
   const classic = catalogFor("classic"); // one object, as a tower's catalog is, so the palette redraws only on a change
   const cb: UICallbacks = {
@@ -87,6 +77,7 @@ export function makeUI(overrides: Partial<UICallbacks> = {}): { ui: UI; cb: UICa
     onSelectTool: vi.fn(),
     onSpeed: vi.fn((s: number) => {
       speed = s;
+      patchTopBar({ speed: s as TopBarSpeed });
     }),
     getSpeed: vi.fn(() => speed),
     onSave: vi.fn(),

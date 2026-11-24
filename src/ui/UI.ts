@@ -8,8 +8,7 @@ import type { CalendarKind } from "@verticopolis/engine/model/engineTypes";
 import type { UpdateInfo } from "../pwa";
 import { downloadFile } from "./downloadFile";
 import type { TemplateResult } from "lit-html";
-import { iconNode } from "./iconNodes";
-import { mountToolbarIcons } from "./uiToolbarIcons";
+import { onTopBar, patchTopBar, topBarView } from "./topBar";
 import type { ReviewRow } from "./templates/scheduleReview";
 import type { BulldozeDragPicker, LobbyHeightPicker } from "./templates/toolInfo";
 import { lobbyPickerFor } from "./lobbyHeightStrip";
@@ -107,25 +106,16 @@ export class UI {
 
   /** @internal friend-module access (shared DOM handle map). */
   el = {
-    money: document.getElementById("stat-money")!,
-    pop: document.getElementById("stat-pop")!,
-    star: document.getElementById("stat-star")!,
-    time: document.getElementById("stat-time")!,
-    date: document.getElementById("stat-date")!,
     palette: document.getElementById("palette-scroll")!,
     paletteTabs: document.getElementById("palette-tabs")!,
-    toolInfo: document.getElementById("tool-info")!,
     towerStats: document.getElementById("tower-stats")!,
     log: document.getElementById("log")!,
     toast: document.getElementById("toast-wrap")!,
     inspector: document.getElementById("inspector")!,
     editor: document.getElementById("editor")!,
     modal: document.getElementById("modal")!,
-    audioToggle: document.getElementById("audio-toggle")!,
     towerName: document.getElementById("tower-name") as HTMLInputElement,
     modeBadge: document.getElementById("btn-mode")!,
-    undo: document.getElementById("btn-undo") as HTMLButtonElement | null,
-    redo: document.getElementById("btn-redo") as HTMLButtonElement | null,
   };
 
   /** True while the user is pressing something inside the editor card. */
@@ -147,10 +137,6 @@ export class UI {
     this.cb = cb;
     buildPalette(this);
     this.wireControls();
-    // selectTool below renders the tool-info panel through lit; clear the static
-    // HTML placeholder first so lit's first render never appends after it (one
-    // container, one renderer). Invisible: selectTool repaints it immediately.
-    this.el.toolInfo.replaceChildren();
     this.selectTool({ type: "inspect" });
     // The editor card's [data-edit] actions and its ✕ dispatch through ONE
     // delegated listener on the container, so lit re-renders never need
@@ -187,27 +173,14 @@ export class UI {
   }
 
   private wireControls(): void {
-    document.querySelectorAll<HTMLButtonElement>("#speed button[data-speed]").forEach((b) => {
-      b.addEventListener("click", () => {
-        document.querySelectorAll("#speed button[data-speed]").forEach((x) => x.classList.remove("active"));
-        b.classList.add("active");
-        this.cb.onSpeed(Number(b.dataset.speed));
-      });
-    });
-
-    // Init from persisted state; toggleMute owns every later update (splash too).
+    // The Information bar, drawn by the components package (./topBar). The
+    // speaker starts from the saved state; toggleMute owns every later update.
+    onTopBar("speed", (level) => this.cb.onSpeed(level));
+    onTopBar("undo", () => this.pressUndo());
+    onTopBar("redo", () => this.pressRedo());
+    onTopBar("save", () => this.cb.onSave());
+    onTopBar("mute", () => void this.cb.onToggleAudio());
     this.setAudioGlyph(this.cb.isMuted());
-    this.el.audioToggle.addEventListener("click", () => this.cb.onToggleAudio());
-    mountToolbarIcons();
-    status.onHistoryClick(
-      this.el.undo,
-      () => this.cb.onUndo(),
-      () => this.cb.undoUnderWay(),
-    );
-    status.onHistoryClick(this.el.redo, () => this.cb.onRedo());
-
-    // Quick Save is the top-bar 💾 (index.html); null-safe so a trimmed DOM that omits it does not throw.
-    document.getElementById("btn-save-top")?.addEventListener("click", () => this.cb.onSave());
     onMenuItem("btn-new", () => this.promptNewTower());
     onMenuItem("btn-settings", () => this.showSettings());
     onMenuItem("btn-help", () => this.showHelp("game_menu"));
@@ -326,8 +299,18 @@ export class UI {
 
   /** Topbar mute glyph, set by toggleMute for every caller so all views agree (SPEC-splash-mute CAP-2). */
   setAudioGlyph(muted: boolean): void {
-    this.el.audioToggle.replaceChildren(iconNode(muted ? "mute" : "sound"));
-    this.el.audioToggle.setAttribute("aria-pressed", String(muted));
+    patchTopBar({ muted });
+  }
+
+  /** Undo, from the bar's button or the Edit menu: only while there is a step
+   *  to undo, or a gesture under way that it would close and undo. */
+  pressUndo(): void {
+    if (!topBarView().undoOff || this.cb.undoUnderWay()) this.cb.onUndo();
+  }
+
+  /** Redo, from the bar's button or the Edit menu, while there is a step to redo. */
+  pressRedo(): void {
+    if (!topBarView().redoOff) this.cb.onRedo();
   }
 
   /** Hand the player an exported file as a browser download. Callers decide

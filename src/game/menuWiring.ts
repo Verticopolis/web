@@ -25,6 +25,7 @@ import { TOWER_CALL_ITEM, towerCallStates, towerCalls, type TowerCalls } from ".
 import { fullScreenStates } from "./fullScreenItem";
 import { firstDragReporter, reportWindowClose } from "./movableWindows";
 import { deskActive } from "../ui/desk/deskController";
+import { topBarView } from "../ui/topBar";
 
 /**
  * The menu bar's commands. The components' MenuBar draws the bar from
@@ -139,11 +140,6 @@ function screenStates(titleScreenUp: boolean): Record<string, MenuEntryState> {
   return states;
 }
 
-/** A menu item grayed the way the toolbar grays its twin. */
-const grayedLike = (twin: Element | null): MenuEntryState => ({
-  disabled: twin?.getAttribute("aria-disabled") === "true",
-});
-
 /** Wire the bar {@link drawMenuBar} drew, once; a page without it, or a
  *  second call, does nothing. */
 export function wireMenus(app: GameApp): MenuBar | null {
@@ -225,8 +221,8 @@ export function wireMenus(app: GameApp): MenuBar | null {
   on("mb-export", file.saveAs);
   wireFileShortcuts(file, window, reportKey);
   // Edit: the toolbar's own buttons, so the gray-out and the gesture rules hold.
-  on("mb-undo", () => ui.el.undo?.click());
-  on("mb-redo", () => ui.el.redo?.click());
+  on("mb-undo", () => ui.pressUndo());
+  on("mb-redo", () => ui.pressRedo());
   // Tower.
   on("mb-rename", () => {
     towerWin?.setShown(true);
@@ -331,8 +327,9 @@ export function wireMenus(app: GameApp): MenuBar | null {
     put("mb-win-statusbar", { checked: !document.body.classList.contains(STATUS_BAR_HIDDEN_CLASS) });
     put("mb-fullscreen", { checked: !!document.fullscreenElement });
     put("mb-sound", { checked: !ui.cb.isMuted() });
-    put("mb-undo", grayedLike(ui.el.undo));
-    put("mb-redo", grayedLike(ui.el.redo));
+    const bar = topBarView();
+    put("mb-undo", { disabled: bar.undoOff });
+    put("mb-redo", { disabled: bar.redoOff });
     for (const [id, state] of Object.entries(screenStates(noTower))) put(id, state);
     for (const id of ENGINE_FILE_ITEMS) put(id, { disabled: stopped });
     // The installed app on a phone is not offered Full Screen (fullScreenItem.ts).

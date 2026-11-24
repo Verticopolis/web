@@ -109,8 +109,8 @@ export function measureSimSpeed(windowMs: number): Promise<number> {
 /**
  * Profile (C): pump the UI `pumps` times (advancing the clock so the snapshot
  * actually changes) and report whether the key DOM nodes keep their identity. The
- * status leaf spans (money/pop/star/time/date) are textContent writes and must
- * NEVER be replaced. The tower-stats CONTAINER must persist, and since E5-S1 its
+ * Information bar's meter spans (money/pop/star/time/date) are patched in place
+ * by lit and must NEVER be replaced. The tower-stats CONTAINER must persist, and since E5-S1 its
  * CHILDREN must too: the grid renders through lit, which patches text in place,
  * so `towerStatsChildStable` is asserted by the gate alongside the other flags.
  */
@@ -121,14 +121,10 @@ export function checkNodeIdentity(pumps: number): {
 } {
   const g = window.game;
   const el = g.ui.el;
-  const before = {
-    money: el.money,
-    pop: el.pop,
-    star: el.star,
-    time: el.time,
-    date: el.date,
-    towerStats: el.towerStats,
-  };
+  const leaves = () =>
+    ["stat-money", "stat-pop", "stat-star", "stat-time", "stat-date"].map((id) => document.getElementById(id));
+  const beforeLeaves = leaves();
+  const before = { towerStats: el.towerStats };
   const beforeChild = el.towerStats.firstElementChild;
   for (let i = 0; i < pumps; i++) {
     // One minute per pump: enough to change the time leaf (the change path)
@@ -138,12 +134,8 @@ export function checkNodeIdentity(pumps: number): {
     g.reader.update();
     g.ui.update({ reader: g.reader, port: g.enginePort, codes: g.portCodes });
   }
-  const statusLeavesStable =
-    before.money === el.money &&
-    before.pop === el.pop &&
-    before.star === el.star &&
-    before.time === el.time &&
-    before.date === el.date;
+  const afterLeaves = leaves();
+  const statusLeavesStable = beforeLeaves.every((leaf, i) => leaf !== null && leaf === afterLeaves[i]);
   return {
     statusLeavesStable,
     towerStatsContainerStable: before.towerStats === el.towerStats,

@@ -57,9 +57,7 @@ function mount(): void {
       <section id="tower-win" hidden><button data-close="tower-win">x</button></section>
       <section id="bulletin-win" hidden><button data-close="bulletin-win">x</button></section>
     </main>
-    <input id="tower-name" />
-    <button id="btn-undo" aria-disabled="true"></button>
-    <button id="btn-redo"></button>`);
+    <input id="tower-name" />`);
   drawMenuBar();
 }
 
@@ -67,8 +65,6 @@ function fakeApp(onPhone = false) {
   const ui = {
     cb: { onSave: vi.fn(), onToggleAudio: vi.fn(), isMuted: vi.fn(() => false), onReplayOnboarding: vi.fn() },
     el: {
-      undo: document.getElementById("btn-undo"),
-      redo: document.getElementById("btn-redo"),
       towerName: document.getElementById("tower-name") as HTMLInputElement,
     },
     promptExport: vi.fn(),
