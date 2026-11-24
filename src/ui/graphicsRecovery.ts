@@ -5,8 +5,12 @@
  * way the crash card does: a modal `<dialog>` makes the menus, the palette and
  * the speed buttons inert, and the game's own key handlers read
  * `isRecoveringGraphics` (`src/game/interactionState.ts`) from its element.
- * Nothing can change the tower blind while the picture is gone.
+ * Nothing can change the tower blind while the picture is gone. It is the
+ * components' `AlertCard` as a wait: no buttons, its text heard as a status,
+ * Escape refused, and it closes only when the recovery ends.
  */
+import { AlertCard } from "@verticopolis/components/windows/alertCard";
+
 export const GRAPHICS_RECOVERY_ID = "graphics-recovery";
 
 /** Put the card up and return the function that takes it down. Over the title
@@ -15,23 +19,10 @@ export const GRAPHICS_RECOVERY_ID = "graphics-recovery";
 export function showGraphicsRecovery(onTitleScreen = false): () => void {
   const safe = onTitleScreen ? "Your saved towers are untouched." : "Your tower is safe.";
   document.getElementById(GRAPHICS_RECOVERY_ID)?.remove();
-  const dialog = document.createElement("dialog");
-  dialog.id = GRAPHICS_RECOVERY_ID;
-  dialog.className = "win crash-card";
-  dialog.setAttribute("aria-labelledby", "graphics-recovery-title");
-  dialog.innerHTML = `
-      <h2 id="graphics-recovery-title" class="win-title">Recovering graphics</h2>
-      <p role="status">The device reset the game's graphics. The game is restarting them, which takes a few seconds. ${safe}</p>`;
-  // Esc would close a modal dialog; the wait ends only when the recovery does.
-  dialog.addEventListener("cancel", (e) => e.preventDefault());
-  document.body.append(dialog);
-  try {
-    dialog.showModal();
-  } catch {
-    dialog.setAttribute("open", "");
-  }
-  return () => {
-    if (dialog.open) dialog.close();
-    dialog.remove();
-  };
+  const card = new AlertCard(document, GRAPHICS_RECOVERY_ID, {
+    title: "Recovering graphics",
+    kind: "wait",
+    text: [`The device reset the game's graphics. The game is restarting them, which takes a few seconds. ${safe}`],
+  });
+  return () => card.close();
 }
