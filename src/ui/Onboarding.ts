@@ -4,7 +4,7 @@ import { splashTemplate, type SplashHandlers } from "./splashTemplate";
 import { isDialogOpen, isEngineStopped } from "../game/interactionState";
 import { iconNode } from "./iconNodes";
 import { openFoldedPaletteAround } from "./paletteCollapse";
-import { DESK_TITLE_CLASS } from "./desk/deskTitle";
+import { DESK_TITLE_CLASS } from "@verticopolis/components/windows/desk/deskTitle";
 
 /**
  * First-run experience — splash/title screen + a non-blocking "Getting Started"

@@ -2,6 +2,9 @@ import { trackAppAction } from "../../analyticsActions";
 import type { DeskWindowId } from "@verticopolis/components/windows/desk/deskGeometry";
 import type { DeskChange } from "@verticopolis/components/windows/desk/deskWindow";
 import type { WindowMenuFrom } from "@verticopolis/components/windows/desk/deskWindowMenu";
+import type { DeskTaskResult } from "@verticopolis/components/windows/desk/deskManager";
+import type { TrayIcon } from "@verticopolis/components/windows/desk/deskTaskbar";
+import { DESK_TITLE_WINDOW } from "@verticopolis/components/windows/desk/deskTitle";
 
 /**
  * The 1994 desk's analytics codes (docs/ui/desk-windows.md and the data map's
@@ -23,25 +26,8 @@ export const DESK_WINDOW_NAME: Readonly<Record<DeskWindowId, string>> = {
   help: "help",
 };
 
-/** The title screen's one window, on its taskbar. */
-export const DESK_TITLE_WINDOW = "title";
-
-/** What a press on a window's taskbar button did: brought it to the front,
- *  minimized the front window, or brought a minimized one back. */
-export type DeskTaskResult = "front" | "min" | "restore";
-
-/** What a taskbar button press does to its window: a minimized one comes
- *  back, the front one minimizes, any other comes to the front. */
-export function deskTaskResult(minimized: boolean, inFront: boolean): DeskTaskResult {
-  if (minimized) return "restore";
-  return inFront ? "min" : "front";
-}
-
 /** Where the Verticopolis menu was opened: over the title screen or a tower. */
 export type DeskScreen = "title" | "tower";
-
-/** The tray's buttons: the monitor (the Control Panel) and the speaker. */
-export type DeskTrayIcon = "display" | "sound";
 
 /** The analytics name of a window id, or the title screen's window. */
 function windowName(id: string): string {
@@ -61,7 +47,7 @@ export function trackDeskStartOpen(screen: DeskScreen): void {
 }
 
 /** A tray button pressed: `desk_tray`, `display` or `sound`. */
-export function trackDeskTray(icon: DeskTrayIcon): void {
+export function trackDeskTray(icon: TrayIcon): void {
   trackAppAction("desk_tray", icon);
 }
 

@@ -1,13 +1,35 @@
+import { html } from "lit-html";
+import { renderDetached } from "@verticopolis/components/windows/detached";
 import { trackAppAction, trackAppActionOnce } from "../../analyticsActions";
 import { browserStorage } from "../overviewMapPrefs";
 import { PALETTE_COLLAPSE_BUTTON_ID, PALETTE_COLLAPSED_CLASS } from "../paletteCollapse";
-import { TOOLS_LIMITS, TOWER_LIMITS, type DeskWindowId } from "@verticopolis/components/windows/desk/deskGeometry";
-import { read, write, type Store } from "./deskStore";
-import { DESK_KEY, DeskLayout } from "./deskLayout";
-import { DeskTitle } from "./deskTitle";
-import { buildControlPanel } from "./deskControlPanel";
 import {
-  deskTaskResult,
+  defaultLayout,
+  TOOLS_LIMITS,
+  TOWER_LIMITS,
+  type DeskWindowId,
+} from "@verticopolis/components/windows/desk/deskGeometry";
+import { ControlPanel } from "@verticopolis/components/windows/desk/deskControlPanel";
+import { DeskManager, deskTaskResult, type DeskSlot } from "@verticopolis/components/windows/desk/deskManager";
+import {
+  deskMode,
+  DESK_POCKET_CLASS,
+  DESK_TOUCH_CLASS,
+  pocketBody,
+  type DeskMode,
+} from "@verticopolis/components/windows/desk/deskPocket";
+import {
+  deskScreenOf,
+  heedDeskSwitch,
+  readDeskSwitch,
+  watchDeskScreen,
+  type DeskSwitchPlace,
+} from "@verticopolis/components/windows/desk/deskScreen";
+import { DeskTaskbar, type TaskbarOptions } from "@verticopolis/components/windows/desk/deskTaskbar";
+import { DeskTitle, DESK_TITLE_WINDOW } from "@verticopolis/components/windows/desk/deskTitle";
+import { buildFrame } from "@verticopolis/components/windows/desk/deskWindow";
+import { onMenuItem, runMenuItem, setMenuState, type MenuEntryState } from "../../game/menuBarHost";
+import {
   trackDeskClose,
   trackDeskStartOpen,
   trackDeskTask,
@@ -15,27 +37,9 @@ import {
   trackDeskWindow,
   trackWindowMenuOpen,
   trackWindowMenuPick,
+  type DeskScreen,
 } from "./deskAnalytics";
-import { DeskTaskbar, type TaskEntry } from "./deskTaskbar";
-import {
-  deskMode,
-  DESK_POCKET_CLASS,
-  DESK_TOUCH_CLASS,
-  TOUCH_DESK_MQ,
-  TOUCH_MQ,
-  type DeskMode,
-  type DeskSwitch,
-  pocketBody,
-} from "@verticopolis/components/windows/desk/deskPocket";
-import { runWindowCommand, windowMenuState } from "@verticopolis/components/windows/desk/deskWindowMenu";
-import {
-  buildFrame,
-  DESK_ACTIVE_CLASS,
-  DeskWindow,
-  type DeskChange,
-  type DeskWindowSpec,
-} from "@verticopolis/components/windows/desk/deskWindow";
-import { onMenuItem, runMenuItem, setMenuState, type MenuEntryState } from "../../game/menuBarHost";
+import { CONTROL_ITEM, CONTROL_ITEMS, CONTROL_PANEL_ITEM, startItems, towerTitleText, towerName } from "./deskGlue";
 import { setDeskMenus } from "./deskMenus";
 
 /**
@@ -44,39 +48,27 @@ import { setDeskMenus } from "./deskMenus";
  * the way the 1994 original opened a tower. The tower window holds the menu
  * bar, the tower and the status bar; Info, Tools, the Map, the Bulletin and
  * Tower Info are windows of their own beside it. A sideways tablet gets the
- * same desk with touch chrome; phones and upright tablets get the pocket desk
- * (`windows/desk/deskPocket` in the components). Small computer windows keep today's layout, and so does
- * the title screen.
+ * same desk with touch chrome; phones and upright tablets get the pocket desk.
+ * Small computer windows keep today's layout, and so does the title screen.
  *
- * The desk moves the game's own elements into its windows and puts them back
- * when it goes away, so every id, listener and test that knows them keeps
- * working. It turns on when the page is wide and tall enough with a mouse
- * (`DESK_MQ`), or on a touchscreen, and no title screen is up. There is no
- * player switch (owner, 2026-11-15 and 2026-11-20): `?desk=on`,
- * `?desk=pocket` and `?desk=off` are for testing.
+ * The windows, the taskbar, the title screen's window and the Control Panel
+ * are the components package's (`windows/desk/*`); this file is the game's
+ * glue. It moves the game's own elements into the windows and puts them back
+ * when the desk goes away, so every id, listener and test that knows them
+ * keeps working. There is no player switch (owner, 2026-11-15 and
+ * 2026-11-20): `?desk=on`, `?desk=pocket` and `?desk=off` are for testing.
  *
- * Cost: nothing per frame. A MutationObserver hears the few elements whose
- * open state the game owns (the Map, Bulletin, Tower Info, Tools, the title
- * screen's class, the tower's name), and each answer touches the taskbar only.
+ * Cost: nothing per frame. MutationObservers hear the few elements whose
+ * state the game owns (the windows' open state, the tower's name, the
+ * sound), and each answer touches the taskbar only.
  */
 
-/** Where the desk can show: a screen at least 1024 x 600 whose main input is
- *  a mouse or a trackpad. A touchscreen laptop gets it too, since its main
- *  pointer is the trackpad (owner, 2026-11-15). A phone or tablet does not,
- *  a tablet with a pen included (#2341): touch is its main input, even though
- *  the pen is a fine pointer that can hover. `?desk=on` still brings the desk
- *  to a tablet (DESK_ANY_SCREEN_MQ). */
-export const DESK_MQ = "(min-width: 1024px) and (min-height: 600px) and (pointer: fine) and (hover: hover)";
 /** The class on `<body>` while the desk is up. */
 export const DESK_CLASS = "desk";
 /** The event the desk sends on the document when it comes up or goes away. */
 export const DESK_CHANGE_EVENT = "vc-desk-change";
-export { DESK_KEY };
-
-/** The stored value `?desk=on` writes: the desk on any screen. */
-export const DESK_ANY_SCREEN = "any";
-/** The narrowest screen `?desk=on` puts the desk on. */
-export const DESK_ANY_SCREEN_MQ = "(min-width: 768px)";
+/** Storage keys: the testing switch, the windows' places, the maximized tower. */
+export const DESK_KEY = { enabled: "vc-desk", layout: "vc-desk-places", max: "vc-desk-max" } as const;
 
 /** Whether the desk is up now. */
 export function deskActive(doc: Document = document): boolean {
@@ -94,82 +86,53 @@ interface Moved {
 }
 
 export class DeskController {
-  private readonly mq: MediaQueryList | null;
-  private readonly wideMq: MediaQueryList | null;
-  private readonly touchMq: MediaQueryList | null;
-  private readonly roomyMq: MediaQueryList | null;
   /** The desk showing now, or the one about to come up. */
   private mode: DeskMode = null;
-  private readonly store: Store | null = browserStorage();
-  private readonly wins = new Map<DeskWindowId, DeskWindow>();
-  private readonly layout: DeskLayout;
+  private readonly place: DeskSwitchPlace = { store: browserStorage(), key: DESK_KEY.enabled };
+  private manager: DeskManager | null = null;
   private moved: Moved[] = [];
   private desk: HTMLElement | null = null;
   private taskbar: DeskTaskbar | null = null;
-  private readonly title: DeskTitle;
+  private control: ControlPanel | null = null;
+  private title: DeskTitle | null = null;
   /** Renames the tower window (lit touches its title only when it changed). */
   private setTowerTitle: ((title: string) => void) | null = null;
-  private infoFrame: HTMLElement | null = null;
   private watcher: MutationObserver | null = null;
-  private syncControl: (() => void) | null = null;
-  private active: DeskWindow | null = null;
-  private z = 100;
   private readonly movedOnce = new Set<DeskWindowId>();
   /** The window the player just asked for from the Window menu, which the
-   *  watcher brings up even on the pocket desk. */
+   *  desk brings up even on the pocket desk. */
   private asked: DeskWindowId | null = null;
 
-  constructor(private readonly doc: Document = document) {
-    this.title = new DeskTitle(doc);
-    this.layout = new DeskLayout(doc, this.store, this.wins);
-    const media = (q: string) => (typeof window.matchMedia === "function" ? window.matchMedia(q) : null);
-    this.mq = media(DESK_MQ);
-    this.wideMq = media(DESK_ANY_SCREEN_MQ);
-    this.touchMq = media(TOUCH_MQ);
-    this.roomyMq = media(TOUCH_DESK_MQ);
-  }
+  constructor(private readonly doc: Document = document) {}
 
   /** Watch for the moments the desk should come or go, and decide now. */
   start(): void {
-    // Testing switches: `?desk=on` turns the full desk on on any screen at
-    // least tablet-wide, `?desk=pocket` the pocket desk on any screen (a
-    // computer's included, to try it), and `?desk=off` turns the desk off
-    // until one of the others (the screenshot and e2e runs use it).
-    const ask = new URL(this.doc.location?.href ?? "http://x/").searchParams.get("desk");
-    if (ask === "on") write(this.store, DESK_KEY.enabled, DESK_ANY_SCREEN);
-    else if (ask === "pocket" || ask === "off") write(this.store, DESK_KEY.enabled, ask);
-    for (const mq of [this.mq, this.wideMq, this.touchMq, this.roomyMq])
-      mq?.addEventListener("change", () => this.decide());
+    heedDeskSwitch(this.doc.location?.href ?? "http://x/", this.place);
+    watchDeskScreen(window, () => this.decide());
     // The title screen's class on <body> decides too.
     new MutationObserver(() => this.decide()).observe(this.doc.body, { attributes: true, attributeFilter: ["class"] });
+    const sound = this.doc.getElementById(CONTROL_ITEM.sounds);
+    if (sound)
+      new MutationObserver(() => this.syncSound()).observe(sound, {
+        attributes: true,
+        attributeFilter: ["aria-checked"],
+      });
     this.wireMenuItems();
     this.decide();
   }
 
-  /** The desk this screen gets now (`windows/desk/deskPocket` in the components). */
-  private screenMode(): DeskMode {
-    const stored = read(this.store, DESK_KEY.enabled);
-    const forced: DeskSwitch = stored === DESK_ANY_SCREEN || stored === "pocket" || stored === "off" ? stored : null;
-    return deskMode({
-      forced,
-      computer: !!this.mq?.matches,
-      wide: !!this.wideMq?.matches,
-      touch: !!this.touchMq?.matches,
-      roomy: !!this.roomyMq?.matches,
-    });
-  }
-
   private decide(): void {
-    const mode = this.screenMode();
+    const screen = deskScreenOf(window, readDeskSwitch(this.place));
+    const mode = deskMode(screen);
     const splash = this.doc.body.classList.contains("splash-up");
     const want = mode !== null && !splash && !!this.doc.getElementById("stage") ? mode : null;
     // The title screen sits in its own window on the full desk.
-    if (mode === "desk" && splash) this.title.show();
-    else this.title.hide();
+    if (mode === "desk" && splash) this.showTitle();
+    else this.title?.hide();
     // Turning a tablet can change the desk: the old one goes first.
     if (this.desk && want !== this.mode) this.down();
     this.mode = want;
-    if (want && !this.desk) this.up();
+    if (want && !this.desk) this.up(screen.touch);
   }
 
   private get pocket(): boolean {
@@ -200,11 +163,9 @@ export class DeskController {
     // The pocket desk's Map is the game's own card in the tower's view.
     if (this.pocket && id === "map" && this.doc.getElementById("overview-map")?.hidden)
       runMenuItem("mb-win-map", this.doc);
-    const w = this.wins.get(id);
-    if (!w) return;
+    if (!this.manager?.get(id)) return;
     this.ask(id);
-    if (!w.spec.isOpen()) w.spec.open?.();
-    this.bringUp(id);
+    this.manager.show(id);
   }
 
   private move(node: HTMLElement | null, into: HTMLElement): void {
@@ -213,24 +174,65 @@ export class DeskController {
     into.appendChild(node);
   }
 
+  /** The Verticopolis menu, the tray and the presses both taskbars share. */
+  private taskbarCommon(screen: DeskScreen): Omit<TaskbarOptions, "task" | "items"> {
+    const doc = this.doc;
+    return {
+      shown: (id) => id === CONTROL_PANEL_ITEM || doc.getElementById(id)?.hidden !== true,
+      start: (itemId) => {
+        trackAppAction("desk_start", itemId);
+        if (itemId === CONTROL_PANEL_ITEM) this.openControl();
+        else doc.getElementById(itemId)?.click();
+      },
+      sound: () => doc.getElementById(CONTROL_ITEM.sounds)?.click(),
+      opened: () => trackDeskStartOpen(screen),
+      tray: trackDeskTray,
+    };
+  }
+
+  /** The title screen in its own window, with a taskbar of its own. */
+  private showTitle(): void {
+    if (this.title?.up) return;
+    if (!this.title) {
+      const host = renderDetached(this.doc, html`<div class="desk-title-host"></div>`).elements[0] as HTMLElement;
+      this.doc.body.append(host);
+      this.title = new DeskTitle({
+        host,
+        title: "Verticopolis",
+        taskbar: {
+          ...this.taskbarCommon("title"),
+          items: startItems(false),
+          // The title screen's window is the only one, and it stays up.
+          task: () => {
+            trackDeskTask(DESK_TITLE_WINDOW, "front");
+            this.doc.querySelector<HTMLElement>("#splash .splash-btn.primary")?.focus();
+          },
+        },
+      });
+    }
+    this.title.show();
+    this.syncSound();
+    trackAppActionOnce("desk_title_shown");
+  }
+
   // ---------- up and down ----------
 
-  private up(): void {
+  private up(touch: boolean): void {
     const doc = this.doc;
     const app = doc.getElementById("app");
     if (!app) return;
     const pocket = this.pocket;
     doc.body.classList.add(DESK_CLASS);
     doc.body.classList.toggle(DESK_POCKET_CLASS, pocket);
-    doc.body.classList.toggle(DESK_TOUCH_CLASS, pocket || !!this.touchMq?.matches);
-    const desk = doc.createElement("div");
-    desk.id = "desk";
-    desk.className = "desk-area";
-    app.appendChild(desk);
+    doc.body.classList.toggle(DESK_TOUCH_CLASS, pocket || touch);
+    // A right-click on a window's title bar opens its window menu, as 1995's did.
+    const desk = renderDetached(doc, html`<div id="desk" class="desk-area" @contextmenu=${this.onDeskMenu}></div>`)
+      .elements[0] as HTMLElement;
+    app.append(desk);
     this.desk = desk;
 
     // The tower window: the menu bar, the tower and the status bar.
-    const tower = buildFrame(doc, "desk-win-tower", this.towerTitleText(), {
+    const tower = buildFrame(doc, "desk-win-tower", towerTitleText(doc), {
       label: "Close the tower",
       onClick: () => {
         trackDeskClose("tower");
@@ -254,9 +256,8 @@ export class DeskController {
     this.move(doc.getElementById("statusbar"), tower.body);
 
     // Info: the rating, date, time, funds, people and speed.
-    const info = buildFrame(doc, "desk-win-info", "Info");
-    if (!pocket) {
-      this.infoFrame = info.root;
+    const info = pocket ? null : buildFrame(doc, "desk-win-info", "Info");
+    if (info) {
       desk.appendChild(info.root);
       this.move(doc.getElementById("topbar"), info.body);
     }
@@ -272,27 +273,70 @@ export class DeskController {
     for (const el of pocket ? [towerInfo, bulletin] : [palette, map, towerInfo, bulletin]) this.move(el, desk);
     // Tools never folds on the desk: a window folded off the desk opens.
     if (palette?.classList.contains(PALETTE_COLLAPSED_CLASS)) doc.getElementById(PALETTE_COLLAPSE_BUTTON_ID)?.click();
-    const item = (id: string) => () => runMenuItem(id, doc);
 
-    const spec = (
+    // The Control Panel: closed until the Verticopolis menu or the tray opens it.
+    const control = new ControlPanel(doc, {
+      items: CONTROL_ITEMS,
+      closeLabel: "Close Control Panel",
+      picked: (icon) => {
+        trackAppAction("desk_control", icon);
+        doc.getElementById(CONTROL_ITEM[icon])?.click();
+      },
+      closed: () => trackDeskClose("control"),
+    });
+    desk.appendChild(control.root);
+    this.control = control;
+
+    const manager = new DeskManager({
+      desk,
+      order: ORDER,
+      // The full desk opens each window at its saved place or the first
+      // layout; the pocket desk leaves the places to its stylesheet.
+      places: (w, h) => {
+        if (!info) return {};
+        // Info's strip takes the width between Tools and the column first, so
+        // the tower opens under it at the height the strip really has.
+        info.root.style.width = `${defaultLayout(w, h).info.w}px`;
+        return defaultLayout(w, h, info.root.offsetHeight || undefined, map?.offsetHeight || undefined);
+      },
+      memory: pocket ? undefined : { store: this.place.store, layoutKey: DESK_KEY.layout, maxKey: DESK_KEY.max },
+      chrome: () => doc.getElementById("menubar"),
+      refreshed: (entries) => {
+        this.setTowerTitle?.(towerTitleText(doc));
+        this.taskbar?.render(entries);
+        this.syncMenuChecks();
+        this.syncSound();
+      },
+      tasked: trackDeskTask,
+      changed: (id, what) => {
+        if (what !== "move" || !this.movedOnce.has(id)) trackDeskWindow(id, what);
+        if (what === "move") this.movedOnce.add(id);
+      },
+    });
+    this.manager = manager;
+
+    this.taskbar = new DeskTaskbar(doc, {
+      ...this.taskbarCommon("tower"),
+      items: startItems(true),
+      task: (id) => this.taskPressed(id as DeskWindowId),
+      controlPanel: () => this.openControl(),
+      windowMenu: manager.windowMenu({
+        picked: trackWindowMenuPick,
+        opened: (_id, from) => trackWindowMenuOpen(from),
+      }),
+    });
+    app.appendChild(this.taskbar.root);
+    this.taskbar.start();
+
+    const item = (id: string) => () => runMenuItem(id, doc);
+    const slot = (
       id: DeskWindowId,
       el: HTMLElement,
       label: () => string,
-      rest: Partial<DeskWindowSpec> & Pick<DeskWindowSpec, "isOpen">,
-    ): DeskWindowSpec => ({
-      id,
-      el,
-      label,
-      layer: "tool",
-      limits: null,
-      canMax: false,
-      changed: (what) => this.changed(id, what),
-      pressed: () => this.focus(this.wins.get(id) ?? null),
-      ...rest,
-    });
-    const add = (s: DeskWindowSpec) => this.wins.set(s.id, new DeskWindow(s));
-    add(
-      spec("tower", tower.root, () => (pocket ? this.towerName() : this.towerTitleText()), {
+      rest: Partial<DeskSlot> & Pick<DeskSlot, "isOpen">,
+    ): DeskSlot => ({ id, el, label, layer: "tool", limits: null, canMax: false, ...rest });
+    manager.add(
+      slot("tower", tower.root, () => (pocket ? towerName(doc) : towerTitleText(doc)), {
         layer: "app",
         limits: TOWER_LIMITS,
         canMax: true,
@@ -300,103 +344,58 @@ export class DeskController {
         close: () => doc.getElementById("mb-close")?.click(),
       }),
     );
-    if (!pocket) add(spec("info", info.root, () => "Info", { isOpen: () => true }));
+    if (info) manager.add(slot("info", info.root, () => "Info", { isOpen: () => true }));
     if (palette && !pocket)
-      add(spec("tools", palette, () => "Tools", { limits: TOOLS_LIMITS, heightOnly: true, isOpen: () => true }));
+      manager.add(
+        slot("tools", palette, () => "Tools", { limits: TOOLS_LIMITS, heightOnly: true, isOpen: () => true }),
+      );
     if (map && !pocket)
-      add(
-        spec("map", map, () => "Map", {
+      manager.add(
+        slot("map", map, () => "Map", {
           isOpen: () => !map.hidden,
           open: item("mb-win-map"),
           close: () => map.querySelector<HTMLElement>(".overview-map-close")?.click(),
         }),
       );
     if (bulletin)
-      add(
-        spec("bulletin", bulletin, () => "Bulletin", {
+      manager.add(
+        slot("bulletin", bulletin, () => "Bulletin", {
           isOpen: () => !bulletin.hidden,
           open: item("mb-win-bulletin"),
           close: () => bulletin.querySelector<HTMLElement>('[data-close="bulletin-win"]')?.click(),
         }),
       );
     if (towerInfo)
-      add(
-        spec("towerInfo", towerInfo, () => "Tower Info", {
+      manager.add(
+        slot("towerInfo", towerInfo, () => "Tower Info", {
           isOpen: () => !towerInfo.hidden,
           open: item("mb-win-tower"),
           close: () => towerInfo.querySelector<HTMLElement>('[data-close="tower-win"]')?.click(),
         }),
       );
-
-    // The Control Panel: closed until the Verticopolis menu or the tray opens it.
-    const control = buildControlPanel(
-      doc,
-      (icon) => trackAppAction("desk_control", icon),
-      () => trackDeskClose("control"),
-    );
-    desk.appendChild(control.root);
-    add(
-      spec("control", control.root, () => "Control Panel", {
-        isOpen: control.isOpen,
-        open: control.open,
-        close: control.close,
+    manager.add(
+      slot("control", control.root, () => "Control Panel", {
+        isOpen: () => control.isOpen(),
+        open: () => control.open(),
+        close: () => control.close(),
       }),
     );
-    this.syncControl = control.sync;
-    const openControl = () => {
-      control.open();
-      this.bringUp("control");
-    };
 
-    this.taskbar = new DeskTaskbar(doc, {
-      task: (id) => this.taskPressed(id as DeskWindowId),
-      start: (itemId) => {
-        trackAppAction("desk_start", itemId);
-        doc.getElementById(itemId)?.click();
-      },
-      controlPanel: openControl,
-      opened: () => trackDeskStartOpen("tower"),
-      tray: trackDeskTray,
-      windowMenu: {
-        state: (id) => windowMenuState(this.wins.get(id as DeskWindowId), this.active),
-        run: (id, command) => {
-          trackWindowMenuPick(id, command);
-          runWindowCommand(this.wins.get(id as DeskWindowId), command, (w) =>
-            w.minimized ? this.bringUp(w.spec.id) : this.focus(w),
-          );
-        },
-        opened: (_id, from) => trackWindowMenuOpen(from),
-      },
-    });
-    app.appendChild(this.taskbar.root);
-    // A right-click on a window's title bar opens its window menu, as 1995's did.
-    desk.addEventListener("contextmenu", (e) => {
-      const el = (e.target as Element | null)?.closest?.(".win-title")?.parentElement;
-      const id = el ? [...this.wins].find(([, w]) => w.spec.el === el)?.[0] : undefined;
-      if (id && this.taskbar?.openWindowMenu(id, e.clientX, e.clientY)) e.preventDefault();
-    });
-    this.taskbar.start();
-
-    // The small windows start stacked above the tower, in their own order.
-    for (const w of this.wins.values()) if (w.spec.layer === "tool") w.spec.el.style.zIndex = String(++this.z);
-    this.wins.get("tower")!.spec.el.style.zIndex = "1";
-    // The pocket desk opens with the Map over the tower, and a Bulletin
-    // already open waits on the taskbar.
+    // The pocket desk opens with the Map over the tower.
     if (pocket && map?.hidden) item("mb-win-map")();
-    if (pocket && bulletin && !bulletin.hidden) this.wins.get("bulletin")?.minimize();
-    if (!pocket) this.layout.up(desk, this.infoFrame);
-    this.watch([palette, map, bulletin, towerInfo, control.root]);
-    this.focus(this.wins.get("tower") ?? null, false);
+    manager.start();
+    // A Bulletin already open on the pocket desk waits on the taskbar.
+    if (pocket && bulletin && !bulletin.hidden) manager.get("bulletin")?.minimize();
+    this.watch(palette, bulletin, pocket ? map : null);
     trackAppActionOnce("desk_shown", pocket ? "pocket" : "desk");
     doc.dispatchEvent(new CustomEvent(DESK_CHANGE_EVENT));
   }
 
   private down(): void {
-    this.layout.down();
     this.watcher?.disconnect();
     this.watcher = null;
-    for (const w of this.wins.values()) w.dispose();
-    this.wins.clear();
+    this.manager?.dispose();
+    this.manager = null;
     this.doc.querySelectorAll(".desk-added").forEach((e) => e.remove());
     for (const { node, parent, next } of this.moved.reverse()) {
       parent.insertBefore(node, next && next.parentNode === parent ? next : null);
@@ -405,139 +404,81 @@ export class DeskController {
     this.taskbar?.stop();
     this.taskbar?.root.remove();
     this.taskbar = null;
-    this.syncControl = null;
+    this.control = null;
     this.desk?.remove();
     this.desk = null;
-    this.infoFrame = null;
     this.setTowerTitle = null;
-    this.active = null;
     setDeskMenus(this.doc, null);
     this.doc.body.classList.remove(DESK_CLASS, DESK_POCKET_CLASS, DESK_TOUCH_CLASS);
     this.doc.dispatchEvent(new CustomEvent(DESK_CHANGE_EVENT));
   }
 
-  // ---------- focus and the taskbar ----------
+  /** A right-click on the desk: on a window's title bar, its window menu. */
+  private readonly onDeskMenu = (e: MouseEvent): void => {
+    const id = this.manager?.titleBarOf(e.target);
+    if (id && this.taskbar?.openWindowMenu(id, e.clientX, e.clientY)) e.preventDefault();
+  };
 
-  /** Give `win` the focus; `raise` false keeps its place in the stack (the
-   *  tower at start, under the small windows it opened with). */
-  private focus(win: DeskWindow | null, raise = true): void {
-    if (win && (win.minimized || !win.spec.isOpen())) win = null;
-    // The tower's place moves on a maximize or a restore even with the focus.
-    if (win && raise && (win !== this.active || win.spec.layer === "app")) {
-      // Windows stack in the order they were pressed, the tower too; a
-      // maximized tower stays under the small windows (owner, 2026-11-15).
-      win.spec.el.style.zIndex = String(win.spec.layer === "app" && win.maximized ? 0 : ++this.z);
-    }
-    this.active = win;
-    for (const w of this.wins.values()) w.spec.el.classList.toggle(DESK_ACTIVE_CLASS, w === win);
-    this.refresh();
-  }
-
-  /** Give the focus to the topmost window still showing. */
-  private focusNext(): void {
-    let best: DeskWindow | null = null;
-    for (const w of this.wins.values()) {
-      if (w.minimized || !w.spec.isOpen()) continue;
-      if (!best || Number(w.spec.el.style.zIndex || 0) > Number(best.spec.el.style.zIndex || 0)) best = w;
-    }
-    this.focus(best);
-  }
-
-  private bringUp(id: DeskWindowId): void {
-    const w = this.wins.get(id);
-    if (!w) return;
-    w.restore();
-    this.focus(w);
+  private openControl(): void {
+    this.control?.open();
+    this.manager?.bringUp("control");
   }
 
   private taskPressed(id: DeskWindowId): void {
-    const w = this.wins.get(id);
-    if (!w) return;
-    const pressed = deskTaskResult(w.minimized, w === this.active);
+    const m = this.manager;
+    const w = m?.get(id);
+    if (!m || !w) return;
     // The pocket tower fills the screen and has no Minimize, so its button only brings it to the front.
-    const result = this.pocket && id === "tower" && pressed === "min" ? "front" : pressed;
-    trackDeskTask(id, result);
-    if (result === "restore") this.bringUp(id);
-    else if (result === "min") w.minimize();
-    else this.focus(w);
+    if (this.pocket && id === "tower" && deskTaskResult(w.minimized, w === m.active) === "min") {
+      trackDeskTask(id, "front");
+      m.focus(w);
+    } else m.taskPressed(id);
   }
 
-  private changed(id: DeskWindowId, what: DeskChange): void {
-    this.layout.changed(id, what);
-    if (this.layout.restoring) return;
-    if (what !== "move" || !this.movedOnce.has(id)) trackDeskWindow(id, what);
-    if (what === "move") this.movedOnce.add(id);
-    if (what === "min") this.focusNext();
-    else if (what === "restore" || what === "max" || what === "unmax") this.focus(this.wins.get(id) ?? null);
-    else this.refresh();
-  }
-
-  /** Rebuild the taskbar and the tower's title from the windows' state. */
-  private refresh(): void {
-    this.setTowerTitle?.(this.towerTitleText());
-    const entries: TaskEntry[] = [];
-    for (const id of ORDER) {
-      const w = this.wins.get(id);
-      if (!w || !w.spec.isOpen()) continue;
-      entries.push({ id, label: w.spec.label(), active: w === this.active, minimized: w.minimized });
-    }
-    this.taskbar?.render(entries);
+  /** Check the Window menu's items for the windows that are open. */
+  private syncMenuChecks(): void {
     const pocketMap = this.pocket ? this.doc.getElementById("overview-map") : null;
     const checks: Record<string, MenuEntryState> = {};
     for (const item of this.doc.querySelectorAll<HTMLElement>("[data-desk-win]")) {
       const id = item.dataset.deskWin as DeskWindowId;
-      checks[item.id] = { checked: pocketMap && id === "map" ? !pocketMap.hidden : !!this.wins.get(id)?.spec.isOpen() };
+      const open = pocketMap && id === "map" ? !pocketMap.hidden : !!this.manager?.get(id)?.spec.isOpen();
+      checks[item.id] = { checked: open };
     }
     setMenuState(checks, this.doc);
-    this.taskbar?.syncSound();
-    this.syncControl?.();
   }
 
-  /** Hear the game open and close its windows, rename the tower and switch
-   *  the sound, and keep the taskbar in step. */
-  private watch(els: ReadonlyArray<HTMLElement | null>): void {
+  /** Mirror Options > Sound on the trays' speakers and the Sounds icon. */
+  private syncSound(): void {
+    const on = this.doc.getElementById(CONTROL_ITEM.sounds)?.getAttribute("aria-checked") !== "false";
+    this.taskbar?.setSound(on);
+    this.title?.taskbar?.setSound(on);
+    this.control?.setLabel("sounds", `Sounds: ${on ? "On" : "Off"}`);
+  }
+
+  /** Hear what the manager does not: the tower's name, Tools unfolding, the
+   *  pocket desk's Map (the game's own card, for the Window menu's check),
+   *  and news the game posts on the pocket desk, which covers the tower, so it
+   *  waits on the taskbar until the player asks for it. Created after the
+   *  manager starts, so it hears each change after the manager has. */
+  private watch(palette: HTMLElement | null, bulletin: HTMLElement | null, pocketMap: HTMLElement | null): void {
     const watcher = new MutationObserver((records) => {
       for (const r of records) {
-        const target = r.target as HTMLElement;
-        if (r.type !== "attributes") continue;
-        const id = [...this.wins].find(([, w]) => w.spec.el === target)?.[0];
-        if (!id) continue;
-        const w = this.wins.get(id);
-        if (!w) continue;
-        // A window the game just opened comes up in front, unminimized. On the
-        // pocket desk the Bulletin covers the tower, so news the game posts
-        // waits on the taskbar until the player asks for it.
-        const opened =
-          w.spec.isOpen() &&
-          (r.oldValue?.includes(PALETTE_COLLAPSED_CLASS) || (r.attributeName === "hidden" && r.oldValue !== null));
-        if (opened && this.pocket && id === "bulletin" && this.asked !== id) w.minimize();
-        else if (opened) this.bringUp(id);
-        else if (!w.spec.isOpen() && w === this.active) this.focusNext();
+        const el = r.target as HTMLElement;
+        const unfolded =
+          r.oldValue?.includes(PALETTE_COLLAPSED_CLASS) && !el.classList.contains(PALETTE_COLLAPSED_CLASS);
+        if (el === palette && unfolded && !this.pocket) this.manager?.bringUp("tools");
+        const opened = el === bulletin && r.attributeName === "hidden" && r.oldValue !== null && !el.hidden;
+        if (opened && this.pocket && this.asked !== "bulletin") this.manager?.get("bulletin")?.minimize();
       }
       this.asked = null;
-      this.refresh();
+      this.manager?.refresh();
     });
-    for (const el of els)
-      if (el) watcher.observe(el, { attributes: true, attributeFilter: ["hidden", "class"], attributeOldValue: true });
+    const attrs = { attributes: true, attributeOldValue: true };
+    if (palette) watcher.observe(palette, { ...attrs, attributeFilter: ["class"] });
+    for (const el of [bulletin, pocketMap]) if (el) watcher.observe(el, { ...attrs, attributeFilter: ["hidden"] });
     const name = this.doc.getElementById("sb-tower");
     if (name) watcher.observe(name, { childList: true, characterData: true, subtree: true });
-    const sound = this.doc.getElementById("mb-sound");
-    if (sound) watcher.observe(sound, { attributes: true, attributeFilter: ["aria-checked"] });
     this.watcher = watcher;
-  }
-
-  // ---------- the tower's name ----------
-
-  /** The tower's name from the status bar ("Tower One · Classic"). */
-  private towerName(): string {
-    const text = this.doc.getElementById("sb-tower")?.textContent ?? "";
-    return text.split(" · ")[0]?.trim() || "Verticopolis";
-  }
-
-  /** The tower window's title, in the period's "Document - Program" form. */
-  private towerTitleText(): string {
-    const name = this.towerName();
-    return name === "Verticopolis" ? name : `${name} - Verticopolis`;
   }
 }
 

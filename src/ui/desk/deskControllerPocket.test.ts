@@ -7,7 +7,8 @@ vi.mock("../../analyticsActions", () => ({ trackAppAction: vi.fn(), trackAppActi
 
 import { trackAppActionOnce } from "../../analyticsActions";
 import { DESK_MINIMIZED_CLASS } from "@verticopolis/components/windows/desk/deskWindow";
-import { DESK_ANY_SCREEN_MQ, DESK_CLASS, DESK_KEY, DESK_MQ, DeskController } from "./deskController";
+import { DESK_ANY_SCREEN_MQ, DESK_MQ } from "@verticopolis/components/windows/desk/deskScreen";
+import { DESK_CLASS, DESK_KEY, DeskController } from "./deskController";
 import {
   DESK_POCKET_CLASS,
   DESK_TOUCH_CLASS,
@@ -60,7 +61,7 @@ afterEach(() => {
 });
 
 const parent = (id: string) => doc.getElementById(id)?.parentElement;
-const tasks = () => [...doc.querySelectorAll<HTMLElement>(".desk-task")].map((t) => t.textContent);
+const tasks = () => [...doc.querySelectorAll<HTMLElement>(".desk-task")].map((t) => t.textContent?.trim());
 
 describe("the pocket desk", () => {
   it("puts Info, Tools and the tower in the tower window on a phone, with the Map left in the tower's view", () => {
