@@ -31,12 +31,9 @@ export const viewTemplate = (view: ModalView): TemplateResult => html`<h2>${view
  *  fragment's child list matches the template's authored structure. The
  *  template is rendered once (this harness never re-renders). */
 export function renderToFragment(result: TemplateResult | ModalView): DocumentFragment {
-  const container = document.createElement("div");
-  render("body" in result ? viewTemplate(result) : result, container);
-  const frag = document.createDocumentFragment();
-  for (const node of Array.from(container.childNodes)) {
-    if (node.nodeType === 8 /* Comment: lit part markers */) continue;
-    frag.appendChild(node);
+  const frag = drawFragment("body" in result ? viewTemplate(result) : result);
+  for (const node of Array.from(frag.childNodes)) {
+    if (node.nodeType === 8 /* Comment: lit part markers */) node.remove();
   }
   return frag;
 }

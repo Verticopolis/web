@@ -11,6 +11,7 @@ import { ScheduleReview } from "./scheduleReview";
 import type { Acknowledgements, Decision } from "./scheduleRecovery";
 
 import { html, render } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 vi.mock("./interactionState", () => ({ isDialogOpen: vi.fn(() => false), isSplashUp: vi.fn(() => false) }));
 
 /**
@@ -53,7 +54,7 @@ function harness(answer = Float64Array.of(1, 0), reason?: string) {
       toast: vi.fn(),
       sayVisibly: vi.fn(),
       showScheduleReview: vi.fn((_rows: unknown, _handlers?: unknown, _focus?: string): HTMLElement =>
-        document.createElement("div"),
+        drawElement<HTMLDivElement>(html`<div></div>`),
       ),
     },
     audio: { sfx: vi.fn() },
@@ -136,7 +137,7 @@ describe("ScheduleReview", () => {
 
   it("redraws an open review when an Undo or Redo changes the tower under it, keeping the focused button", () => {
     const { review, deps, engine } = harness();
-    const box = document.createElement("div");
+    const box = drawElement<HTMLDivElement>(html`<div></div>`);
     render(html`<button data-act="${reviewAct(9)}"></button>`, box);
     document.body.appendChild(box);
     deps.ui.showScheduleReview.mockReturnValueOnce(box);
@@ -156,7 +157,7 @@ describe("ScheduleReview", () => {
 
   it("redraws an open review when an Undo or Redo raises the tower revision under the same generation (#1802)", () => {
     const { review, deps, reader } = harness();
-    const box = document.createElement("div");
+    const box = drawElement<HTMLDivElement>(html`<div></div>`);
     document.body.appendChild(box);
     deps.ui.showScheduleReview.mockReturnValueOnce(box);
     review.open();

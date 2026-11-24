@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { render } from "lit-html";
-import { viewTemplate } from "../testing/litTestUtils";
+import { html, render } from "lit-html";
+import { viewTemplate, drawElement } from "../testing/litTestUtils";
 import { scheduleReviewEntry, scheduleReviewTemplate, type ReviewRow } from "./scheduleReview";
 
 const flat: ReviewRow = {
@@ -18,7 +18,7 @@ const staggered: ReviewRow = {
 };
 
 const draw = (rows: readonly ReviewRow[]): HTMLElement => {
-  const box = document.createElement("div");
+  const box = drawElement<HTMLDivElement>(html`<div></div>`);
   render(viewTemplate(scheduleReviewTemplate(rows)), box);
   return box;
 };
@@ -74,7 +74,7 @@ describe("the elevator schedule review dialog", () => {
 
 describe("the Tower Statistics entry", () => {
   it("counts the elevators and is not a footer row the dialog would pin over the stats", () => {
-    const box = document.createElement("div");
+    const box = drawElement<HTMLDivElement>(html`<div></div>`);
     render(scheduleReviewEntry(1), box);
     expect(box.textContent).toContain("1 elevator to look at");
     render(scheduleReviewEntry(3), box);

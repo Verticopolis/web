@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { announceLive } from "./liveRegion";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * The polite live region's clear-then-set announce (#541 / AUD-022). Screen
@@ -14,7 +16,7 @@ describe("announceLive (#541)", () => {
   const win = window as unknown as { requestAnimationFrame: (cb: FrameRequestCallback) => number };
 
   beforeEach(() => {
-    el = document.createElement("div");
+    el = drawElement<HTMLDivElement>(html`<div></div>`);
     el.id = "a11y-live";
     document.body.appendChild(el);
     raf = { cb: null };

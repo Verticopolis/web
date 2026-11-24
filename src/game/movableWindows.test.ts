@@ -11,6 +11,7 @@ import {
 } from "./movableWindows";
 
 import { html, render } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 vi.mock("../analytics", () => ({ trackAppAction: vi.fn() }));
 
 /**
@@ -21,14 +22,14 @@ vi.mock("../analytics", () => ({ trackAppAction: vi.fn() }));
  */
 
 function makeApp() {
-  const stage = document.createElement("div");
+  const stage = drawElement<HTMLDivElement>(html`<div></div>`);
   stage.id = "stage";
-  const editor = document.createElement("div");
+  const editor = drawElement<HTMLDivElement>(html`<div></div>`);
   editor.id = "editor";
   editor.className = "win win-closable";
   render(html`<div class="win-title"><span>Office</span><button type="button">✕</button></div>`, editor);
   stage.append(editor);
-  const modal = document.createElement("dialog");
+  const modal = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
   document.body.append(stage, modal);
   vi.spyOn(stage, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 800, 600));
   Object.defineProperty(stage, "clientWidth", { value: 800 });
@@ -166,7 +167,7 @@ describe("window analytics", () => {
   });
 
   it("wires the Map's ✕ and its first drag off the desk", () => {
-    const root = document.createElement("div");
+    const root = drawElement<HTMLDivElement>(html`<div></div>`);
     render(html`<div class="win-title"><button type="button" class="overview-map-close">✕</button></div>`, root);
     let onDesk = true;
     const placed = wireMapWindowAnalytics(root, () => onDesk);

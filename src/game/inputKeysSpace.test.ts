@@ -5,6 +5,8 @@ import { catalogFor } from "../tests/catalogFixture";
 import { buildPalette } from "../ui/uiPalette";
 import type { UI } from "../ui/UI";
 import { makeApp, pointer, press, release, tap } from "./inputKeys.fixture";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * Space is both the build key of keyboard play and the pan key held through a
@@ -66,7 +68,7 @@ describe("Space builds on release, never as the pan key", () => {
 
   it("a wheel that scrolls the palette or a panel, or a sideways swipe the camera ignores, leaves the tap", () => {
     const app = makeApp();
-    const panel = document.body.appendChild(document.createElement("div"));
+    const panel = document.body.appendChild(drawElement<HTMLDivElement>(html`<div></div>`));
     const wheels: [EventTarget, WheelEventInit][] = [
       [panel, { deltaY: 100 }],
       [app.canvas, { deltaX: 40 }], // no Shift, so the world does not zoom
@@ -140,10 +142,10 @@ describe("Space builds on release, never as the pan key", () => {
 
   it("cancels a pan release before a focused palette item sees it (the capture phase)", () => {
     makeApp();
-    const palette = document.createElement("div");
+    const palette = drawElement<HTMLDivElement>(html`<div></div>`);
     const selectTool = vi.fn();
     const ui = {
-      el: { palette, paletteTabs: document.createElement("div") },
+      el: { palette, paletteTabs: drawElement<HTMLDivElement>(html`<div></div>`) },
       selectTool,
       cb: { getCatalog: () => catalogFor("classic") },
     } as unknown as UI;
@@ -220,28 +222,28 @@ describe("Space builds on release, never as the pan key", () => {
       window.dispatchEvent(up);
       return up;
     };
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     expect(panRelease().defaultPrevented, "the splash").toBe(false);
     splash.remove();
-    const crash = document.createElement("div");
+    const crash = drawElement<HTMLDivElement>(html`<div></div>`);
     crash.id = CRASH_SCREEN_ID;
     document.body.appendChild(crash);
     expect(panRelease().defaultPrevented, "the crash card").toBe(false);
     crash.remove();
-    const failure = document.createElement("div");
+    const failure = drawElement<HTMLDivElement>(html`<div></div>`);
     failure.id = ENGINE_FAILURE_ID;
     document.body.appendChild(failure);
     expect(panRelease().defaultPrevented, "the engine-failure card").toBe(false);
     failure.remove();
-    const editable = document.createElement("div");
+    const editable = drawElement<HTMLDivElement>(html`<div></div>`);
     editable.contentEditable = "true";
     editable.tabIndex = 0;
     for (const field of [
-      document.createElement("input"),
-      document.createElement("textarea"),
-      document.createElement("select"),
+      drawElement<HTMLInputElement>(html`<input>`),
+      drawElement<HTMLTextAreaElement>(html`<textarea></textarea>`),
+      drawElement<HTMLSelectElement>(html`<select></select>`),
       editable,
     ]) {
       document.body.appendChild(field);
@@ -254,7 +256,7 @@ describe("Space builds on release, never as the pan key", () => {
   it("a Space-drag over a focused checkbox or radio cancels its release, as over a button", () => {
     const app = makeApp();
     for (const type of ["checkbox", "radio"]) {
-      const box = document.createElement("input");
+      const box = drawElement<HTMLInputElement>(html`<input>`);
       box.type = type;
       document.body.appendChild(box);
       box.focus();
@@ -271,7 +273,7 @@ describe("Space builds on release, never as the pan key", () => {
 
   it("a hold that reaches a focused field only as repeats is the field's", () => {
     makeApp();
-    const field = document.body.appendChild(document.createElement("input"));
+    const field = document.body.appendChild(drawElement<HTMLInputElement>(html`<input>`));
     field.focus();
     press(" ", { repeat: true });
     pointer("pointerdown");
@@ -299,7 +301,7 @@ describe("Space builds on release, never as the pan key", () => {
       expect(releaseIsCanceled(), `a Space chord with ${chord} is the system's`).toBe(false);
     }
     lostPanHold();
-    const field = document.body.appendChild(document.createElement("input"));
+    const field = document.body.appendChild(drawElement<HTMLInputElement>(html`<input>`));
     field.focus();
     press(" ");
     expect(releaseIsCanceled(), "the field's Space").toBe(false);
@@ -307,7 +309,7 @@ describe("Space builds on release, never as the pan key", () => {
 
   it("a pan hold with a dialog open leaves Space to the dialog's controls", () => {
     const app = makeApp();
-    const dialog = document.createElement("dialog");
+    const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     dialog.id = "modal";
     document.body.appendChild(dialog);
     dialog.open = true;
@@ -333,23 +335,23 @@ describe("Space builds on release, never as the pan key", () => {
       release(" ");
       return blur as unknown as ReturnType<typeof vi.fn>;
     };
-    const button = document.createElement("button");
+    const button = drawElement<HTMLButtonElement>(html`<button></button>`);
     expect(panOver(button), "the button Space pressed is reset").toHaveBeenCalledTimes(1);
     expect(document.activeElement, "and keeps the focus").toBe(button);
-    const box = document.createElement("input");
+    const box = drawElement<HTMLInputElement>(html`<input>`);
     box.type = "checkbox";
     expect(panOver(box), "so is a checkbox").toHaveBeenCalledTimes(1);
     expect(document.activeElement, "which keeps the focus too").toBe(box);
-    const map = document.createElement("canvas");
+    const map = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
     map.tabIndex = 0;
     map.setAttribute("role", "application");
     expect(panOver(map), "the Map keeps its drag").not.toHaveBeenCalled();
-    const item = document.createElement("div");
+    const item = drawElement<HTMLDivElement>(html`<div></div>`);
     item.tabIndex = 0;
     item.setAttribute("role", "button"); // a palette item, whose mouse press a blur would end
     expect(panOver(item), "a palette item the mouse holds keeps its press").not.toHaveBeenCalled();
     // A text field clicked into while Space is held keeps its edit.
-    const field = document.body.appendChild(document.createElement("input"));
+    const field = document.body.appendChild(drawElement<HTMLInputElement>(html`<input>`));
     press(" ");
     field.focus();
     vi.spyOn(field, "matches").mockImplementation((selector) => selector === ":active");
@@ -362,16 +364,16 @@ describe("Space builds on release, never as the pan key", () => {
 
   it("Enter and a Space tap on a focused palette item or button pick it and never build", () => {
     const app = makeApp();
-    const palette = document.createElement("div");
+    const palette = drawElement<HTMLDivElement>(html`<div></div>`);
     const selectTool = vi.fn();
     const ui = {
-      el: { palette, paletteTabs: document.createElement("div") },
+      el: { palette, paletteTabs: drawElement<HTMLDivElement>(html`<div></div>`) },
       selectTool,
       cb: { getCatalog: () => catalogFor("classic") },
     } as unknown as UI;
     buildPalette(ui);
     document.body.appendChild(palette);
-    const button = document.createElement("button");
+    const button = drawElement<HTMLButtonElement>(html`<button></button>`);
     document.body.appendChild(button);
     const lobby = palette.querySelector<HTMLElement>('.pal-item[data-kind="lobby"]')!;
     for (const control of [lobby, button]) {
@@ -415,7 +417,7 @@ describe("Space builds on release, never as the pan key", () => {
   it("a dialog opened while Space is held keeps the release from committing", () => {
     const app = makeApp();
     press(" ");
-    const dialog = document.createElement("dialog");
+    const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     dialog.id = "modal";
     document.body.appendChild(dialog);
     dialog.open = true;
@@ -426,7 +428,7 @@ describe("Space builds on release, never as the pan key", () => {
   it("a field focused while Space is held keeps the release from committing", () => {
     const app = makeApp();
     press(" ");
-    const input = document.createElement("input");
+    const input = drawElement<HTMLInputElement>(html`<input>`);
     document.body.appendChild(input);
     input.focus();
     release(" ");
@@ -436,7 +438,7 @@ describe("Space builds on release, never as the pan key", () => {
   it("the crash card coming up while Space is held keeps the release from committing", () => {
     const app = makeApp();
     press(" ");
-    const crash = document.createElement("div");
+    const crash = drawElement<HTMLDivElement>(html`<div></div>`);
     crash.id = CRASH_SCREEN_ID;
     document.body.appendChild(crash);
     release(" ");
@@ -453,7 +455,7 @@ describe("Space builds on release, never as the pan key", () => {
 
   it("a Space pressed on the Map window's canvas does not commit when released over the world", () => {
     const app = makeApp();
-    const map = document.createElement("canvas");
+    const map = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
     map.tabIndex = 0;
     map.setAttribute("role", "application");
     document.body.appendChild(map);

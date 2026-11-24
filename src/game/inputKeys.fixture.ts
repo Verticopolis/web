@@ -1,6 +1,8 @@
 import { vi } from "vitest";
 import type { GameApp } from "../main";
 import { bindKeys } from "./inputKeys";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * The fake app the keyboard tests drive, and the key helpers. `makeApp` builds
@@ -60,7 +62,7 @@ export function makeApp(cursorValue: { tile: number; floor: number } | null = nu
       refreshCursorPreview: vi.fn(),
     },
     audio: { start: vi.fn() },
-    canvas: document.body.appendChild(document.createElement("canvas")),
+    canvas: document.body.appendChild(drawElement<HTMLCanvasElement>(html`<canvas></canvas>`)),
   };
   liveListeners?.abort();
   liveListeners = new AbortController();

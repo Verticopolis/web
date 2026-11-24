@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { makeApp, pointer, press, release, tap } from "./inputKeys.fixture";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * The pointers a Space hold counts as held down. A hold with a pointer down at
@@ -21,7 +23,7 @@ const BUTTONS = { none: 0, primary: 1 } as const;
 describe("the pointers a Space hold counts", () => {
   it("counts a pointer press that a handler further down stops from bubbling", () => {
     const app = makeApp();
-    const world = document.createElement("div");
+    const world = drawElement<HTMLDivElement>(html`<div></div>`);
     world.addEventListener("pointerdown", (e) => e.stopPropagation());
     document.body.appendChild(world);
     press(" ");
@@ -69,7 +71,7 @@ describe("the pointers a Space hold counts", () => {
 
   it("a context menu the game keeps closed leaves the press it came in on record", () => {
     const app = makeApp();
-    const world = document.createElement("div");
+    const world = drawElement<HTMLDivElement>(html`<div></div>`);
     world.addEventListener("contextmenu", (e) => e.preventDefault());
     document.body.appendChild(world);
     pointer("pointerdown", 1, world);

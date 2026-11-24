@@ -8,6 +8,8 @@ import {
   mountDebugHud,
   type FrameStatsLike,
 } from "./debugHud";
+import { html } from "lit-html";
+import { drawElement } from "./ui/testing/litTestUtils";
 
 const frame = (fps: number, drawCalls: number): FrameStatsLike => ({
   fps,
@@ -60,7 +62,7 @@ describe("mounting the debug HUD (#645)", () => {
 
   it("sits in the game view's bottom-left corner and follows it on refresh", () => {
     vi.useFakeTimers();
-    const view = document.createElement("canvas");
+    const view = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
     view.id = DEBUG_HUD_VIEW_ID;
     document.body.append(view);
     const rect = { left: 180, bottom: 900, width: 1000, height: 850 };
@@ -78,7 +80,7 @@ describe("mounting the debug HUD (#645)", () => {
   });
 
   it("falls back to the page's corner while the view has no size", () => {
-    const view = document.createElement("canvas");
+    const view = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
     view.id = DEBUG_HUD_VIEW_ID;
     document.body.append(view);
     const stop = mountDebugHud(() => undefined);

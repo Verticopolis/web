@@ -53,7 +53,7 @@ describe("appearance prefs", () => {
   });
 
   it("put the scheme on the root element, and Standard takes the attribute off", () => {
-    const root = document.createElement("html");
+    const root = document.implementation.createHTMLDocument().documentElement;
     applyScheme("skyline", root);
     expect(root.getAttribute(SCHEME_ATTRIBUTE)).toBe("skyline");
     applyScheme("high_contrast", root);

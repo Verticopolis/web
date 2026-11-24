@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { runFrame, CHOICE_WAITING_NOTICE } from "./frameLoop";
 import { makeApp, makeSim } from "./frameLoop.fixture";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * How `runFrame` treats its auto-surfaced dialogs (an emergency choice, the
@@ -21,7 +23,7 @@ afterEach(() => {
  *  player's work (unsaved schedule edits, #1121). Returns the dialog so a test
  *  can close it. */
 function openDialogHoldingWork(raw: ReturnType<typeof makeApp>["raw"]): HTMLDialogElement {
-  const dialog = document.createElement("dialog");
+  const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
   dialog.id = "modal";
   dialog.open = true;
   document.body.appendChild(dialog);
@@ -69,7 +71,7 @@ describe("runFrame auto-surfaced dialogs and a dialog holding the player's work 
   it("still opens an emergency over a dialog that holds nothing", () => {
     const sim = makeSim({ pendingChoice: { message: "Fire!", cost: 5000 } });
     const { app, raw } = makeApp({ sim });
-    const dialog = document.createElement("dialog");
+    const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     dialog.id = "modal";
     dialog.open = true;
     document.body.appendChild(dialog);

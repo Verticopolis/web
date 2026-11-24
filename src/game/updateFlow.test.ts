@@ -9,6 +9,8 @@ import {
   showUpdatePrompt,
 } from "./updateFlow";
 import { NOTES_SEEN_KEY } from "../pwaUpdateInfo";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * Colocated unit tests for the PWA update-prompt flow. Every function is a free
@@ -117,7 +119,7 @@ describe("updateCoastClear", () => {
     // `updateCoastClear` reads the modal through `interactionState.isDialogOpen()`
     // (the `#modal.open` element) now, not `ui.isModalOpen()`, so drive the DOM.
     const { app } = clearApp();
-    const modal = document.createElement("dialog");
+    const modal = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     modal.id = "modal";
     document.body.appendChild(modal);
     (modal as HTMLDialogElement).open = true;
@@ -128,7 +130,7 @@ describe("updateCoastClear", () => {
 
   it("is false while a #splash element is in the DOM", () => {
     const { app } = clearApp();
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     expect(updateCoastClear(app)).toBe(false);

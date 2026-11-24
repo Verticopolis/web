@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi } from "vitest";
-import { render } from "lit-html";
+import { html, render } from "lit-html";
 import type { TemplateResult } from "lit-html";
 import type { TransportDetail, UnitDetail } from "@verticopolis/engine/port/panels";
 import type { GameMode } from "@verticopolis/engine/model/types";
@@ -8,6 +8,7 @@ import { catalogFor } from "../tests/catalogFixture";
 import { transportDetail, unitDetail } from "../tests/fixtures/detailCards";
 import { transportEditorTemplate, unitEditorTemplate } from "./templates/editor";
 import { syncRungSelects } from "./templates/rungPicker";
+import { drawElement } from "./testing/litTestUtils";
 
 /**
  * The editor card's update-in-place invariant, rewritten for lit (E6-S1).
@@ -37,7 +38,7 @@ function transportEditor(t: TransportDetail): TemplateResult {
 
 describe("editor card lit diffing — updates in place, element identity survives", () => {
   it("patches a changed stat cell without recreating the buttons or the rename input", () => {
-    const card = document.createElement("div");
+    const card = drawElement<HTMLDivElement>(html`<div></div>`);
     render(unitEditor(office({ satisfaction: 0.5 })), card);
     const btn = card.querySelector<HTMLElement>('[data-edit="rentUp"]')!;
     const name = card.querySelector<HTMLInputElement>("#ed-name")!;
@@ -59,7 +60,7 @@ describe("editor card lit diffing — updates in place, element identity survive
     // dirty (mid-edit) value would survive the attribute update and unit A's
     // half-typed text would show, and commit, on unit B.
     const officeB = office({ id: 2, x: 21, label: "Office B" });
-    const card = document.createElement("div");
+    const card = drawElement<HTMLDivElement>(html`<div></div>`);
     render(unitEditor(office()), card);
     const inputA = card.querySelector<HTMLInputElement>("#ed-name")!;
     inputA.value = "half-typed"; // player is mid-rename when the selection moves
@@ -71,7 +72,7 @@ describe("editor card lit diffing — updates in place, element identity survive
   });
 
   it("a click listener attached before a refresh still fires on the same button after it", () => {
-    const card = document.createElement("div");
+    const card = drawElement<HTMLDivElement>(html`<div></div>`);
     render(unitEditor(office()), card);
     const btn = card.querySelector<HTMLElement>('[data-edit="rentUp"]')!;
     const onClick = vi.fn();
@@ -92,7 +93,7 @@ describe("editor card lit diffing — updates in place, element identity survive
     // option bindings before the options attach, so the value write must come
     // after render).
     let classic = office({}, "classic");
-    const card = document.createElement("div");
+    const card = drawElement<HTMLDivElement>(html`<div></div>`);
     // Mirror renderEditor: selection is written post-render by syncRungSelects
     // (a select's options must be attached before its value can be set).
     const paint = () => {
@@ -118,7 +119,7 @@ describe("editor card lit diffing — updates in place, element identity survive
     // engine truth over that in-progress pick. After blur, the next sync
     // reconciles normally.
     const classic = office({}, "classic");
-    const card = document.createElement("div");
+    const card = drawElement<HTMLDivElement>(html`<div></div>`);
     document.body.appendChild(card); // focus needs a connected element
     try {
       const paint = () => {
@@ -141,7 +142,7 @@ describe("editor card lit diffing — updates in place, element identity survive
   });
 
   it("a shape change (gutted) restructures rows while the action buttons keep identity", () => {
-    const card = document.createElement("div");
+    const card = drawElement<HTMLDivElement>(html`<div></div>`);
     render(unitEditor(office()), card);
     expect(card.textContent).toContain("Resale value");
     const sell = card.querySelector<HTMLElement>('[data-edit="sell"]')!;
@@ -156,7 +157,7 @@ describe("editor card lit diffing — updates in place, element identity survive
   });
 
   it("a car button crossing its disabled bound flips the attribute on the SAME element", () => {
-    const card = document.createElement("div");
+    const card = drawElement<HTMLDivElement>(html`<div></div>`);
     render(transportEditor(lift(1)), card);
     const remove = card.querySelector<HTMLButtonElement>('[data-edit="removecar"]')!;
     // The legacy protocol REBUILT the whole card at this bound (it was part of

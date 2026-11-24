@@ -5,10 +5,12 @@ vi.mock("../analyticsActions", () => ({ trackAppActionOnce: vi.fn() }));
 import { trackAppActionOnce } from "../analyticsActions";
 import { makeUI, mountAppDom } from "../tests/uiFixture";
 import { wireBulletinReadBack } from "./bulletinReadBack";
+import { html } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 
 /** A log element whose scroll offset the test sets, then scrolls. */
 function scrolledLog(): { log: HTMLElement; scrollTo: (top: number) => void } {
-  const log = document.createElement("div");
+  const log = drawElement<HTMLDivElement>(html`<div></div>`);
   return {
     log,
     scrollTo: (top) => {

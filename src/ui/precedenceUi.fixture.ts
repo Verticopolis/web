@@ -1,6 +1,8 @@
 import { vi } from "vitest";
 import { ModalPrecedence, type ModalOpts } from "@verticopolis/components/windows/modalPrecedence";
 import type { UI } from "./UI";
+import { html } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 
 /**
  * A stand-in for the UI's one shared dialog, for unit tests of the report
@@ -20,7 +22,7 @@ export function precedenceUi() {
     openModal: vi.fn((_template: unknown, opts: ModalOpts = {}) => {
       precedence.opening(open, opts);
       open = true;
-      return document.createElement("div");
+      return drawElement<HTMLDivElement>(html`<div></div>`);
     }),
     closeModal: vi.fn(() => {
       const wasOpen = open;

@@ -22,10 +22,11 @@ import {
   type PresenceChannel,
 } from "./fromGame";
 import { pageShell } from "./templates/pageShell";
+import { drawElement } from "./testing/litTestUtils";
 
 /** A page the game opened, in the shared shell, mounted in the test DOM. */
 function mountFromGame(): void {
-  const root = document.createElement("div");
+  const root = drawElement<HTMLDivElement>(html`<div></div>`);
   render(pageShell({ title: "T", backHref: "/", main: html`<p>Body</p>`, fromGame: true }), root);
   document.body.replaceChildren(root);
 }

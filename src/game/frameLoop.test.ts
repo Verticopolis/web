@@ -8,6 +8,8 @@ import { CROWD_CULL_ZOOM } from "@verticopolis/components/render/excalibur/crowd
 import { NO_PEOPLE } from "@verticopolis/components/render/excalibur/peopleWindow";
 import { TOAST_SHOWN_MS } from "../ui/uiStatus";
 import { maybeShowStarUp, noteStarUp } from "./starUpFlow";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * These pin the per-frame simulation + throttled UI/audio refresh (`runFrame`)
@@ -89,7 +91,7 @@ describe("runFrame freeze path", () => {
 
   it("stops time for good once a wasm-only build has stopped on its engine, whatever the speed", () => {
     const { app, raw } = makeApp({ accMinutes: 7 });
-    const stop = document.createElement("div");
+    const stop = drawElement<HTMLDivElement>(html`<div></div>`);
     stop.id = "engine-failure";
     document.body.appendChild(stop);
     try {
@@ -376,7 +378,7 @@ describe("runFrame auto-surfaced emergency choice", () => {
   it("does not open the choice behind the boot/return splash", () => {
     const sim = makeSim({ pendingChoice: { message: "Fire!", cost: 5000 } });
     const { app, raw } = makeApp({ speed: 0, sim });
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     runFrame(app, 16);
@@ -417,7 +419,7 @@ describe("runFrame TOWER congratulations", () => {
   it("suppresses the TOWER congrats behind the splash", () => {
     const sim = makeSim({ evaluatedTower: true });
     const { app, raw } = makeApp({ speed: 0, sim });
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     runFrame(app, 16);

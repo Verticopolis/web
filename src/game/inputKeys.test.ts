@@ -4,6 +4,8 @@ import { CRASH_SCREEN_ID } from "../ui/crashScreen";
 import { GRAPHICS_RECOVERY_ID } from "../ui/graphicsRecovery";
 import { setHistoryButtons } from "../ui/uiStatus";
 import { makeApp, press, tap } from "./inputKeys.fixture";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * These pin the keyboard-play / audio-kick / pagehide wiring installed by
@@ -60,7 +62,7 @@ describe("undo / redo", () => {
 
   it("is skipped while typing in an INPUT (the field keeps its own history)", () => {
     const app = makeApp();
-    const input = document.createElement("input");
+    const input = drawElement<HTMLInputElement>(html`<input>`);
     document.body.appendChild(input);
     input.focus();
     press("z", { ctrlKey: true });
@@ -69,7 +71,7 @@ describe("undo / redo", () => {
 
   it("still undoes/redoes while a SELECT is focused (no native undo to yield to)", () => {
     const app = makeApp();
-    const select = document.createElement("select");
+    const select = drawElement<HTMLSelectElement>(html`<select></select>`);
     document.body.appendChild(select);
     select.focus();
     press("z", { ctrlKey: true });
@@ -80,7 +82,7 @@ describe("undo / redo", () => {
 
   it("is skipped while a contentEditable region is focused (it keeps its own undo)", () => {
     const app = makeApp();
-    const box = document.createElement("div");
+    const box = drawElement<HTMLDivElement>(html`<div></div>`);
     box.contentEditable = "true";
     document.body.appendChild(box);
     box.focus();
@@ -90,7 +92,7 @@ describe("undo / redo", () => {
 
   it("is inert behind the first-run splash (never mutate the tower behind it, #541)", () => {
     const app = makeApp();
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     press("z", { ctrlKey: true });
@@ -101,7 +103,7 @@ describe("undo / redo", () => {
 
   it("is inert while a modal dialog is open (the tower must not change under a dialog, #541)", () => {
     const app = makeApp();
-    const dialog = document.createElement("dialog");
+    const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     dialog.id = "modal";
     document.body.appendChild(dialog);
     dialog.open = true;
@@ -113,7 +115,7 @@ describe("undo / redo", () => {
 
   it("resumes normally once the modal closes", () => {
     const app = makeApp();
-    const dialog = document.createElement("dialog");
+    const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     dialog.id = "modal";
     document.body.appendChild(dialog);
     dialog.open = true;
@@ -197,7 +199,7 @@ describe("commit / bulldoze", () => {
 
   it("Space and Enter on the Map window's canvas (role application) never commit the cursor", () => {
     const app = makeApp();
-    const map = document.createElement("canvas");
+    const map = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
     map.tabIndex = 0;
     map.setAttribute("role", "application");
     document.body.appendChild(map);
@@ -210,7 +212,7 @@ describe("commit / bulldoze", () => {
 
   it("Enter and Space on a grayed-out Undo never commit the cursor", () => {
     const app = makeApp();
-    const undo = document.body.appendChild(document.createElement("button"));
+    const undo = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
     undo.focus();
     setHistoryButtons({ el: { undo, redo: null } } as never, { undoDepths: () => Float64Array.of(0, 0) });
     expect([document.activeElement, undo.getAttribute("aria-disabled")], "gray and still focused").toEqual([
@@ -270,7 +272,7 @@ describe("Escape cancels", () => {
 describe("early-return guards", () => {
   it("a crash screen swallows ALL keys (undo and game keys alike)", () => {
     const app = makeApp({ tile: 1, floor: 1 });
-    const crash = document.createElement("div");
+    const crash = drawElement<HTMLDivElement>(html`<div></div>`);
     crash.id = CRASH_SCREEN_ID;
     document.body.appendChild(crash);
     press("z", { ctrlKey: true });
@@ -283,7 +285,7 @@ describe("early-return guards", () => {
 
   it("the graphics-recovery card swallows ALL keys while the canvas is frozen (#321)", () => {
     const app = makeApp({ tile: 1, floor: 1 });
-    const card = document.createElement("dialog");
+    const card = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     card.id = GRAPHICS_RECOVERY_ID;
     document.body.appendChild(card);
     press("z", { ctrlKey: true });
@@ -298,7 +300,7 @@ describe("early-return guards", () => {
 
   it("a focused INPUT swallows game keys", () => {
     const app = makeApp();
-    const input = document.createElement("input");
+    const input = drawElement<HTMLInputElement>(html`<input>`);
     document.body.appendChild(input);
     input.focus();
     press("2");
@@ -309,7 +311,7 @@ describe("early-return guards", () => {
 
   it("a focused SELECT swallows game keys", () => {
     const app = makeApp();
-    const select = document.createElement("select");
+    const select = drawElement<HTMLSelectElement>(html`<select></select>`);
     document.body.appendChild(select);
     select.focus();
     press("2");
@@ -318,7 +320,7 @@ describe("early-return guards", () => {
 
   it("a focused TEXTAREA swallows game keys", () => {
     const app = makeApp();
-    const ta = document.createElement("textarea");
+    const ta = drawElement<HTMLTextAreaElement>(html`<textarea></textarea>`);
     document.body.appendChild(ta);
     ta.focus();
     press("ArrowRight");
@@ -327,7 +329,7 @@ describe("early-return guards", () => {
 
   it("the first-run splash blocks game keys", () => {
     const app = makeApp();
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     press("2");
@@ -338,7 +340,7 @@ describe("early-return guards", () => {
 
   it("an open #modal dialog blocks game keys", () => {
     const app = makeApp();
-    const dialog = document.createElement("dialog");
+    const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     dialog.id = "modal";
     document.body.appendChild(dialog);
     dialog.open = true;
@@ -348,7 +350,7 @@ describe("early-return guards", () => {
 
   it("a CLOSED #modal dialog does NOT block", () => {
     const app = makeApp();
-    const dialog = document.createElement("dialog");
+    const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     dialog.id = "modal";
     document.body.appendChild(dialog);
     dialog.open = false;
@@ -371,7 +373,7 @@ describe("audio kick + pagehide", () => {
 
   it("skips audio behind the crash screen but stays armed for the next gesture", () => {
     const app = makeApp();
-    const crash = document.createElement("div");
+    const crash = drawElement<HTMLDivElement>(html`<div></div>`);
     crash.id = CRASH_SCREEN_ID;
     document.body.appendChild(crash);
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "q" }));

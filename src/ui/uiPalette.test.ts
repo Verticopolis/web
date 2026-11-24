@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { toolInfoFor } from "./templates/toolInfo";
-import { renderToFragment } from "./testing/litTestUtils";
+import { renderToFragment, drawElement } from "./testing/litTestUtils";
 import { catalogFor } from "../tests/catalogFixture";
 import { buildPalette, relabelPalette, selectGroup, syncPaletteTabs } from "./uiPalette";
 import type { Tool, UI } from "./UI";
+import { html } from "lit-html";
 
 /**
  * The build palette: Inspect/Bulldoze in a pinned cluster, every build category a
@@ -14,8 +15,8 @@ import type { Tool, UI } from "./UI";
  * the lock scan writes, without standing up the whole UI.
  */
 function stubUI(): { ui: UI; palette: HTMLElement; tabs: HTMLElement; selectTool: ReturnType<typeof vi.fn> } {
-  const palette = document.createElement("div");
-  const tabs = document.createElement("div");
+  const palette = drawElement<HTMLDivElement>(html`<div></div>`);
+  const tabs = drawElement<HTMLDivElement>(html`<div></div>`);
   const selectTool = vi.fn();
   const ui = {
     el: { palette, paletteTabs: tabs },

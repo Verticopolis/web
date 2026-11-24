@@ -1,6 +1,8 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copyText } from "./copyText";
+import { html } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 
 afterEach(() => {
   document.body.replaceChildren();
@@ -49,7 +51,7 @@ describe("copyText", () => {
   });
 
   it("puts the fallback textarea inside an open dialog, which is where a modal page can select", async () => {
-    const dialog = document.createElement("dialog");
+    const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     document.body.appendChild(dialog);
     (dialog as HTMLDialogElement & { open: boolean }).open = true;
     let parent: Element | null = null;
@@ -62,7 +64,7 @@ describe("copyText", () => {
   });
 
   it("gives focus back to the control that had it", async () => {
-    const button = document.createElement("button");
+    const button = drawElement<HTMLButtonElement>(html`<button></button>`);
     document.body.appendChild(button);
     button.focus();
     document.execCommand = vi.fn(() => true);

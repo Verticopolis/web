@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { makeApp, pointer, press, release } from "./inputKeys.fixture";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * Which Space the game follows as a hold, and what a cover that comes up mid-hold
@@ -26,7 +28,7 @@ function releaseIsCanceled(init: KeyboardEventInit = { key: " " }): boolean {
 }
 
 function openDialog(): void {
-  const dialog = document.createElement("dialog");
+  const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
   dialog.id = "modal";
   document.body.appendChild(dialog);
   dialog.open = true;
@@ -46,12 +48,12 @@ describe("the Space hold the game follows", () => {
       expect(panKey(), `a Space chord with ${chord}`).toBe(false);
       release(" ", { [chord]: true });
     }
-    const field = document.body.appendChild(document.createElement("input"));
+    const field = document.body.appendChild(drawElement<HTMLInputElement>(html`<input>`));
     field.focus();
     press(" ");
     expect(panKey(), "a Space typed into a field").toBe(false);
     release(" ");
-    const box = document.body.appendChild(document.createElement("input"));
+    const box = document.body.appendChild(drawElement<HTMLInputElement>(html`<input>`));
     box.type = "checkbox";
     box.focus();
     press(" ");
@@ -86,7 +88,9 @@ describe("the Space hold the game follows", () => {
     const dialogWithButton = (): HTMLButtonElement => {
       document.body.replaceChildren();
       openDialog();
-      const button = document.getElementById("modal")!.appendChild(document.createElement("button"));
+      const button = document
+        .getElementById("modal")!
+        .appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
       button.focus();
       return button;
     };
@@ -95,7 +99,7 @@ describe("the Space hold the game follows", () => {
       window.dispatchEvent(repeat);
       return repeat.defaultPrevented;
     };
-    const field = document.body.appendChild(document.createElement("input"));
+    const field = document.body.appendChild(drawElement<HTMLInputElement>(html`<input>`));
     field.focus();
     press(" ");
     dialogWithButton(); // an emergency choice takes focus mid-press
@@ -139,7 +143,7 @@ describe("the Space hold the game follows", () => {
 
   it("a Space-drag over a focused slider pans, and its release is canceled", () => {
     makeApp();
-    const slider = document.body.appendChild(document.createElement("input"));
+    const slider = document.body.appendChild(drawElement<HTMLInputElement>(html`<input>`));
     slider.type = "range";
     slider.focus();
     press(" ");
@@ -197,7 +201,7 @@ describe("the Space hold the game follows", () => {
   it("a plain Space tap on a focused checkbox or radio is left to it", () => {
     const app = makeApp();
     for (const type of ["checkbox", "radio"]) {
-      const box = document.body.appendChild(document.createElement("input"));
+      const box = document.body.appendChild(drawElement<HTMLInputElement>(html`<input>`));
       box.type = type;
       box.focus();
       press(" ");
@@ -223,8 +227,8 @@ describe("the Space hold the game follows", () => {
 
   it("a pan hold that Cmd's release, a native menu or drag, or a dropdown's key ended still cancels its late Space release", () => {
     const app = makeApp();
-    const dropdown = document.body.appendChild(document.createElement("select"));
-    const image = document.body.appendChild(document.createElement("img"));
+    const dropdown = document.body.appendChild(drawElement<HTMLSelectElement>(html`<select></select>`));
+    const image = document.body.appendChild(drawElement<HTMLImageElement>(html`<img>`));
     image.addEventListener("dragstart", (e) => e.preventDefault());
     press(" ");
     image.dispatchEvent(new Event("dragstart", { bubbles: true, cancelable: true }));
@@ -286,7 +290,10 @@ describe("the Space hold the game follows", () => {
   it("a Space the page first sees as repeats is not an open dialog's", () => {
     makeApp();
     openDialog();
-    document.getElementById("modal")!.appendChild(document.createElement("button")).focus();
+    document
+      .getElementById("modal")!
+      .appendChild(drawElement<HTMLButtonElement>(html`<button></button>`))
+      .focus();
     const repeat = new KeyboardEvent("keydown", { key: " ", repeat: true, cancelable: true });
     window.dispatchEvent(repeat);
     expect(repeat.defaultPrevented, "its repeat does not press the dialog's button").toBe(true);
@@ -295,7 +302,7 @@ describe("the Space hold the game follows", () => {
 
   it("a press or a key that opens a dropdown ends the hold, since its popup can take the release", () => {
     const app = makeApp();
-    const select = document.body.appendChild(document.createElement("select"));
+    const select = document.body.appendChild(drawElement<HTMLSelectElement>(html`<select></select>`));
     const pressOn = (target: Element, init: PointerEventInit = {}): void => {
       pointer("pointerdown", 1, target, init);
       pointer("pointerup", 1, target);
@@ -363,7 +370,10 @@ describe("the Space hold the game follows", () => {
     press(" ");
     release("Meta"); // ends the hold with Space still down
     openDialog(); // an emergency choice, its button focused
-    document.getElementById("modal")!.appendChild(document.createElement("button")).focus();
+    document
+      .getElementById("modal")!
+      .appendChild(drawElement<HTMLButtonElement>(html`<button></button>`))
+      .focus();
     expect(releaseIsCanceled(), "the release does not click its button").toBe(true);
   });
 
@@ -379,7 +389,7 @@ describe("the Space hold the game follows", () => {
 
   it("a release a cover took lifts the pressed look of a control the cover left focused", () => {
     makeApp();
-    const button = document.body.appendChild(document.createElement("button"));
+    const button = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
     button.focus();
     vi.spyOn(button, "matches").mockImplementation((selector) => selector === ":active");
     const blur = vi.spyOn(button, "blur");

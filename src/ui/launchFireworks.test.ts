@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import type { ModalView } from "@verticopolis/components/windows/uiModal";
-import { render } from "lit-html";
-import { renderToFragment, viewTemplate } from "./testing/litTestUtils";
+import { html, render } from "lit-html";
+import { renderToFragment, viewTemplate, drawElement } from "./testing/litTestUtils";
 import { WELCOME_LINKS, welcomeModalTemplate } from "./templates/welcome";
 import {
   LAUNCH_FIREWORKS_SEEN_KEY,
@@ -203,10 +203,10 @@ describe("the show", () => {
    *  a box inside a dialog, as `UI.openModal` does; closing empties
    *  the dialog, as `UI.closeModal` does. */
   function modalPort() {
-    const dialog = document.createElement("dialog");
+    const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     dialog.id = "test-modal";
     document.body.append(dialog);
-    const box = document.createElement("div");
+    const box = drawElement<HTMLDivElement>(html`<div></div>`);
     const ui = {
       openModal: vi.fn((result: ModalView, _opts?: { displaceable?: boolean; onDisplaced?: () => void }) => {
         render(viewTemplate(result), box);
@@ -411,14 +411,14 @@ describe("the boot call", () => {
     history.replaceState(null, "", "/");
   });
 
-  const port = () => ({ openModal: vi.fn(() => document.createElement("div")), wireActions: vi.fn() });
+  const port = () => ({ openModal: vi.fn(() => drawElement<HTMLDivElement>(html`<div></div>`)), wireActions: vi.fn() });
 
   /** A port whose box sits in a real dialog, so the boot's close hook is wired. */
   function dialogPort() {
-    const dialog = document.createElement("dialog");
+    const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     const ui = {
       openModal: vi.fn(() => {
-        const box = document.createElement("div");
+        const box = drawElement<HTMLDivElement>(html`<div></div>`);
         dialog.replaceChildren(box);
         return box;
       }),

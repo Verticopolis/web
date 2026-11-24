@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { GameApp } from "../main";
 import { rebuildEngine } from "./engineWiring";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 // The real renderer needs WebGL, which a headless run lacks; the rebuild only
 // needs a renderer it can wire, configure and start.
@@ -29,7 +31,7 @@ vi.mock("@verticopolis/components/render/excalibur/TowerEngine", () => ({
  * drawn again on it, and a shaft anchor stays, since the tower is the same.
  */
 function appUnderContextLoss() {
-  const canvas = document.createElement("canvas");
+  const canvas = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
   document.body.append(canvas);
   const order: string[] = [];
   const app = {

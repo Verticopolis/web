@@ -6,6 +6,8 @@ import {
   pickSkyBridgeLook,
   syncSkyBridgeLookStrip,
 } from "./skyBridgeLookStrip";
+import { html } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 
 /** The Sky Bridge tool's look strip: one button per catalog look, shown only
  *  while the tool is armed, the picked look pressed. */
@@ -15,7 +17,7 @@ describe("the bridge look strip", () => {
 
   beforeEach(() => {
     document.body.replaceChildren();
-    strip = document.createElement("div");
+    strip = drawElement<HTMLDivElement>(html`<div></div>`);
     strip.id = "sky-bridge-look-strip";
     document.body.append(strip);
     pickSkyBridgeLook(FIRST_PICKED_LOOK, null);

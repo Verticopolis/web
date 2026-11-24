@@ -31,7 +31,7 @@ function boot(
   tab: Map<string, string> = new Map(),
 ): { worn: string | null; kept: string | null } {
   const store = new Map<string, string>(kept === null ? [] : [[HELP_SCHEME_KEY, kept]]);
-  const root = document.createElement("html");
+  const root = document.implementation.createHTMLDocument().documentElement;
   const doc = {
     documentElement: root,
     get cookie(): string {

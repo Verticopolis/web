@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { catalogFor } from "../tests/catalogFixture";
-import { renderToFragment } from "./testing/litTestUtils";
+import { renderToFragment, drawElement } from "./testing/litTestUtils";
 import { buildPalette } from "./uiPalette";
 import { scanSkyBridgeButton, skyBridgeToolInfo, skyBridgeUnlocked } from "./skyBridgePalette";
 import type { UI } from "./UI";
+import { html } from "lit-html";
 
 /**
  * The Sky Bridge tool's palette button and card (Modern): built only from a
@@ -15,7 +16,7 @@ const MODERN = catalogFor("modern");
 const RULE = MODERN.rules.skyBridge!;
 
 function palette(mode: "classic" | "modern") {
-  const el = document.createElement("div");
+  const el = drawElement<HTMLDivElement>(html`<div></div>`);
   const selectTool = vi.fn();
   const ui = {
     el: { palette: el, paletteTabs: null },

@@ -13,6 +13,8 @@ import { NO_GESTURE } from "./appHistory";
 import type { EnginePort } from "@verticopolis/engine/port/enginePort";
 import { mockPort } from "../tests/portKit/mockPort";
 import { PortCodes } from "@verticopolis/engine/port/portCodes";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * The UI command boundary is pure wiring: every UICallbacks member delegates to
@@ -179,7 +181,7 @@ describe("createUICallbacks delegates every callback to its port", () => {
   it("edit action routes to the editor port", () => {
     const { ports } = makePorts();
     const cb = createUICallbacks(ports);
-    const root = document.createElement("div");
+    const root = drawElement<HTMLDivElement>(html`<div></div>`);
     cb.onEditAction("rename", root);
     expect(ports.personCard.handleAction).toHaveBeenCalledWith("rename");
     expect(ports.editor.handleEditAction).toHaveBeenCalledWith("rename", root);
@@ -188,7 +190,7 @@ describe("createUICallbacks delegates every callback to its port", () => {
   it("a person card button stays with the person card", () => {
     const { ports } = makePorts();
     const cb = createUICallbacks(ports);
-    cb.onEditAction("person:follow", document.createElement("div"));
+    cb.onEditAction("person:follow", drawElement<HTMLDivElement>(html`<div></div>`));
     expect(ports.personCard.handleAction).toHaveBeenCalledWith("person:follow");
     expect(ports.editor.handleEditAction).not.toHaveBeenCalled();
   });

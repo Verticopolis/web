@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { lobbyPickerFor, syncLobbyHeightStrip } from "./lobbyHeightStrip";
 import { catalogFor } from "../tests/catalogFixture";
 import type { UI } from "./UI";
+import { html } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 
 /**
  * The phone's lobby height strip (#308): it shows the Lobby card's 1 / 2 / 3
@@ -13,7 +15,7 @@ const catalog = catalogFor("modern");
 let strip: HTMLElement;
 
 beforeEach(() => {
-  strip = document.createElement("div");
+  strip = drawElement<HTMLDivElement>(html`<div></div>`);
   strip.id = "lobby-height-strip";
   strip.hidden = true;
   document.body.append(strip);
@@ -49,7 +51,7 @@ describe("lobbyPickerFor", () => {
       },
       pick: vi.fn((h: number) => (picked = h)),
     };
-    const toolInfo = document.createElement("div");
+    const toolInfo = drawElement<HTMLDivElement>(html`<div></div>`);
     const ui = {
       cb: { lobbyHeight: () => choice, getCatalog: () => catalog },
       tool: { type: "build", kind: "lobby" },

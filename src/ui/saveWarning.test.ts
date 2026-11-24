@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SAVE_WARNING_ID, clearSaveWarning, showSaveWarning } from "./saveWarning";
+import { html } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 
 /** The save-failure notice on the toast rail: one notice, reworded rather than
  *  stacked, with an Export button that calls back and a Dismiss that removes it. */
 describe("save-failure notice", () => {
   let rail: HTMLElement;
   beforeEach(() => {
-    rail = document.createElement("div");
-    rail.append(document.createElement("div"));
+    rail = drawElement<HTMLDivElement>(html`<div></div>`);
+    rail.append(drawElement<HTMLDivElement>(html`<div></div>`));
   });
 
   it("goes first on the rail with its headline, text and buttons", () => {

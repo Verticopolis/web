@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { render } from "lit-html";
+import { html, render } from "lit-html";
 import { towerStatsTemplate, type TowerStatsSnapshot } from "./towerStats";
-import { renderToFragment } from "../testing/litTestUtils";
+import { renderToFragment, drawElement } from "../testing/litTestUtils";
 
 /**
  * The tower-stats grid (E5-S1, the first live view). Package: the eight k/v rows
@@ -59,7 +59,7 @@ describe("towerStatsTemplate values", () => {
 
 describe("towerStatsTemplate patches in place across pumps", () => {
   it("keeps every span's identity when re-rendered with a changed snapshot", () => {
-    const box = document.createElement("div");
+    const box = drawElement<HTMLDivElement>(html`<div></div>`);
     render(towerStatsTemplate(snap()), box);
     const before = [...box.querySelectorAll("span")];
     render(towerStatsTemplate(snap({ floors: 43, dirty: 2, vacant: 10 })), box);

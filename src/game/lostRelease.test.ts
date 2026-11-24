@@ -2,6 +2,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import type { GameApp } from "../main";
 import { PinchTracker } from "@verticopolis/components/render/pinchTracker";
 import { watchLostRelease } from "./lostRelease";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * The page-level end of a tower press (#1014, #824): a release elsewhere on
@@ -13,8 +15,8 @@ import { watchLostRelease } from "./lostRelease";
 const MOUSE = 1;
 
 function setup() {
-  const canvas = document.createElement("canvas");
-  const panel = document.createElement("div");
+  const canvas = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
+  const panel = drawElement<HTMLDivElement>(html`<div></div>`);
   document.body.append(canvas, panel);
   const tracker = new PinchTracker();
   const engine = {

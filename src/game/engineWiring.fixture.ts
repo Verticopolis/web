@@ -2,6 +2,8 @@ import { vi } from "vitest";
 import type { GameApp } from "../main";
 import { PortCodes } from "@verticopolis/engine/port/portCodes";
 import { mockPort, record } from "../tests/portKit/mockPort";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /** The fake app `engineWiring.test.ts` wires: every hook the engine callbacks
  *  reach, as vi.fn spies, over a mock port. */
@@ -32,7 +34,7 @@ export const flush = () => new Promise((r) => setTimeout(r, 0));
 
 export function makeApp(toolOver: Record<string, unknown> = {}) {
   const engine: FakeEngine = {};
-  const canvas = document.createElement("canvas");
+  const canvas = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
   // A drag latch (generation) and a shaft quote; the real answers: shaftPreview.integration.test.ts.
   const enginePort = mockPort({
     generation: () => 1,

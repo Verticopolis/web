@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { viewTemplate } from "../testing/litTestUtils";
+import { viewTemplate, drawElement } from "../testing/litTestUtils";
 import type { ModalView } from "@verticopolis/components/windows/uiModal";
-import { render } from "lit-html";
+import { html, render } from "lit-html";
 import type { UI } from "../UI";
 import { ctxDouble } from "./saverTestKit.fixture";
 import { openScreenSaverDialog, type SaverDialogPorts } from "./saverDialog";
@@ -14,7 +14,7 @@ function uiDouble() {
   const ui = {
     openModal: vi.fn((t: ModalView) => {
       box?.remove();
-      box = document.createElement("div");
+      box = drawElement<HTMLDivElement>(html`<div></div>`);
       box.className = "test-modal";
       document.body.append(box);
       render(viewTemplate(t), box);

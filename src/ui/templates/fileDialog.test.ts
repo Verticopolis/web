@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render } from "lit-html";
+import { html, render } from "lit-html";
 import {
   fileDialogTemplate,
   fileSizeText,
@@ -7,6 +7,7 @@ import {
   type FileDialogHandlers,
   type FileDialogView,
 } from "./fileDialog";
+import { drawElement } from "../testing/litTestUtils";
 
 const handlers = new Proxy({}, { get: () => vi.fn() }) as FileDialogHandlers;
 const view = (over: Partial<FileDialogView> = {}): FileDialogView => ({
@@ -40,7 +41,7 @@ const view = (over: Partial<FileDialogView> = {}): FileDialogView => ({
   ...over,
 });
 const draw = (v: FileDialogView) => {
-  const el = document.createElement("div");
+  const el = drawElement<HTMLDivElement>(html`<div></div>`);
   render(fileDialogTemplate(v, handlers), el);
   return el;
 };

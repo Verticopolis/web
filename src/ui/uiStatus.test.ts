@@ -12,7 +12,7 @@ import { SAVE_WARNING_ID, showSaveWarning } from "./saveWarning";
 import { refitPalette } from "./paletteFit";
 
 import { html } from "lit-html";
-import { mountPage } from "./testing/litTestUtils";
+import { mountPage, drawElement } from "./testing/litTestUtils";
 // The lock scan asks the Tools window to refit when it shows or hides a tool.
 // The fit itself reads layout, which jsdom does not have; paletteFit.test.ts
 // covers it. Here a spy records the calls.
@@ -31,7 +31,7 @@ vi.mock("./paletteFit", async (importOriginal) => ({
 const TOAST_MAX = 5; // mirrors the cap in uiStatus.ts
 
 function makeUI(): { ui: UI; rail: HTMLElement } {
-  const rail = document.createElement("div");
+  const rail = drawElement<HTMLDivElement>(html`<div></div>`);
   const ui = { el: { toast: rail } } as unknown as UI;
   return { ui, rail };
 }
@@ -186,11 +186,11 @@ function source(
  *  grid and the Undo and Redo buttons draw. */
 function hud(header: Partial<typeof HEADER> = {}) {
   const made: Record<string, HTMLElement> = {
-    undo: document.createElement("button"),
-    redo: document.createElement("button"),
+    undo: drawElement<HTMLButtonElement>(html`<button></button>`),
+    redo: drawElement<HTMLButtonElement>(html`<button></button>`),
   };
   const el = new Proxy(made, {
-    get: (target, key: string) => (target[key] ??= document.createElement("div")),
+    get: (target, key: string) => (target[key] ??= drawElement<HTMLDivElement>(html`<div></div>`)),
   });
   const h = { ...HEADER, ...header };
   const catalog = catalogFor("classic");
@@ -301,8 +301,8 @@ describe("the Undo and Redo buttons", () => {
   const holding = (depths: number[]) => ({ undoDepths: () => Float64Array.from(depths) });
 
   const buttons = () => {
-    const undo = document.body.appendChild(document.createElement("button"));
-    const redo = document.body.appendChild(document.createElement("button"));
+    const undo = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
+    const redo = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
     return { undo, redo, ui: { el: { undo, redo } } as unknown as UI };
   };
   const grayed = (...bs: HTMLButtonElement[]) => bs.map((b) => b.getAttribute("aria-disabled") === "true");
@@ -384,15 +384,15 @@ describe("the palette's lock scan", () => {
   const lockScan = (mode: GameMode, edit: (catalog: Catalog) => Catalog = (c) => c) => {
     const base = catalogFor(mode);
     let catalog = edit(base);
-    const palette = document.createElement("div");
+    const palette = drawElement<HTMLDivElement>(html`<div></div>`);
     for (const kind of ["foodHall", "office"]) {
-      const item = document.createElement("button");
+      const item = drawElement<HTMLButtonElement>(html`<button></button>`);
       item.className = "pal-item";
       item.dataset.kind = kind;
       palette.append(item);
     }
     const el = new Proxy({ palette } as Record<string, HTMLElement>, {
-      get: (made, key: string) => (made[key] ??= document.createElement("div")),
+      get: (made, key: string) => (made[key] ??= drawElement<HTMLDivElement>(html`<div></div>`)),
     });
     const ui = {
       el,
@@ -458,7 +458,7 @@ describe("the palette's lock scan", () => {
 
   it("refits the Tools window when a tool is shown or hidden, and not when only affordability moves", () => {
     const refit = vi.mocked(refitPalette);
-    const win = document.createElement("aside");
+    const win = drawElement(html`<aside></aside>`);
     win.id = "palette";
     const { ui, node } = lockScan("modern");
     win.append(node("office")!.parentElement!);

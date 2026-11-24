@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fitPalette, PALETTE_FIT, PALETTE_FIT_MQ, refitPalette, watchPaletteFit } from "./paletteFit";
 
 import { html, render } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 /**
  * jsdom lays nothing out, so each test gives the Tools window a height and a
  * list height per layout. The list height reads the window's classes at the
@@ -10,7 +11,7 @@ import { html, render } from "lit-html";
 type Heights = { normal: number; compact: number; columns: number; both: number };
 
 function windowWith(clientHeight: number, heights: Heights): HTMLElement {
-  const win = document.createElement("aside");
+  const win = drawElement(html`<aside></aside>`);
   win.id = "palette";
   Object.defineProperty(win, "clientHeight", { configurable: true, get: () => clientHeight });
   Object.defineProperty(win, "scrollHeight", {

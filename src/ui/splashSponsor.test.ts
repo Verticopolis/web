@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render } from "lit-html";
+import { html, render } from "lit-html";
 import { trackAppAction } from "../analytics";
 import { SPONSOR_URL, TWA_SESSION_KEY, splashTemplate, sponsorOffered, type SplashHandlers } from "./splashTemplate";
+import { drawElement } from "./testing/litTestUtils";
 
 vi.mock("../analytics", () => ({ trackAppAction: vi.fn() }));
 
@@ -16,7 +17,7 @@ function handlers(): SplashHandlers {
 }
 
 function mount(): HTMLElement {
-  const host = document.createElement("div");
+  const host = drawElement<HTMLDivElement>(html`<div></div>`);
   render(splashTemplate(true, "premise", false, false, false, handlers()), host);
   document.body.appendChild(host);
   return host;
