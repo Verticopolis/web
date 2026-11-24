@@ -5,9 +5,13 @@ On a computer (a window at least 1024 by 600 whose main pointer is a mouse or tr
 taskbar. A touchscreen gets the desk too (owner's pick, 2026-11-20): a
 sideways tablet the same desk with touch chrome, a phone or an upright tablet
 the pocket desk (below). Small computer windows and the title screen keep
-the ordinary layout. The code is `src/ui/desk/` here and `windows/desk/*` from
-`@verticopolis/components`; the numbers below live in the components'
-`src/ui/desk/deskGeometry.ts` and its tests.
+the ordinary layout. The windows, the window manager (`DeskManager`), the
+taskbar, the title screen's window and the Control Panel are
+`windows/desk/*` from `@verticopolis/components`; `src/ui/desk/` here is the
+game's glue: which of the game's elements become windows, the Verticopolis
+menu's items, what each Control Panel icon runs, and the analytics. The
+numbers below live in the components' `src/ui/desk/deskGeometry.ts` and its
+tests.
 
 | Window | Moves | Resizes | Minimize | Maximize | Close | Starts at |
 | --- | --- | --- | --- | --- | --- | --- |

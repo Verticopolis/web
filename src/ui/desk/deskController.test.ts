@@ -7,16 +7,8 @@ vi.mock("../../analyticsActions", () => ({ trackAppAction: vi.fn(), trackAppActi
 
 import { trackAppAction, trackAppActionOnce } from "../../analyticsActions";
 import { DESK_MINIMIZED_CLASS } from "@verticopolis/components/windows/desk/deskWindow";
-import {
-  DESK_ANY_SCREEN,
-  DESK_ANY_SCREEN_MQ,
-  DESK_CLASS,
-  DESK_KEY,
-  DESK_MQ,
-  DeskController,
-  deskActive,
-  wireDesk,
-} from "./deskController";
+import { DESK_ANY_SCREEN_MQ, DESK_MQ } from "@verticopolis/components/windows/desk/deskScreen";
+import { DESK_CLASS, DESK_KEY, DeskController, deskActive, wireDesk } from "./deskController";
 
 /** The page the desk works on: the game's own elements, in their usual places. */
 const PAGE = html`
@@ -152,7 +144,7 @@ describe("DeskController", () => {
     screen(DESK_ANY_SCREEN_MQ);
     doc = page("http://localhost/?desk=on");
     new DeskController(doc).start();
-    expect(localStorage.getItem(DESK_KEY.enabled)).toBe(DESK_ANY_SCREEN);
+    expect(localStorage.getItem(DESK_KEY.enabled)).toBe("any");
     expect(doc.body.classList.contains(DESK_CLASS)).toBe(true);
     doc = page("http://localhost/?desk=off");
     new DeskController(doc).start();
@@ -327,6 +319,15 @@ describe("DeskController", () => {
     expect(trackAppAction).toHaveBeenCalledWith("desk_control", "sounds");
   });
 
+  it("opens the Control Panel from the Verticopolis menu, and counts the pick", () => {
+    new DeskController(doc).start();
+    doc.querySelector<HTMLElement>(".desk-start")!.click();
+    doc.querySelector<HTMLElement>('.desk-start-menu [data-item="desk-control-panel"]')!.click();
+    expect(doc.getElementById("desk-win-control")!.hidden).toBe(false);
+    expect(doc.querySelector('.desk-task[data-win="control"]')!.getAttribute("aria-pressed")).toBe("true");
+    expect(trackAppAction).toHaveBeenCalledWith("desk_start", "desk-control-panel");
+  });
+
   it("starts once per page, and says whether the desk is up", () => {
     expect(deskActive(doc)).toBe(false);
     expect(wireDesk(doc)).toBeInstanceOf(DeskController);
@@ -359,6 +360,7 @@ describe("DeskController", () => {
     expect(mapButton().getAttribute("aria-pressed")).toBe("true");
     const about = vi.fn();
     onMenuItem("btn-about", about, doc);
+    doc.querySelector<HTMLElement>(".desk-start")!.click();
     doc.querySelector<HTMLElement>('.desk-start-menu [data-item="btn-about"]')!.click();
     expect(about).toHaveBeenCalledTimes(1);
     expect(trackAppAction).toHaveBeenCalledWith("desk_start", "btn-about");
@@ -389,11 +391,11 @@ describe("DeskController", () => {
       sound.setAttribute("aria-checked", String(sound.getAttribute("aria-checked") === "false")),
     );
     const icon = doc.querySelector<HTMLElement>('#desk-win-control [data-control="sounds"]')!;
-    expect(icon.textContent).toBe("Sounds: On");
+    expect(icon.textContent?.trim()).toBe("Sounds: On");
     icon.click();
     await Promise.resolve();
     expect(doc.querySelector(".desk-tray-sound")!.classList.contains("muted")).toBe(true);
-    expect(icon.textContent).toBe("Sounds: Off");
+    expect(icon.textContent?.trim()).toBe("Sounds: Off");
   });
 });
 
