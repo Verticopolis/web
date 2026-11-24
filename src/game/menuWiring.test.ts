@@ -316,11 +316,16 @@ describe("wireMenus", () => {
     expect($("mb-sponsor").hasAttribute("href")).toBe(false);
   });
 
-  it("on the title screen, the menus and items that need a tower leave the bar, and New Tower presses the title screen's own button", async () => {
+  it("on the title screen, the menus that need a tower leave the bar, the items that need one gray, and New Tower presses the title screen's own button", async () => {
     const { app } = fakeApp();
     const bar = wireMenus(app)!;
-    const towerOnly = () => [...TOWER_ONLY_MENUS.map((id) => $(id).parentElement!), ...TOWER_ONLY_ITEMS.map($)];
+    const towerOnly = () => TOWER_ONLY_MENUS.map((id) => $(id).parentElement!);
+    const grayed = () => TOWER_ONLY_ITEMS.map((id) => $(id).getAttribute("aria-disabled") === "true");
+    // File reads the same over the title screen and a tower: the line above
+    // Save and the one above Close stay, and the items stay, grayed.
+    const fileLines = () => ["mb-save-sep", "mb-close-sep", ...TOWER_ONLY_ITEMS].map((id) => $(id).hidden);
     expect(towerOnly().map((el) => el.hidden)).toEqual(towerOnly().map(() => false));
+    expect(grayed()).toEqual(TOWER_ONLY_ITEMS.map(() => false));
     const splashNew = vi.fn();
     const splash = drawElement(html`<div id="splash"><button data-splash="new" @click=${splashNew}></button></div>`);
     // The title screen mounts the way ui/Onboarding.ts mounts it: the element,
@@ -329,6 +334,8 @@ describe("wireMenus", () => {
     document.body.classList.add("splash-up");
     await Promise.resolve();
     expect(towerOnly().map((el) => el.hidden)).toEqual(towerOnly().map(() => true));
+    expect(grayed()).toEqual(TOWER_ONLY_ITEMS.map(() => true));
+    expect(fileLines()).toEqual(fileLines().map(() => false));
     expect($("mb-file").parentElement!.hidden).toBe(false);
     for (const id of ["btn-new", "mb-import"]) expect($(id).hidden, id).toBe(false);
     // The arrow keys and the Alt letters skip a menu that left the bar.
@@ -339,8 +346,14 @@ describe("wireMenus", () => {
     const gameNew = vi.fn();
     $("btn-new").addEventListener("click", gameNew); // the game's own New, wired as UI.ts wires it
     bar.open($("mb-file") as HTMLButtonElement, false);
-    // Opening a menu keeps them out, Tools' layout check included.
+    // Opening a menu keeps them out, Tools' layout check included, and the
+    // live engine's check keeps Save, Save As and Close grayed.
     expect(towerOnly().map((el) => el.hidden)).toEqual(towerOnly().map(() => true));
+    expect(grayed()).toEqual(TOWER_ONLY_ITEMS.map(() => true));
+    const close = vi.fn();
+    $("mb-close").addEventListener("click", close);
+    $("mb-close").click();
+    expect(close).not.toHaveBeenCalled();
     $("btn-new").click();
     expect(splashNew).toHaveBeenCalledOnce();
     expect(gameNew).not.toHaveBeenCalled(); // the title screen leaves its own way
@@ -350,6 +363,7 @@ describe("wireMenus", () => {
     document.body.classList.remove("splash-up");
     await Promise.resolve();
     expect(towerOnly().map((el) => el.hidden)).toEqual(towerOnly().map(() => false));
+    expect(grayed()).toEqual(TOWER_ONLY_ITEMS.map(() => false));
     $("btn-new").click();
     expect(gameNew).toHaveBeenCalledOnce();
   });

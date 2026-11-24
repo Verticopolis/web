@@ -115,8 +115,8 @@ async function closeToTitle(page: Page): Promise<void> {
 
 /**
  * The title screen on the pocket desk (owner, 2026-11-24): its window on a
- * phone held upright and sideways, first for a new player, then with
- * Continue after a tower is closed.
+ * phone held upright and sideways, first for a new player (and with its
+ * Control Panel open), then with Continue after a tower is closed.
  */
 function pocketTitleScenes(): Scene[] {
   return (
@@ -131,7 +131,15 @@ function pocketTitleScenes(): Scene[] {
       viewport,
       desk: true,
       keepSplash: true,
-      shots: [{ name: `desk-title-${suffix}`, wait: 400 }],
+      shots: [
+        { name: `desk-title-${suffix}`, wait: 400 },
+        // The Control Panel across the window under its menu bar (#2600).
+        {
+          name: `desk-title-${suffix}-control-panel`,
+          wait: 400,
+          setup: (page: Page) => press(page, ".desk-tray-display"),
+        },
+      ],
     },
     {
       id: `desk-title-${suffix}-continue`,
@@ -336,7 +344,8 @@ export const DESK_SCENES: Scene[] = [
     shots: HELP_SHOTS,
   },
   {
-    // The title screen in its Verticopolis window, and the start menu over it.
+    // The title screen in its Verticopolis window, the start menu over it,
+    // and its Control Panel, opened from the tray.
     id: "desk-title",
     outDir: "features",
     desk: true,
@@ -344,6 +353,15 @@ export const DESK_SCENES: Scene[] = [
     shots: [
       { name: "desk-title", wait: 400, setup: park },
       { name: "desk-title-start-menu", wait: 400, setup: (page) => press(page, ".desk-start") },
+      {
+        name: "desk-title-control-panel",
+        wait: 400,
+        setup: async (page) => {
+          await closeMenus(page);
+          await press(page, ".desk-tray-display");
+          await park(page);
+        },
+      },
     ],
   },
   ...pocketTitleScenes(),

@@ -29,6 +29,7 @@ import { fullScreenStates } from "./fullScreenItem";
 import { firstDragReporter, reportWindowClose } from "./movableWindows";
 import { deskActive } from "../ui/desk/deskController";
 import { deskOptionStates } from "../ui/desk/deskMenus";
+import { DESK_TITLE_CLASS } from "@verticopolis/components/windows/desk/deskTitle";
 import { topBarView } from "../ui/topBar";
 
 /**
@@ -82,18 +83,14 @@ export const STATUS_BAR_HIDDEN_CLASS = "statusbar-off";
  *  shrinks to File and Help with no document open (party 2026-11-15). */
 export const TOWER_ONLY_MENUS = ["mb-edit", "mb-tower", "mb-window"] as const;
 
-/** The items of the menus the title screen keeps that act on a tower, and
- *  the lines above them: they leave those menus while it is up. */
-export const TOWER_ONLY_ITEMS = [
-  "mb-save-sep",
-  "mb-quick-save",
-  "mb-export",
-  "mb-close-sep",
-  "mb-close",
-  "mb-win-tools",
-  "mb-win-statusbar",
-  "mb-replay",
-] as const;
+/** The items of the menus the title screen keeps (File and Help) that act on
+ *  a tower: grayed while it is up, as a 1995 program grays Save with no
+ *  document open, so each menu reads the same over the title screen and a
+ *  tower (owner, #2600 follow-up). */
+export const TOWER_ONLY_ITEMS = ["mb-quick-save", "mb-export", "mb-close", "mb-replay"] as const;
+
+/** The Window menu's items that leave with it while the title screen is up. */
+const TOWER_ONLY_HIDDEN_ITEMS = ["mb-win-tools", "mb-win-statusbar"] as const;
 
 /** On the title screen these items press the title screen's own button, so it
  *  leaves the way it always does (and the mute glyph stays in step). Open is
@@ -137,10 +134,12 @@ function remember(storage: Store | null, key: string, open: boolean): void {
 
 const on = (id: string, run: () => void): void => onMenuItem(id, run);
 
-/** The menus and items that need a tower, shown only when one is open. */
+/** The menus that need a tower, shown only when one is open, and the items
+ *  that need one, grayed until one is. */
 function screenStates(titleScreenUp: boolean): Record<string, MenuEntryState> {
   const states: Record<string, MenuEntryState> = {};
-  for (const id of [...TOWER_ONLY_MENUS, ...TOWER_ONLY_ITEMS]) states[id] = { hidden: titleScreenUp };
+  for (const id of [...TOWER_ONLY_MENUS, ...TOWER_ONLY_HIDDEN_ITEMS]) states[id] = { hidden: titleScreenUp };
+  for (const id of TOWER_ONLY_ITEMS) states[id] = { disabled: titleScreenUp };
   return states;
 }
 
@@ -219,7 +218,12 @@ export function wireMenus(app: GameApp): MenuBar | null {
     saveAs: () => showSaveAsDialog(app),
   };
   on("mb-quick-save", file.save);
-  on("mb-close", () => closeTower(app));
+  on("mb-close", () => {
+    // Closed first: the title screen grays Close at once, and a menu does
+    // not close on a grayed item's click.
+    bar.close(false);
+    closeTower(app);
+  });
   on("mb-import", () => showOpenDialog(app, "menu"));
   wireRecentMenu(app);
   on("mb-export", file.saveAs);
@@ -252,7 +256,7 @@ export function wireMenus(app: GameApp): MenuBar | null {
 
   // The title screen is a child of the body with a body class of its own
   // (ui/Onboarding.ts): the bar follows either one changing at once, not
-  // only when a menu next opens. The callback compares eleven states and
+  // only when a menu next opens. The callback compares nine states and
   // draws the bar again only when one changed, on a body child or class
   // change only.
   setMenuState(screenStates(titleScreenUp()));
@@ -335,11 +339,13 @@ export function wireMenus(app: GameApp): MenuBar | null {
     put("mb-undo", { disabled: bar.undoOff });
     put("mb-redo", { disabled: bar.redoOff });
     for (const [id, state] of Object.entries(screenStates(noTower))) put(id, state);
-    for (const id of ENGINE_FILE_ITEMS) put(id, { disabled: stopped });
+    for (const id of ENGINE_FILE_ITEMS) put(id, { disabled: stopped || !!states[id]?.disabled });
     // The installed app on a phone is not offered Full Screen (fullScreenItem.ts).
     for (const [id, state] of Object.entries(fullScreenStates(app.mobileMq?.matches ?? false))) put(id, state);
-    // On the desk the Control Panel holds Screen Saver and Appearance (deskMenus.ts).
-    if (deskActive()) for (const [id, state] of Object.entries(deskOptionStates(true))) put(id, state);
+    // On the desk, the title screen's included, the Control Panel holds
+    // Screen Saver and Appearance (deskMenus.ts).
+    if (deskActive() || document.body.classList.contains(DESK_TITLE_CLASS))
+      for (const [id, state] of Object.entries(deskOptionStates(true))) put(id, state);
     // Fire Rescue and the exterminator, read from the engine only as the
     // Tower menu opens (towerCallItems.ts). A stopped engine answers
     // nothing, so both stay grayed.

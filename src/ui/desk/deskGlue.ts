@@ -1,5 +1,11 @@
-import type { ControlIcon, ControlItem } from "@verticopolis/components/windows/desk/deskControlPanel";
+import type {
+  ControlIcon,
+  ControlItem,
+  ControlPanelOptions,
+} from "@verticopolis/components/windows/desk/deskControlPanel";
 import type { StartItem } from "@verticopolis/components/windows/desk/deskTaskbar";
+import { trackAppAction } from "../../analyticsActions";
+import { trackDeskClose } from "./deskAnalytics";
 
 /**
  * What the game puts on the 1994 desk the components package draws: the
@@ -12,22 +18,21 @@ import type { StartItem } from "@verticopolis/components/windows/desk/deskTaskba
 /** The Start menu's Control Panel item, which the desk opens itself. */
 export const CONTROL_PANEL_ITEM = "desk-control-panel";
 
-/** The Start menu: each item runs the game's menu item with its id,
- *  so it does exactly what its menu twin does. A null is a separator. It
- *  holds no command another menu holds: the manual and About live in Help,
- *  Settings in Options, the screen saver in the Control Panel (#2600). */
+/** The Start menu: each item runs the game's menu item with its id, so it
+ *  does exactly what its menu twin does. A null is a separator. It holds no
+ *  command another menu holds: the manual and About live in Help, Settings
+ *  in Options, the screen saver in the Control Panel, and closing the tower
+ *  belongs to its window (#2600). */
 const START_ITEMS: readonly (StartItem | null)[] = [
   { id: "btn-new", label: "New…" },
   { id: "mb-import", label: "Open…" },
   null,
   { id: CONTROL_PANEL_ITEM, label: "Control Panel…" },
-  null,
-  { id: "mb-close", label: "Close Verticopolis" },
 ];
 
-/** The menu's items; the title screen has no Control Panel. */
-export function startItems(controlPanel: boolean): (StartItem | null)[] {
-  return START_ITEMS.filter((i) => controlPanel || i?.id !== CONTROL_PANEL_ITEM);
+/** The menu's items, the same over the title screen and a tower. */
+export function startItems(): (StartItem | null)[] {
+  return [...START_ITEMS];
 }
 
 /** The game menu item each Control Panel icon runs: Display opens the Screen
@@ -47,6 +52,20 @@ export const CONTROL_ITEMS: readonly ControlItem[] = [
   { icon: "sounds", label: "Sounds", hint: "Sound on or off" },
   { icon: "settings", label: "Settings", hint: "Game settings" },
 ];
+
+/** The Control Panel's icons, what each runs, and the analytics of a press
+ *  and of its ✕: the same panel over the title screen and a tower. */
+export function controlPanelOptions(doc: Document): ControlPanelOptions {
+  return {
+    items: CONTROL_ITEMS,
+    closeLabel: "Close Control Panel",
+    picked: (icon) => {
+      trackAppAction("desk_control", icon);
+      doc.getElementById(CONTROL_ITEM[icon])?.click();
+    },
+    closed: () => trackDeskClose("control"),
+  };
+}
 
 /** The tower's name from the status bar ("Tower One · Classic"). */
 export function towerName(doc: Document): string {

@@ -329,12 +329,12 @@ describe("DeskController", () => {
     expect(trackAppAction).toHaveBeenCalledWith("desk_start", "desk-control-panel");
   });
 
-  it("keeps the Start menu to commands no other menu holds", () => {
+  it("keeps the Start menu to commands no other menu holds, and leaves closing to the tower's window", () => {
     new DeskController(doc).start();
     doc.querySelector<HTMLElement>(".desk-start")!.click();
     const entries = doc.querySelectorAll(".desk-start-menu .mb-item, .desk-start-menu .mb-sep");
     const lines = [...entries].map((el) => (el.matches(".mb-sep") ? "-" : el.textContent?.trim()));
-    expect(lines).toEqual(["New…", "Open…", "-", "Control Panel…", "-", "Close Verticopolis"]);
+    expect(lines).toEqual(["New…", "Open…", "-", "Control Panel…"]);
   });
 
   it("leaves Screen Saver and Appearance to the Control Panel while it is up, and Options opens it", () => {
