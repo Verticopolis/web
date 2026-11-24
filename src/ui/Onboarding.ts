@@ -2,7 +2,6 @@ import { html, nothing, render as litRender } from "lit-html";
 import type { EnginePort } from "@verticopolis/engine/port/enginePort";
 import { splashTemplate, type SplashHandlers } from "./splashTemplate";
 import { isDialogOpen, isEngineStopped } from "../game/interactionState";
-import { iconNode } from "./iconNodes";
 import { openFoldedPaletteAround } from "./paletteCollapse";
 import { DESK_TITLE_CLASS } from "@verticopolis/components/windows/desk/deskTitle";
 
@@ -223,11 +222,11 @@ export class OnboardingController {
     const premise = mobile
       ? "Raise a high-rise floor by floor and climb to the TOWER."
       : "Raise a living high-rise floor by floor: lease offices, open shops, run hotels, and thread the elevators that keep the city moving. Climb from 1★ to the legendary TOWER.";
-    // The splash renders once; the mute toggle reflects its new state onto its
-    // own button (glyph + aria-pressed) rather than re-rendering the whole
-    // overlay for one control. An absent onToggleMute leaves the template's
-    // @click unbound, so the button is inert and never lies (CAP-2).
+    // The mute toggle draws the title screen again with its new state, and lit
+    // writes only the mute's glyph and aria-pressed. An absent onToggleMute
+    // leaves the button's @click unbound, so it is inert and never lies (CAP-2).
     const onToggleMute = o.onToggleMute;
+    let muted = o.muted?.() ?? false;
     const handlers: SplashHandlers = {
       onContinue: () => {
         this.teardownSplash();
@@ -245,11 +244,9 @@ export class OnboardingController {
       // Help stacks over the splash (its own modal); the splash stays behind it.
       onHelp: () => this.opts.showHelp(),
       onToggleMute: onToggleMute
-        ? (e: Event) => {
-            const btn = e.currentTarget as HTMLButtonElement;
-            const muted = onToggleMute();
-            btn.replaceChildren(iconNode(muted ? "mute" : "sound"));
-            btn.setAttribute("aria-pressed", String(muted));
+        ? () => {
+            muted = onToggleMute();
+            draw();
           }
         : undefined,
       // The install tap keeps the splash mounted and the engine paused: the native
@@ -259,10 +256,9 @@ export class OnboardingController {
     // Read offerability ONCE at mount (CAP-5: not gated on a live event, so no
     // reveal race), and only when a handler is present.
     const installOffered = (o.installOffered?.() ?? false) && !!o.onInstall;
-    litRender(
-      splashTemplate(o.hasSave, premise, o.muted?.() ?? false, installOffered, o.founder?.() ?? false, handlers),
-      el,
-    );
+    const founder = o.founder?.() ?? false;
+    const draw = () => litRender(splashTemplate(o.hasSave, premise, muted, installOffered, founder, handlers), el);
+    draw();
     document.body.appendChild(el);
     // Marks the title screen as mounted for CSS that must react to it: the
     // toast rail lifts above the splash only while this class is set, so a
