@@ -2,7 +2,7 @@ import { html, nothing, render as litRender } from "lit-html";
 import type { EnginePort } from "@verticopolis/engine/port/enginePort";
 import { splashTemplate, type SplashHandlers } from "./splashTemplate";
 import { isDialogOpen, isEngineStopped } from "../game/interactionState";
-import { openFoldedPaletteAround } from "./paletteCollapse";
+import { openFoldedToolsAround } from "./toolsWindow";
 import { DESK_TITLE_CLASS } from "@verticopolis/components/windows/desk/deskTitle";
 
 /**
@@ -459,7 +459,7 @@ export class OnboardingController {
       if (this.opts.mq.matches) {
         const group = n.closest<HTMLElement>(".pal-group")?.dataset.group;
         if (group) document.querySelector<HTMLElement>(`.pal-tab[data-group="${group}"]`)?.click();
-      } else openFoldedPaletteAround(n);
+      } else openFoldedToolsAround(n);
       n.classList.add("tt-pulse");
     });
   }

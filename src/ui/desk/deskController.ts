@@ -2,7 +2,10 @@ import { html } from "lit-html";
 import { renderDetached } from "@verticopolis/components/windows/detached";
 import { trackAppAction, trackAppActionOnce } from "../../analyticsActions";
 import { browserStorage } from "@verticopolis/components/windows/overviewMapPrefs";
-import { PALETTE_COLLAPSE_BUTTON_ID, PALETTE_COLLAPSED_CLASS } from "../paletteCollapse";
+import {
+  PALETTE_COLLAPSE_BUTTON_ID,
+  PALETTE_COLLAPSED_CLASS,
+} from "@verticopolis/components/windows/palette/paletteCollapse";
 import {
   defaultLayout,
   TOOLS_LIMITS,

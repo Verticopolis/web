@@ -125,13 +125,16 @@ flowchart TD
   the top-left on a phone, 200 by 288 at the bottom-right on a tablet), with
   its own ✕ and Map pill, and has no taskbar button. It opens with the
   pocket desk, and Window > Map opens it again after its ✕.
-- The Bulletin opens over the whole desk, and Tower Info and the Control
-  Panel across its top at the height of what they hold (a long list
-  scrolls); the tower stays laid out under them. A Bulletin the game opens by
+- The Bulletin, Tower Info and the Control Panel open across the top of
+  the desk at the height of what they hold (a long list scrolls), the
+  Bulletin capped at a third of the desk; the tower stays in view under
+  them. A drag by the title bar moves any of them, or the Map, inside the
+  desk; their width stays the desk's. A Bulletin the game opens by
   itself (news, the welcome note) waits minimized on the taskbar; one the
   player asks for from the Window menu or the taskbar comes up.
 - The pocket desk saves no places and runs no resize pass: its stylesheet
-  places every window. Turning a tablet between pocket and full desk takes
+  places every window, and a place the player drags to lasts only until the
+  page reloads or the desk comes down. Turning a tablet between pocket and full desk takes
   the old desk down and puts the new one up.
 - `?desk=pocket` puts the pocket desk on any screen, a computer's included
   (`vc-desk` = `pocket`).

@@ -9,16 +9,19 @@ import type { GameMode } from "@verticopolis/engine/model/types";
 import type { UI } from "./UI";
 import { useGermanDefaultLocale } from "../tests/localeStub";
 import { SAVE_WARNING_ID, showSaveWarning } from "./saveWarning";
-import { refitPalette } from "./paletteFit";
+import { buildPalette } from "./toolsWindow";
 
 import { html } from "lit-html";
 import { mountPage, drawElement } from "./testing/litTestUtils";
 // The lock scan asks the Tools window to refit when it shows or hides a tool.
-// The fit itself reads layout, which jsdom does not have; paletteFit.test.ts
-// covers it. Here a spy records the calls.
-vi.mock("./paletteFit", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./paletteFit")>()),
-  refitPalette: vi.fn(),
+// The fit itself reads layout, which jsdom does not have; the components
+// package tests it. Here a spy stands in for the window's refit.
+const refit = vi.hoisted(() => vi.fn());
+vi.mock("@verticopolis/components/windows/palette/paletteFit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@verticopolis/components/windows/palette/paletteFit")>()),
+  PaletteFit: class {
+    refit = refit;
+  },
 }));
 
 /**
@@ -202,13 +205,10 @@ function hud(header: Partial<typeof HEADER> = {}) {
   });
   const h = { ...HEADER, ...header };
   const catalog = catalogFor("classic");
-  let scanKey = h.mode + ":" + h.star;
-  for (const f of catalog.facilities) scanKey += h.money >= f.cost ? "1" : "0";
   const ui = {
     el,
     cb: { getCatalog: () => catalog },
     paletteCatalog: catalog,
-    paletteScanKey: scanKey,
     lastLogSeq: h.logSeq,
     tool: { type: "inspect" },
     setTowerName: () => {},
@@ -389,21 +389,16 @@ describe("the palette's lock scan", () => {
   const lockScan = (mode: GameMode, edit: (catalog: Catalog) => Catalog = (c) => c) => {
     const base = catalogFor(mode);
     let catalog = edit(base);
-    const palette = drawElement<HTMLDivElement>(html`<div></div>`);
-    for (const kind of ["foodHall", "office"]) {
-      const item = drawElement<HTMLButtonElement>(html`<button></button>`);
-      item.className = "pal-item";
-      item.dataset.kind = kind;
-      palette.append(item);
-    }
-    const el = new Proxy({ palette } as Record<string, HTMLElement>, {
-      get: (made, key: string) => (made[key] ??= drawElement<HTMLDivElement>(html`<div></div>`)),
+    mountPage(html`<aside id="palette"><div id="palette-tabs"></div><div id="palette-scroll"></div></aside>`);
+    const palette = document.getElementById("palette-scroll")!;
+    const made: Record<string, HTMLElement> = { palette, paletteTabs: document.getElementById("palette-tabs")! };
+    const el = new Proxy(made, {
+      get: (target, key: string) => (target[key] ??= drawElement<HTMLDivElement>(html`<div></div>`)),
     });
     const ui = {
       el,
       cb: { getCatalog: () => catalog },
-      paletteCatalog: catalog,
-      paletteScanKey: "",
+      paletteCatalog: null,
       lastLogSeq: 0,
       tool: { type: "inspect" },
       setTowerName: () => {},
@@ -412,12 +407,14 @@ describe("the palette's lock scan", () => {
     ui.selectTool = (tool) => {
       ui.tool = tool;
     };
+    buildPalette(ui);
     const pump = () => update(ui, source({ mode, star: 5, money: 1e9 }).src);
     pump();
+    const node = (kind: string) => palette.querySelector(`[data-kind="${kind}"]`);
     return {
       ui,
-      node: (kind: string) => palette.querySelector(`[data-kind="${kind}"]`),
-      locked: (kind: string) => palette.querySelector(`[data-kind="${kind}"]`)!.classList.contains("locked"),
+      node,
+      locked: (kind: string) => node(kind)!.classList.contains("locked"),
       /** Hand the UI a new catalog, then pump again. */
       swap: (next: (catalog: Catalog) => Catalog) => {
         catalog = next(base);
@@ -428,6 +425,10 @@ describe("the palette's lock scan", () => {
   const withoutOffice = (c: Catalog): Catalog => ({
     ...c,
     facilities: c.facilities.map((f) => (f.key === "office" ? { ...f, available: false } : f)),
+  });
+
+  afterEach(() => {
+    document.body.replaceChildren();
   });
 
   for (const mode of ["classic", "modern"] as const) {
@@ -444,36 +445,25 @@ describe("the palette's lock scan", () => {
     expect(locked("foodHall")).toBe(false);
   });
 
-  it("rewrites the locks whenever a new catalog arrives, whether it rebuilds the palette or relabels it", () => {
+  it("rewrites the locks whenever a new catalog arrives, on the same buttons", () => {
     const { node, locked, swap } = lockScan("modern");
-    // The first swap lays the palette out from the catalog (a rebuild).
-    const handMade = node("office");
-    swap(withoutOffice);
-    expect(node("office")).not.toBe(handMade);
-    expect(locked("office")).toBe(true);
-    // Later swaps keep the layout, so they relabel the same buttons.
     const office = node("office");
+    swap(withoutOffice);
+    expect(node("office")).toBe(office);
+    expect(locked("office")).toBe(true);
     swap((c) => ({ ...c }));
     expect(node("office")).toBe(office);
     expect(locked("office")).toBe(false);
-    swap(withoutOffice);
-    expect(node("office")).toBe(office);
-    expect(locked("office")).toBe(true);
   });
 
   it("refits the Tools window when a tool is shown or hidden, and not when only affordability moves", () => {
-    const refit = vi.mocked(refitPalette);
-    const win = drawElement(html`<aside></aside>`);
-    win.id = "palette";
     const { ui, node } = lockScan("modern");
-    win.append(node("office")!.parentElement!);
     const pump = (star: number, money: number) => update(ui, source({ mode: "modern", star, money }).src);
     refit.mockClear();
     // Five stars to one: the Food Hall (three stars) is hidden.
     pump(1, 1e9);
     expect(node("foodHall")!.classList.contains("locked")).toBe(true);
     expect(refit).toHaveBeenCalledTimes(1);
-    expect(refit).toHaveBeenLastCalledWith(win);
     // Broke: the scan reruns and dims the office, but nothing is shown or hidden.
     pump(1, 0);
     expect(node("office")!.classList.contains("unaffordable")).toBe(true);

@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { catalogFor } from "../tests/catalogFixture";
-import { renderToFragment, drawElement } from "./testing/litTestUtils";
-import { buildPalette } from "./uiPalette";
-import { scanSkyBridgeButton, skyBridgeToolInfo, skyBridgeUnlocked } from "./skyBridgePalette";
+import { renderToFragment, mountPage } from "./testing/litTestUtils";
+import { buildPalette, scanTools } from "./toolsWindow";
+import { skyBridgeToolInfo, skyBridgeUnlocked } from "./skyBridgePalette";
 import type { UI } from "./UI";
 import { html } from "lit-html";
 
 /**
- * The Sky Bridge tool's palette button and card (Modern): built only from a
+ * The Sky Bridge tool's Tools window button and card (Modern): built only from a
  * catalog that publishes the rule, hidden below its star, dimmed while one tile
  * is past the funds. The rule's values come from the engine's catalog.
  */
@@ -16,20 +16,22 @@ const MODERN = catalogFor("modern");
 const RULE = MODERN.rules.skyBridge!;
 
 function palette(mode: "classic" | "modern") {
-  const el = drawElement<HTMLDivElement>(html`<div></div>`);
+  mountPage(html`<div id="palette-scroll"></div>`);
+  const el = document.getElementById("palette-scroll")!;
   const selectTool = vi.fn();
   const ui = {
     el: { palette: el, paletteTabs: null },
     selectTool,
+    tool: { type: "inspect" },
     cb: { getCatalog: () => catalogFor(mode) },
   } as unknown as UI;
   buildPalette(ui);
-  return { el, selectTool, button: el.querySelector<HTMLElement>('.pal-item[data-tool="skyBridge"]') };
+  return { ui, selectTool, button: () => el.querySelector<HTMLElement>('.pal-item[data-tool="skyBridge"]') };
 }
 
 describe("the Sky Bridge button", () => {
   it("is in Structure's Modern band on a Modern tower, with its price per tile", () => {
-    const { button } = palette("modern");
+    const button = palette("modern").button();
     expect(button).not.toBeNull();
     expect(button!.closest(".pal-group")?.getAttribute("data-group")).toBe("Structure");
     expect(button!.classList.contains("pal-mod")).toBe(true);
@@ -40,12 +42,12 @@ describe("the Sky Bridge button", () => {
 
   it("is not built on a Classic tower", () => {
     expect(catalogFor("classic").rules.skyBridge).toBeNull();
-    expect(palette("classic").button).toBeNull();
+    expect(palette("classic").button()).toBeNull();
   });
 
   it("picks the Sky Bridge tool", () => {
     const { button, selectTool } = palette("modern");
-    button!.click();
+    button()!.click();
     expect(selectTool).toHaveBeenCalledExactlyOnceWith({ type: "skyBridge" });
   });
 });
@@ -59,14 +61,14 @@ describe("the lock scan", () => {
   });
 
   it("hides the button below the star and dims it when a tile is past the funds", () => {
-    const { el, button } = palette("modern");
-    expect(scanSkyBridgeButton(el, RULE, 2, 1_000_000)).toBe(true);
-    expect(button!.classList.contains("locked")).toBe(true);
-    expect(scanSkyBridgeButton(el, RULE, 3, RULE.tileCost - 1)).toBe(true);
-    expect(button!.classList.contains("locked")).toBe(false);
-    expect(button!.classList.contains("unaffordable")).toBe(true);
-    expect(scanSkyBridgeButton(el, RULE, 3, RULE.tileCost)).toBe(false);
-    expect(button!.classList.contains("unaffordable")).toBe(false);
+    const { ui, button } = palette("modern");
+    scanTools(ui, "modern", 2, 1_000_000);
+    expect(button()!.classList.contains("locked")).toBe(true);
+    scanTools(ui, "modern", 3, RULE.tileCost - 1);
+    expect(button()!.classList.contains("locked")).toBe(false);
+    expect(button()!.classList.contains("unaffordable")).toBe(true);
+    scanTools(ui, "modern", 3, RULE.tileCost);
+    expect(button()!.classList.contains("unaffordable")).toBe(false);
   });
 });
 

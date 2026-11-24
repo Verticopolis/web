@@ -18,8 +18,7 @@ import {
   type MenuBarOptions,
   type MenuEntryModel,
 } from "@verticopolis/components/windows/menuBar";
-import { render, type TemplateResult } from "lit-html";
-import { iconTemplate } from "@verticopolis/components/windows/icons";
+import type { TemplateResult } from "lit-html";
 import { gameMenuModel } from "./menuModel";
 import { SPONSOR_URL, sponsorOffered } from "../ui/splashTemplate";
 import { trackAppAction } from "../analytics";
@@ -93,9 +92,6 @@ export function drawMenuBar(doc: Document = document): MenuBar | null {
     }),
   };
   drawnBars.set(host, drawn);
-  // The bar's app icon, which the phone layout shows at its left.
-  const brand = host.querySelector<HTMLElement>(".menubar-brand");
-  if (brand) render(iconTemplate("brand"), brand);
   return drawn.bar;
 }
 

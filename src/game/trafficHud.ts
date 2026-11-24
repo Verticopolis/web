@@ -94,7 +94,7 @@ function drawTraffic(app: GameApp, line: WaitingLine | null): void {
   const shown = topBarView().traffic;
   // A refresh that changes nothing passes the readout the bar holds, which
   // draws nothing. Red is a redundant cue, never the only one.
-  const same = shown.level === level && shown.word === word && shown.floor === floorText;
+  const same = shown !== undefined && shown.level === level && shown.word === word && shown.floor === floorText;
   patchTopBar({ traffic: same ? shown : { level, word, floor: floorText, spoken: aria, warn: tier >= 2 } });
 }
 

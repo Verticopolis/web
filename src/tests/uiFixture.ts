@@ -48,7 +48,7 @@ export function mountAppDom(): void {
   mountPage(html`
     <header id="topbar"></header>
     <div id="a11y-live"></div>
-    <div id="palette-tabs"></div>
+    <div id="palette-tabs" role="tablist" aria-label="Build categories"></div>
     <div id="palette-scroll"></div>
     <footer id="statusbar" class="statusbar"></footer>
     <input id="tower-name" />

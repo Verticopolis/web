@@ -5,7 +5,7 @@ import { expectEngineHosted } from "./helpers";
  * The desktop Tools window shows every tool without scrolling. A Modern tower
  * at five stars lists the most tools (40 under 12 headers), so it is the case
  * checked here, at common desktop window sizes. The window picks compact rows,
- * two columns, or both (src/ui/paletteFit.ts), and the happy-dom tests cannot
+ * two columns, or both (the components package's PaletteFit), and the happy-dom tests cannot
  * check that, since they lay nothing out. Phones and tablets keep their own
  * palette layouts and never carry the fit.
  */

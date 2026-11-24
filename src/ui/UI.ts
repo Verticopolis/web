@@ -19,7 +19,7 @@ import type { GameHelpSource } from "./fromGame";
 import * as panels from "./uiPanels";
 import * as status from "./uiStatus";
 import type { HudSource } from "./uiStatus";
-import { buildPalette } from "./uiPalette";
+import { buildPalette, showActiveTool } from "./toolsWindow";
 import { wireBulletinReadBack } from "./bulletinReadBack";
 import type { ModalOpts, ModalPrecedence, NoticeKind } from "@verticopolis/components/windows/modalPrecedence";
 import { ModalShell, type ModalView } from "@verticopolis/components/windows/uiModal";
@@ -92,14 +92,14 @@ export interface UICallbacks {
  * the view and behavior lives in friend-modules that take this instance: the
  * lit template bodies in `./templates/`, the dialog controllers in `./uiDialogs`, the
  * status/log pump in `./uiStatus`, the editor/inspector panels in `./uiPanels`,
- * and the palette build in `./uiPalette`. This class keeps the shared DOM handle
+ * and the Tools window in `./toolsWindow`. This class keeps the shared DOM handle
  * map, the modal primitives they build on, the tool selection, and thin
  * delegations, so `main.ts` and the game modules call `ui.*` unchanged. The
  * members those friend-modules read are public for that reason.
  */
 export class UI {
   tool: Tool = { type: "inspect" };
-  /** @internal friend-module access (uiDialogs / uiStatus / uiPanels / uiPalette). */
+  /** @internal friend-module access (uiDialogs / uiStatus / uiPanels / toolsWindow). */
   cb: UICallbacks;
   /** @internal friend-module access (uiStatus log cursor). */
   lastLogSeq = 0;
@@ -126,11 +126,7 @@ export class UI {
   editorSize = { w: 0, h: 0 };
   /** @internal friend-module access (uiPanels). */
   inspectorSize = { w: 0, h: 0 };
-  /** Dirty-gate key for the palette lock/afford scan: the star plus the per-kind
-   *  affordability bitmask last applied to the DOM. The ~6 Hz pump rescans only
-   *  when this changes. @internal friend-module access (uiStatus). */
-  paletteScanKey: string | null = null;
-  /** The catalog the palette labels show (#921). @internal (uiPalette, uiStatus) */
+  /** The catalog the Tools window shows (#921). @internal (toolsWindow, uiStatus) */
   paletteCatalog: Catalog | null = null;
 
   constructor(cb: UICallbacks) {
@@ -198,9 +194,7 @@ export class UI {
   selectTool(tool: Tool): void {
     this.tool = tool;
     this.cb.onSelectTool(tool);
-    document.querySelectorAll(".pal-item").forEach((x) => x.classList.remove("active"));
-    const item = tool.type === "build" ? `.pal-item[data-kind="${tool.kind}"]` : `.pal-item[data-tool="${tool.type}"]`;
-    document.querySelector(item)?.classList.add("active");
+    showActiveTool(this, tool);
     renderToolCard(this, tool);
   }
 

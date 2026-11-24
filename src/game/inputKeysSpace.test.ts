@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { CRASH_SCREEN_ID } from "../ui/crashScreen";
 import { ENGINE_FAILURE_ID } from "./interactionState";
 import { catalogFor } from "../tests/catalogFixture";
-import { buildPalette } from "../ui/uiPalette";
+import { buildPalette } from "../ui/toolsWindow";
 import type { UI } from "../ui/UI";
 import { makeApp, pointer, press, release, tap } from "./inputKeys.fixture";
 import { html } from "lit-html";
@@ -147,6 +147,7 @@ describe("Space builds on release, never as the pan key", () => {
     const ui = {
       el: { palette, paletteTabs: drawElement<HTMLDivElement>(html`<div></div>`) },
       selectTool,
+      tool: { type: "inspect" },
       cb: { getCatalog: () => catalogFor("classic") },
     } as unknown as UI;
     buildPalette(ui);
@@ -369,6 +370,7 @@ describe("Space builds on release, never as the pan key", () => {
     const ui = {
       el: { palette, paletteTabs: drawElement<HTMLDivElement>(html`<div></div>`) },
       selectTool,
+      tool: { type: "inspect" },
       cb: { getCatalog: () => catalogFor("classic") },
     } as unknown as UI;
     buildPalette(ui);

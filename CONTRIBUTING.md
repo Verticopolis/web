@@ -415,7 +415,7 @@ diagrams). The prose conventions below are the source of truth.
   `<dialog>` for modals. The `UI` class is a thin shell over friend-modules that
   take the instance: the lit-html template bodies (`templates/`), the dialog
   controllers (`uiDialogs`), the editor/inspector panels (`uiPanels`), the
-  status/log pump (`uiStatus`), and the palette build (`uiPalette`).
+  status/log pump (`uiStatus`), and the Tools window (`toolsWindow`).
 - **`src/storage/`**: save and load, independent of rendering.
 - **`src/main.ts`**: the composition root that wires input, engine, and the
   game loop together.
@@ -821,7 +821,7 @@ alone.
 | `@verticopolis/engine` (npm) | The simulation, built from [Verticopolis/engine](https://github.com/Verticopolis/engine): the Rust engine compiled to WebAssembly, the only engine the game runs. It owns the rules, caps and tuning, the catalog the UI reads, saves and `.TDT`, and undo. Its tooling and conformance packages come from the same engine release. |
 | `@verticopolis/components` (npm) | Rendering, sprites, audio, the engine binding and hosts, the catalog handle and shared types, built from [Verticopolis/components](https://github.com/Verticopolis/components). |
 | `src/game/` | Game controllers: the testable logic behind the composition root. |
-| `src/ui/` | DOM controls: palette, status bar, native `<dialog>` modals. The `UI` shell delegates to friend-modules: `templates/` (lit-html bodies), `uiDialogs`, `uiPanels`, `uiStatus`, `uiPalette`. |
+| `src/ui/` | DOM controls: palette, status bar, native `<dialog>` modals. The `UI` shell delegates to friend-modules: `templates/` (lit-html bodies), `uiDialogs`, `uiPanels`, `uiStatus`, `toolsWindow`. |
 | `src/storage/` | Save/load, the `VCZ1:` storage container, `.vctower` file handling. Who owns what, and every path: [`docs/architecture/save-paths.md`](./docs/architecture/save-paths.md). |
 | `api/` | Vercel serverless functions, with their own `tsconfig.json` (typecheck and lint cover them). |
 | `scripts/`, `tools/` | Build, release, screenshot and perf scripts, and the SimTower harness in `tools/simtower/`. `scripts/tsconfig.json` type-checks both under `npm run typecheck`, and `npm run lint` covers them (and `e2e/`) with Node globals. |
