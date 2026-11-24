@@ -1,4 +1,4 @@
-/* Help-only rules over the engine docs theme (docs/engine-site/src/styles/theme.css in Verticopolis/engine). */
+/* Help-only rules over the docs sites' shared theme (styles/starlight-theme.css in @verticopolis/components). */
 
 /* "Close this tab" when the browser keeps a game-opened tab open. */
 /* The Help bar (#2035, HelpBar.astro): the game's status bar along the
@@ -112,14 +112,6 @@ html.vc-help-bar-showing:not(.vc-embedded) body {
 .title-screen .ts-tag {
   width: min(78vw, 340px);
 }
-/* The trademark mark beside the wordmark, matching the game's splash. */
-.title-screen .ts-word .tm {
-  font-size: 14px;
-  letter-spacing: 0;
-  stroke: none;
-  fill: var(--splash-wordmark);
-}
-
 /* Room pictures, drawn by the game's own painters (src/scripts/sprites.ts). */
 .vc-sprite {
   margin: 1rem auto;

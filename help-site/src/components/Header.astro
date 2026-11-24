@@ -1,6 +1,8 @@
 ---
 // The help site's header: the game's menu bar on top (MenuBar.astro), then
-// the title bar (TitleBar.astro, the same bar the engine docs draw), handed this site's own Starlight search and theme switch, with its
+// the shared title bar from @verticopolis/components (the same bar the engine
+// docs draw), handed this site's name and front page from Starlight and its own
+// Starlight search and theme switch, with its
 // game button pointed at the game (verticopolis.com from the manual's own
 // host, this same host in a /help build). In a
 // tab the game opened (?from=game, src/ui/fromGame.ts) that button and the
@@ -12,15 +14,17 @@
 // loads it here when it doesn't (backToOpenGame).
 import Search from "@astrojs/starlight/components/Search.astro";
 import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
-import TitleBar from "./TitleBar.astro";
+import TitleBar from "@verticopolis/components/astro/TitleBar.astro";
 import MenuBar from "./MenuBar.astro";
 import HelpBar from "./HelpBar.astro";
 import logo from "../assets/logo.png";
-import { siteHref } from "../../site.mjs";
+import { GITHUB, siteHref } from "../../site.mjs";
+
+const { siteTitle, siteTitleHref } = Astro.locals.starlightRoute;
 ---
 
 <MenuBar />
-<TitleBar logo={logo} short="Help" game={siteHref("/")}>
+<TitleBar logo={logo} title={siteTitle} short="Help" href={siteTitleHref} github={GITHUB} game={siteHref("/")}>
   <Search slot="search" />
   <ThemeSelect slot="theme" />
 </TitleBar>
