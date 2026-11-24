@@ -4,7 +4,8 @@
  * PR review, plus the README's day and night pair (`desk-hero`), written into
  * docs/screenshots/. Every other scene turns the desk off; these keep it on
  * (`desk`). `desk-help` shows the Player's Manual window. The pocket desk scenes show a phone held each way, with the Map
- * floating over the tower and then closed to its pill.
+ * floating over the tower and then closed to its pill, and the title screen
+ * in its window, with and without Continue.
  * The shots in a scene share one page, so each setup starts from the last
  * one's state and leaves the next a known one. Part of the SCENES manifest
  * (screenshot-scenes.ts). Keep ERASABLE.
@@ -106,6 +107,44 @@ function pocketShots(suffix: string): Shot[] {
   ];
 }
 
+/** Close the tower (File > Close) to come back to the title screen with Continue. */
+async function closeToTitle(page: Page): Promise<void> {
+  await page.evaluate(() => document.getElementById("mb-close")?.click());
+  await page.locator('#splash [data-splash="continue"]').waitFor();
+}
+
+/**
+ * The title screen on the pocket desk (owner, 2026-11-24): its window on a
+ * phone held upright and sideways, first for a new player, then with
+ * Continue after a tower is closed.
+ */
+function pocketTitleScenes(): Scene[] {
+  return (
+    [
+      ["phone", PHONE],
+      ["landscape", PHONE_LANDSCAPE],
+    ] as const
+  ).flatMap(([suffix, viewport]) => [
+    {
+      id: `desk-title-${suffix}`,
+      outDir: "features" as const,
+      viewport,
+      desk: true,
+      keepSplash: true,
+      shots: [{ name: `desk-title-${suffix}`, wait: 400 }],
+    },
+    {
+      id: `desk-title-${suffix}-continue`,
+      outDir: "features" as const,
+      viewport,
+      desk: true,
+      build: buildCanonTower,
+      assertUnits: 50,
+      shots: [{ name: `desk-title-${suffix}-continue`, wait: 400, setup: closeToTitle }],
+    },
+  ]);
+}
+
 /** The Player's Manual window's frame. */
 const MANUAL_FRAME = "#desk-win-help iframe";
 
@@ -187,7 +226,7 @@ export const DESK_SCENES: Scene[] = [
     shots: [
       // The default layout: Tools, the tower, Info, the Map and the Bulletin.
       { name: "desk-windows", clock: 11, setup: park },
-      // The Verticopolis button's menu.
+      // The Start button's menu.
       {
         name: "desk-start-menu",
         clock: 11,
@@ -307,6 +346,7 @@ export const DESK_SCENES: Scene[] = [
       { name: "desk-title-start-menu", wait: 400, setup: (page) => press(page, ".desk-start") },
     ],
   },
+  ...pocketTitleScenes(),
   {
     // The startup screen's sunrise on a computer and on a phone.
     id: "startup-sunrise",

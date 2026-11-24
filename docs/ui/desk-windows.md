@@ -4,11 +4,12 @@ On a computer (a window at least 1024 by 600 whose main pointer is a mouse or tr
 1994 desktop: each part of the game is its own window on a teal desk with a
 taskbar. A touchscreen gets the desk too (owner's pick, 2026-11-20): a
 sideways tablet the same desk with touch chrome, a phone or an upright tablet
-the pocket desk (below). Small computer windows and the title screen keep
-the ordinary layout. The windows, the window manager (`DeskManager`), the
+the pocket desk (below). Small computer windows keep the ordinary layout.
+The title screen sits in its own window on the desk, the pocket desk's too
+(`DeskTitle.show(pocket)`, owner's pick 2026-11-24). The windows, the window manager (`DeskManager`), the
 taskbar, the title screen's window and the Control Panel are
 `windows/desk/*` from `@verticopolis/components`; `src/ui/desk/` here is the
-game's glue: which of the game's elements become windows, the Verticopolis
+game's glue: which of the game's elements become windows, the Start
 menu's items, what each Control Panel icon runs, and the analytics. The
 numbers below live in the components' `src/ui/desk/deskGeometry.ts` and its
 tests.
@@ -21,7 +22,7 @@ tests.
 | Map | Title bar | No | Yes | No | ✕, Window > Map | Top of the right column |
 | Bulletin | Title bar | No | Yes | No | ✕, Window > Bulletin | Bottom of the right column (on a desk too short for it under the Map, over the tower's sky at the left, clear of the menu bar, the toasts and the ground line) |
 | Tower Info | Title bar | No | Yes | No | ✕, Window > Tower Info | Under Info, left of the column |
-| Control Panel | Title bar | No | Yes | No | ✕; opens from the Verticopolis menu and the tray | The middle of the desk |
+| Control Panel | Title bar | No | Yes | No | ✕; opens from the Start menu and the tray | The middle of the desk |
 | Help (the Player's Manual) | Title bar | Grip, at least 480 by 360 | Yes | Yes, button or double-click the title | ✕; opens from Help > Player's Manual, F1 and every Help link in the game, with the tower paused until it closes | The middle of the desk, 760 by 560 (shrunk to fit a smaller desk) |
 
 - Windows stack in the order they were pressed, the tower like any other, and
@@ -49,7 +50,7 @@ tests.
 - A minimized window keeps its layout (it is only hidden), so the tower's
   canvas never re-sizes while it waits on the taskbar.
 - A resize draws a dotted outline and sets the size once on release.
-- The taskbar has the Verticopolis button (New, Open, Control Panel, Close;
+- The taskbar has the Start button (New, Open, Control Panel, Close;
   an item whose menu-bar twin is hidden, such as Close on the title screen,
   is left out, and the title screen has no Control Panel), one button
   per open window (press to bring it up, press the front one to minimize it)
@@ -69,8 +70,8 @@ tests.
   already fills it.
 - Analytics (`app_action`, codes in `src/ui/desk/deskAnalytics.ts`, every
   row in docs/analytics-data-map.md): `desk_shown` is the desk coming up over
-  a tower and `desk_title_shown` around the title screen (each once per page
-  life); `desk_window` is a window changing, detail `<window>_<verb>` with
+  a tower and `desk_title_shown` around the title screen, detail `desk` or
+  `pocket` (each once per page life); `desk_window` is a window changing, detail `<window>_<verb>` with
   windows `tower`, `info`, `tools`, `map`, `bulletin`, `tower_info`,
   `control_panel`, `help` and verbs `min`, `restore`, `max`, `unmax`, `resize`,
   `move` (the first move in a page life) and `close` (the tower's, the
@@ -79,7 +80,7 @@ tests.
   did it; `desk_help_menu` is a pick on the Help window's menu bar, detail the item's
   code (`src/ui/desk/deskHelpMenu.ts`); `desk_task` is a taskbar window button, detail `<window>_front`,
   `_min` or `_restore` (`title` on the title screen); `desk_start_open` is the
-  Verticopolis button opening its menu (`title` or `tower`) and `desk_start` a
+  Start button opening its menu (`title` or `tower`) and `desk_start` a
   pick on it, detail the game menu item it ran (`btn-new`, `mb-import`,
   `desk-control-panel`, `mb-close`; before #2600 also `btn-help`,
   `mb-screensaver`, `btn-settings` and `btn-about`); `desk_tray` is the tray's `display` or `sound`;
@@ -113,7 +114,7 @@ flowchart TD
 
 - **Touch chrome** (`body.desk-touch`, every desk on a touchscreen): a 44 px
   taskbar with 38 px buttons above the home indicator, 44 px rows in the
-  Verticopolis and window menus, 26 px title bars whose buttons take a 44 px
+  Start and window menus, 26 px title bars whose buttons take a 44 px
   touch, and white title text on every window (3:1 or better on the gray).
 - **The pocket desk** (`body.desk-pocket`): the tower window fills the desk
   and never moves. Inside it, `.desk-pocket-body` is a grid that holds
@@ -142,6 +143,17 @@ flowchart TD
   places every window, and a place the player drags to lasts only until the
   page reloads or the desk comes down. Turning a tablet between pocket and full desk takes
   the old desk down and puts the new one up.
+- **The title screen** on the pocket desk (`body.desk-title-pocket`, the
+  components' `desk-title-pocket.css`): the same window as on a computer,
+  menu bar included, filling the screen above the 44 px taskbar and under
+  the browser's own bars. Upright, the poster fills its top and the buttons
+  (Continue when there is a tower, then Open, New and How to Play) stack in
+  the gray bar, two by two on a short screen; held sideways, they stand in
+  a gray panel beside the poster. The poster takes the height the buttons
+  leave and the premise line is hidden. A window too short even for that
+  scrolls, so every control stays reachable (`e2e/desk.spec.ts` checks it
+  at 852 by 330 and 411 by 796). Turning a tablet moves the window between
+  the two desks.
 - `?desk=pocket` puts the pocket desk on any screen, a computer's included
   (`vc-desk` = `pocket`).
 

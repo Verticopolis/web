@@ -337,10 +337,10 @@ empty face or poster; a click on the desk outside it does nothing). Each button'
 `splash`; New Tower's `new_game_started` once the tower is founded), so a
 command's total stays its own event and `title_pick` says what people did on
 the title screen. A menu item that presses a title button for the player (File
-> New… and Options > Sound on the title screen, or the desk's Verticopolis
+> New… and Options > Sound on the title screen, or the desk's Start
 menu) is that menu's own `menu_pick` or `desk_start`, never a `title_pick`.
 The "Title screen: buttons pressed" dashboard tile splits it by `detail`. Read
-it beside `desk_title_shown` to tell a computer's title screen from a phone's.
+it beside `desk_title_shown`, split by its `detail`, to tell a computer's title screen from a phone's.
 
 ## The Traffic readout's tap
 
@@ -386,7 +386,7 @@ always one fixed code, never a URL or a referrer. A link the game opens carries
 `?from=game&via=CODE` (`fromGameHref` in `src/ui/fromGame.ts`), the page reads
 it once and takes both marks out of the address bar, so a copied or shared
 link never carries them. The codes: `game_menu` (Help > Player's Manual, or
-the desk's Verticopolis menu), `title` (How to Play), `mode_badge` (the Tower
+the desk's Start menu), `title` (How to Play), `mode_badge` (the Tower
 panel's mode badge), `compare` (a link in the Classic vs Modern table),
 `welcome` (the version 4 welcome), `update_prompt` (All release notes),
 `about` (the privacy link), `inspector` and `stats` (a problem line's Help
@@ -436,7 +436,7 @@ The "page not found" page (`src/404.html`) reports two `app_action` codes, so a 
 | `action` | `detail` | When |
 | --- | --- | --- |
 | `not_found_view` | `game` or `help` | The page opened for a missing address on the game's site or the manual's (help.verticopolis.com, or /help on a build that serves the manual there) |
-| `not_found_pick` | `game`, `manual`, `changelog`, `rooms`, `close` or `taskbar` | One of its buttons (Play the game, Player's Manual, Release notes, Every room), the window's close box, or the taskbar's Verticopolis button. A click, keyboard Enter or middle-click counts; a link opened from the right-click menu does not |
+| `not_found_pick` | `game`, `manual`, `changelog`, `rooms`, `close` or `taskbar` | One of its buttons (Play the game, Player's Manual, Release notes, Every room), the window's close box, or the taskbar's Start button. A click, keyboard Enter or middle-click counts; a link opened from the right-click menu does not |
 
 The "Page not found" dashboard tile splits both by `detail`. Read picks against views for the share of lost visitors who went on.
 
@@ -526,11 +526,11 @@ The windows and cards that came with the menu bar report through `app_action`:
 | `screensaver_set` | `night`, `stars`, `express`, `endless`, `marquee` or `none` | The Screen Saver dialog's OK, with the saver picked |
 | `appearance_set` | `standard`, `skyline` or `high_contrast` | The Appearance dialog's OK changed the scheme, with the new one. An OK that keeps the scheme sends nothing; the common `scheme` property carries the scheme on every event. The "Appearance: scheme changes" dashboard tile splits it by `detail`, and "Appearance: page loads by scheme" splits `boot` by `scheme` |
 | `desk_shown` | `desk` or `pocket` | The 1994 desk came up over a tower (once per page life): `desk` for the full desk (a computer, or a sideways tablet), `pocket` for the pocket desk on a phone or upright tablet |
-| `desk_title_shown` | none | The title screen came up in its window on the desk (once per page life) |
+| `desk_title_shown` | `desk` or `pocket` (4.17.0 and later; none before) | The title screen came up in its window on the desk (once per page life): `desk` on a computer or a sideways tablet, `pocket` on a phone or an upright tablet |
 | `desk_window` | `<window>_<verb>`: windows `tower`, `info`, `tools`, `map`, `bulletin`, `tower_info`, `control_panel`, `help` (the Help window, components 2.2.0 and later); verbs `min`, `restore`, `max`, `unmax`, `resize`, `move`, `close` | A desk window changed: minimized, brought back, maximized or put back (from its title-bar buttons, a double-click on its title, its taskbar button or its window menu), resized from its grip, or moved for the first time in a page life. `close` is the tower's ✕ (it runs File > Close) or the Control Panel's ✕ only; the Map, Bulletin and Tower Info ✕ keep their own events (`docs/ui/desk-windows.md`) |
 | `desk_task` | `<window>_front`, `<window>_min` or `<window>_restore`, the window `title` on the title screen | A taskbar window button: it brought the window to the front, minimized the front window, or brought a minimized one back. The change itself is also a `desk_window` row, so `desk_task` says how many came from the taskbar |
-| `desk_start_open` | `title` or `tower` | The taskbar's Verticopolis button opened its menu, over the title screen or a tower |
-| `desk_start` | the menu item it ran (`btn-new`, `mb-import`, `desk-control-panel`, `mb-close`; before #2600 also `btn-help`, `mb-screensaver`, `btn-settings`, `btn-about`) | A pick on the taskbar's Verticopolis menu. It is never also a `menu_pick`. Options > Control Panel… on the desk is a `menu_pick` with item `control_panel` |
+| `desk_start_open` | `title` or `tower` | The taskbar's Start button opened its menu, over the title screen or a tower |
+| `desk_start` | the menu item it ran (`btn-new`, `mb-import`, `desk-control-panel`, `mb-close`; before #2600 also `btn-help`, `mb-screensaver`, `btn-settings`, `btn-about`) | A pick on the taskbar's Start menu. It is never also a `menu_pick`. Options > Control Panel… on the desk is a `menu_pick` with item `control_panel` |
 | `desk_tray` | `display` or `sound` | A tray button: the monitor (opens the Control Panel) or the speaker (sound on or off, which also sends `mute`) |
 | `desk_win_menu_open` | `taskbar` or `title_bar` | A window menu opened, from a taskbar button (right-click, Shift+F10 or the context menu key) or a window's title bar (right-click) |
 | `desk_win_menu` | `<window>_<command>`, commands `restore`, `minimize`, `maximize`, `close` | A window menu pick. Restore, Minimize and Maximize also send their `desk_window` row |

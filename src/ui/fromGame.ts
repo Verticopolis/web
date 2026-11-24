@@ -30,7 +30,7 @@ export const HELP_SOURCE_PARAM = "via";
  * The places in the game that open the manual, each a `via` code that the help
  * site's landing events report as their `detail` (#2037; a fixed code, never a
  * URL or a referrer, owner 2026-11-12): `game_menu` the Help menu's Player's
- * Manual (and the desk's Verticopolis menu, which presses the same item),
+ * Manual (and the desk's Start menu, which presses the same item),
  * `title` the title screen's How to Play, `mode_badge` the Tower panel's mode
  * badge (the Classic and Modern page, in a browser tab), `compare` a link in
  * the Classic vs Modern table (the founding screen, the in-game comparison,

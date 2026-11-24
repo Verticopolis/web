@@ -130,8 +130,8 @@ export class DeskController {
     const mode = deskMode(screen);
     const splash = this.doc.body.classList.contains("splash-up");
     const want = mode !== null && !splash && !!this.doc.getElementById("stage") ? mode : null;
-    // The title screen sits in its own window on the full desk.
-    if (mode === "desk" && splash) this.showTitle();
+    // The title screen sits in its own window on the desk, the pocket one included.
+    if (mode && splash) this.showTitle(mode === "pocket");
     else this.title?.hide();
     // Turning a tablet can change the desk: the old one goes first.
     if (this.desk && want !== this.mode) this.down();
@@ -179,7 +179,7 @@ export class DeskController {
     into.appendChild(node);
   }
 
-  /** The Verticopolis menu, the tray and the presses both taskbars share. */
+  /** The Start menu, the tray and the presses both taskbars share. */
   private taskbarCommon(screen: DeskScreen): Omit<TaskbarOptions, "task" | "items"> {
     const doc = this.doc;
     return {
@@ -196,8 +196,8 @@ export class DeskController {
   }
 
   /** The title screen in its own window, with a taskbar of its own. */
-  private showTitle(): void {
-    if (this.title?.up) return;
+  private showTitle(pocket: boolean): void {
+    if (this.title?.up) return this.title.show(pocket); // A turned tablet moves it.
     if (!this.title) {
       const host = renderDetached(this.doc, html`<div class="desk-title-host"></div>`).elements[0] as HTMLElement;
       this.doc.body.append(host);
@@ -215,9 +215,9 @@ export class DeskController {
         },
       });
     }
-    this.title.show();
+    this.title.show(pocket);
     this.syncSound();
-    trackAppActionOnce("desk_title_shown");
+    trackAppActionOnce("desk_title_shown", pocket ? "pocket" : "desk");
   }
 
   // ---------- up and down ----------
@@ -279,7 +279,7 @@ export class DeskController {
     // Tools never folds on the desk: a window folded off the desk opens.
     if (palette?.classList.contains(PALETTE_COLLAPSED_CLASS)) doc.getElementById(PALETTE_COLLAPSE_BUTTON_ID)?.click();
 
-    // The Control Panel: closed until the Verticopolis menu or the tray opens it.
+    // The Control Panel: closed until the Start menu or the tray opens it.
     const control = new ControlPanel(doc, {
       items: CONTROL_ITEMS,
       closeLabel: "Close Control Panel",

@@ -1189,7 +1189,7 @@ function buildInsights(ids) {
     {
       name: "The desk: windows, taskbar and Control Panel",
       description:
-        "app_action for the 1994 desk on a computer and the pocket desk on a phone or tablet: desk_shown (once per page life the desk comes up over a tower; detail desk or pocket) and desk_title_shown (around the title screen), desk_window (<window>_<verb>, such as map_min, tower_max or tower_close), desk_task (a taskbar button: <window>_front, _min or _restore), desk_start_open (the Verticopolis menu opened, title or tower) and desk_start (its item), desk_tray (display or sound), desk_win_menu_open (taskbar or title_bar) and desk_win_menu (<window>_<command>), and desk_control (the Control Panel icon), production.",
+        "app_action for the 1994 desk on a computer and the pocket desk on a phone or tablet: desk_shown (once per page life the desk comes up over a tower; detail desk or pocket) and desk_title_shown (around the title screen; detail desk or pocket, 4.17.0 and later), desk_window (<window>_<verb>, such as map_min, tower_max or tower_close), desk_task (a taskbar button: <window>_front, _min or _restore), desk_start_open (the Start menu opened, title or tower) and desk_start (its item), desk_tray (display or sound), desk_win_menu_open (taskbar or title_bar) and desk_win_menu (<window>_<command>), and desk_control (the Control Panel icon), production.",
       query: trends([series("app_action", "Actions")], {
         breakdown: ["action", "detail"],
         display: "ActionsTable",
@@ -1211,9 +1211,10 @@ function buildInsights(ids) {
       }),
     },
     {
+      // The name finds the tile an earlier run added, so it keeps the menu's old name.
       name: "The desk: Verticopolis menu opened to picked",
       description:
-        "Sessions that opened the taskbar's Verticopolis menu (app_action desk_start_open) and then picked an item from it (desk_start) within a minute, production. A drop is a menu opened and closed again. Per session (cookieless), never a person.",
+        "Sessions that opened the taskbar's Start menu (app_action desk_start_open) and then picked an item from it (desk_start) within a minute, production. A drop is a menu opened and closed again. Per session (cookieless), never a person.",
       query: {
         kind: "InsightVizNode",
         source: {
@@ -1222,7 +1223,7 @@ function buildInsights(ids) {
             {
               kind: "EventsNode",
               event: "app_action",
-              name: "Opened the Verticopolis menu",
+              name: "Opened the Start menu",
               properties: [inAction(["desk_start_open"])],
             },
             { kind: "EventsNode", event: "app_action", name: "Picked an item", properties: [inAction(["desk_start"])] },

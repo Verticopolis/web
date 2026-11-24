@@ -26,7 +26,7 @@ export const DESK_WINDOW_NAME: Readonly<Record<DeskWindowId, string>> = {
   help: "help",
 };
 
-/** Where the Verticopolis menu was opened: over the title screen or a tower. */
+/** Where the Start menu was opened: over the title screen or a tower. */
 export type DeskScreen = "title" | "tower";
 
 /** The analytics name of a window id, or the title screen's window. */
@@ -41,7 +41,7 @@ export function trackDeskTask(id: string, result: DeskTaskResult): void {
   trackAppAction("desk_task", `${windowName(id)}_${result}`);
 }
 
-/** The Verticopolis button opened its menu: `desk_start_open`, the screen. */
+/** The Start button opened its menu: `desk_start_open`, the screen. */
 export function trackDeskStartOpen(screen: DeskScreen): void {
   trackAppAction("desk_start_open", screen);
 }

@@ -6,7 +6,7 @@ import { trackAppAction } from "../analyticsActions";
  * listener on the document hears a press on any `#splash [data-splash]`
  * button, however many times the title screen is drawn again.
  *
- * Only a real press counts. The menu bar and the desk's Verticopolis menu
+ * Only a real press counts. The menu bar and the desk's Start menu
  * press the title screen's own New Tower and mute buttons from a script
  * (`ON_TITLE_SCREEN` in menuWiring.ts), and those count as their menu's own
  * events (`menu_pick`, `desk_start`), so a script's click (`isTrusted`

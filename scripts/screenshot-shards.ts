@@ -185,6 +185,14 @@ export const SHARDS: Record<string, string[]> = {
   // The pocket desk on a phone held each way (owner, 2026-11-20), with the Map
   // open and closed; its own shard, as new features get.
   "pocket-desk": ["desk-pocket-phone", "desk-pocket-landscape"],
+  // The title screen on the pocket desk (owner, 2026-11-24), held each way,
+  // with and without Continue; its own shard, as new features get.
+  "pocket-title": [
+    "desk-title-phone",
+    "desk-title-phone-continue",
+    "desk-title-landscape",
+    "desk-title-landscape-continue",
+  ],
   // The appearance schemes (owner, 2026-11-17): the dialog, the canon tower's
   // desk in Skyline and High Contrast, a phone in Skyline and the phone title
   // screen in both; its own shard,
