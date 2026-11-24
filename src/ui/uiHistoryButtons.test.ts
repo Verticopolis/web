@@ -20,8 +20,8 @@ beforeEach(() => {
 describe("the toolbar's Undo and Redo", () => {
   it("run a click on a gray Undo only while a gesture is still open", () => {
     const underWay = vi.fn(() => true);
-    const { ui, cb } = makeUI({ undoUnderWay: underWay });
-    setHistoryButtons(ui, holding([0, 0]));
+    const { cb } = makeUI({ undoUnderWay: underWay });
+    setHistoryButtons(holding([0, 0]));
     const undo = document.getElementById("btn-undo")!;
     expect(undo.getAttribute("aria-disabled")).toBe("true");
     undo.click();
@@ -32,8 +32,8 @@ describe("the toolbar's Undo and Redo", () => {
   });
 
   it("leave a click on a gray Redo alone, with a gesture open or not", () => {
-    const { ui, cb } = makeUI({ undoUnderWay: vi.fn(() => true) });
-    setHistoryButtons(ui, holding([0, 0]));
+    const { cb } = makeUI({ undoUnderWay: vi.fn(() => true) });
+    setHistoryButtons(holding([0, 0]));
     document.getElementById("btn-redo")!.click();
     expect(cb.onRedo).not.toHaveBeenCalled();
   });

@@ -4,6 +4,7 @@ import { catalogFacility } from "@verticopolis/components/render/catalogIndex";
 import type { FacilityKind, GameMode } from "@verticopolis/engine/model/types";
 import { RULE_SET_NAME } from "./ruleSetName";
 import { showNewsInStatusBar, showToolInStatusBar, showTowerInStatusBar } from "./statusBar";
+import { patchTopBar } from "./topBar";
 import type { EnginePort } from "@verticopolis/engine/port/enginePort";
 import type { PortCodes } from "@verticopolis/engine/port/portCodes";
 import { clockOf } from "../engineHost/headerClock";
@@ -102,13 +103,15 @@ export function update(ui: UI, src: HudSource): void {
   // Whole dollars; a rounded -0 shows as 0 (never "$-0"), in the color of the
   // value shown, and a bad value still shows as NaN.
   const funds = Math.round(money);
-  ui.el.money.textContent = `$${groupDigits(funds === 0 ? 0 : funds)}`;
-  ui.el.money.style.color = funds < 0 ? "var(--bad)" : "var(--money)";
-  ui.el.pop.textContent = groupDigits(stats.population);
-  ui.el.star.textContent = star >= 6 ? "TOWER" : "★".repeat(star) + "☆".repeat(5 - star);
   const clock = clockOf(header);
-  ui.el.time.textContent = clock.format();
-  ui.el.date.textContent = clock.formatRetroDate();
+  patchTopBar({
+    funds: `$${groupDigits(funds === 0 ? 0 : funds)}`,
+    fundsNegative: funds < 0,
+    population: groupDigits(stats.population),
+    rating: star >= 6 ? "TOWER" : "★".repeat(star) + "☆".repeat(5 - star),
+    time: clock.format(),
+    date: clock.formatRetroDate(),
+  });
 
   // The palette and the build tool's card show the tower's catalog: redraw
   // them when it is no longer the one they were drawn from (a WASM host
@@ -193,7 +196,7 @@ export function update(ui: UI, src: HudSource): void {
   // #tower-stats is lit's container exclusively (one container, one renderer).
   render(towerStatsTemplate(stats), ui.el.towerStats);
 
-  setHistoryButtons(ui, src.port);
+  setHistoryButtons(src.port);
   renderLog(ui, src);
 }
 
@@ -204,35 +207,14 @@ export function update(ui: UI, src: HudSource): void {
  *  A gesture under way counts once it closes: one is normally open only
  *  while a press is held (a release the canvas never saw can leave one open,
  *  #1014), its release updates the buttons, and Ctrl+Z or a click on Undo
- *  still closes and undoes it ({@link onHistoryClick}). One two-number read
- *  per call; the DOM is written only when a state flips. */
-export function setHistoryButtons(ui: UI, port: Pick<EnginePort, "undoDepths">): void {
+ *  still closes and undoes it (`UI.pressUndo`). One two-number read
+ *  per call; the bar is drawn only when a state flips. */
+export function setHistoryButtons(port: Pick<EnginePort, "undoDepths">, doc: Document = document): void {
   const [undoSteps, redoSteps] = port.undoDepths();
-  grayWhen(ui.el.undo, undoSteps === 0);
-  grayWhen(ui.el.redo, redoSteps === 0);
-}
-
-/** Run `run` when `button` is clicked while it is not grayed out, or while
- *  `underWay` says a gesture it would close is still open. */
-export function onHistoryClick(button: HTMLButtonElement | null, run: () => void, underWay = () => false): void {
-  button?.addEventListener("click", () => {
-    if (!grayedOut(button) || underWay()) run();
-  });
-}
-
-/** Gray out `button` or bring it back, on a page that has it. It stays
- *  focusable: `disabled` would drop the focus to the page, and the next Enter
- *  or Space would then reach the game keys and build at the cursor. So it is
- *  marked `aria-disabled`, which the stylesheet draws as GrayText, and its
- *  click does nothing ({@link onHistoryClick}). */
-function grayWhen(button: HTMLButtonElement | null, off: boolean): void {
-  if (!button || grayedOut(button) === off) return;
-  if (off) button.setAttribute("aria-disabled", "true");
-  else button.removeAttribute("aria-disabled");
-}
-
-function grayedOut(button: HTMLButtonElement): boolean {
-  return button.getAttribute("aria-disabled") === "true";
+  // A grayed button stays focusable: `disabled` would drop the focus to the
+  // page, and the next Enter or Space would reach the game keys. The package
+  // marks it `aria-disabled`, and `UI.pressUndo` refuses the press.
+  patchTopBar({ undoOff: undoSteps === 0, redoOff: redoSteps === 0 }, doc);
 }
 
 const STRIP_FIELDS = [

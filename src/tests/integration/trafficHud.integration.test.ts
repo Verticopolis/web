@@ -49,9 +49,7 @@ function rawLines(engine: EnginePort): Array<[number, number, number, LineWaitTi
 
 describe.skipIf(!hasWasmPackage())("the traffic chip on the engine", () => {
   it("names the engine's worst line all day, not the floors' remembered waits, and a tap lands on it", () => {
-    mountPage(
-      html`<div id="traffic"><span id="traffic-glyph"></span><span id="traffic-label"></span><span id="traffic-floor"></span></div>`,
-    );
+    mountPage(html`<header id="topbar"></header>`);
     const engine = wasm().Engine.fromVctower(readFileSync(TOWER, "utf8")) as unknown as EnginePort & {
       free(): void;
       tick(m: number): void;

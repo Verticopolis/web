@@ -23,6 +23,13 @@ describe("setMenuState", () => {
     expect($("mb-replay").hidden).toBe(false);
   });
 
+  it("draws the app icon into the bar's brand, and keeps it through a redraw", () => {
+    const icons = () => [...document.querySelectorAll(".menubar-brand > .vc-icon")];
+    expect(icons().map((i) => i.getAttribute("data-icon"))).toEqual(["brand"]);
+    setMenuState({ "mb-sound": { checked: false } });
+    expect(icons()).toHaveLength(1);
+  });
+
   it("keeps the fields a change leaves out", () => {
     setMenuState({ "mb-quick-save": { hidden: true } });
     setMenuState({ "mb-quick-save": { disabled: true } });

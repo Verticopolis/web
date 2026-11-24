@@ -32,12 +32,7 @@ const label = () => document.getElementById("traffic-label")!.textContent;
 const floor = () => document.getElementById("traffic-floor")!.textContent;
 
 beforeEach(() => {
-  mountPage(html`
-    <div id="traffic">
-      <span id="traffic-glyph"></span>
-      <span id="traffic-label"></span>
-      <span id="traffic-floor"></span>
-    </div>`);
+  mountPage(html`<header id="topbar"></header>`);
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -90,7 +85,7 @@ describe("updateTraffic on the queue projection", () => {
     expect(updateTraffic(app as unknown as GameApp)).toBeUndefined();
     expect(app.frameErrors.map((e) => e.message.split("\n")[0])).toEqual(["[traffic] port down"]);
     expect(consoleSpy).toHaveBeenCalledExactlyOnceWith("[tick] traffic error, continuing:", expect.any(Error));
-    expect(label()).toBe("");
+    expect(document.getElementById("topbar")!.hasChildNodes(), "nothing drawn").toBe(false);
   });
 
   it("logs a failed draw, and the tooling's refresh throws it", () => {

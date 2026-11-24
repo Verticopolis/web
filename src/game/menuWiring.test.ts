@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { drawFragment, drawElement, mountPage } from "../ui/testing/litTestUtils";
+import { patchTopBar } from "../ui/topBar";
 import { html } from "lit-html";
 import type { GameApp } from "../main";
 
@@ -70,17 +71,17 @@ function mount(): void {
       <section id="bulletin-win" hidden><button data-close="bulletin-win">x</button></section>
     </main>
     <input id="tower-name" />
-    <button id="btn-undo" aria-disabled="true"></button>
-    <button id="btn-redo"></button>`);
+    <header id="topbar"></header>`);
   drawMenuBar();
+  patchTopBar({ undoOff: true }); // the toolbar's Undo is grayed, its Redo is not
 }
 
 function fakeApp(onPhone = false) {
   const ui = {
     cb: { onSave: vi.fn(), onToggleAudio: vi.fn(), isMuted: vi.fn(() => false), onReplayOnboarding: vi.fn() },
+    pressUndo: vi.fn(),
+    pressRedo: vi.fn(),
     el: {
-      undo: document.getElementById("btn-undo"),
-      redo: document.getElementById("btn-redo"),
       towerName: document.getElementById("tower-name") as HTMLInputElement,
     },
     promptExport: vi.fn(),
@@ -148,8 +149,6 @@ describe("wireMenus", () => {
 
   it("routes File, Edit, Tower, Options and Help items to the game", () => {
     const { app, ui } = fakeApp();
-    const undo = vi.fn();
-    vi.spyOn($("btn-undo"), "click").mockImplementation(undo);
     wireMenus(app);
     $("mb-quick-save").click();
     $("mb-close").click();
@@ -164,7 +163,7 @@ describe("wireMenus", () => {
     expect(closer.closeTower).toHaveBeenCalledWith(app);
     expect(files.showOpenDialog).toHaveBeenCalledExactlyOnceWith(app, "menu");
     expect(files.showSaveAsDialog).toHaveBeenCalledWith(app);
-    expect(undo).toHaveBeenCalledOnce(); // the toolbar's own button, so its rules hold
+    expect(ui.pressUndo).toHaveBeenCalledOnce(); // the toolbar's own press, so its rules hold
     expect(ui.showTowerRules).toHaveBeenCalledOnce(); // this tower's column, not the whole comparison
     expect(ui.showCompare).toHaveBeenCalledOnce();
     expect(ui.cb.onToggleAudio).toHaveBeenCalledOnce();

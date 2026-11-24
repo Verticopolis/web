@@ -5,12 +5,14 @@ import { dirname, resolve } from "node:path";
 import { settingsTemplate } from "./templates/settings";
 import { helpAboutBody } from "./templates/helpContent";
 import { renderToFragment } from "./testing/litTestUtils";
+import { topBarTemplate, type TopBarActions } from "@verticopolis/components/windows/bars/topBar";
+import { FIRST_TOP_BAR } from "./topBar";
 
 /**
  * The Verticopolis name carries its ™ mark everywhere the game shows it as a
  * name (owner, 2026-11-13). The splash wordmark's mark is pinned in
  * splashSponsor.test.ts; this file pins the in-game spots: the top bar's
- * VERTICOPOLIS badge (a static node in index.html), the version line in
+ * VERTICOPOLIS badge (the components package draws it), the version line in
  * Settings and About this game, the page's fallback heading, and the window
  * titles of the sprite gallery and missing-page pages.
  */
@@ -21,8 +23,9 @@ const page = new DOMParser().parseFromString(indexHtml, "text/html");
 
 describe("the in-game name badge", () => {
   it("reads VERTICOPOLIS™, with the mark in its own raised span after POLIS", () => {
-    const brand = page.querySelector(".brand")!;
-    expect(brand.textContent).toBe("VERTICOPOLIS™");
+    const bar = renderToFragment(topBarTemplate(FIRST_TOP_BAR, {} as TopBarActions));
+    const brand = bar.querySelector(".brand")!;
+    expect(brand.textContent!.trim()).toBe("VERTICOPOLIS™");
     const mark = brand.querySelector(".brand-tm")!;
     expect(mark.textContent).toBe("™");
     expect(mark.previousElementSibling?.textContent).toBe("POLIS");

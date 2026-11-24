@@ -6,6 +6,7 @@ import type { GameApp } from "../main";
 
 import { html } from "lit-html";
 import { mountPage } from "../ui/testing/litTestUtils";
+import { patchTopBar } from "../ui/topBar";
 const track = vi.hoisted(() => vi.fn());
 vi.mock("../analytics", () => ({ trackAppAction: track }));
 const spot = vi.hoisted(() => vi.fn());
@@ -61,7 +62,7 @@ function fakeApp(tier: number, rows: Row[], stretches: Record<string, [number, n
 beforeEach(() => {
   track.mockClear();
   spot.mockClear();
-  mountPage(html`<span id="traffic" role="button" tabindex="0"></span>`);
+  mountPage(html`<header id="topbar"></header>`);
 });
 
 describe("jumpToTraffic", () => {
@@ -108,6 +109,7 @@ describe("jumpToTraffic", () => {
   it("answers a click, Enter and Space on the readout", () => {
     const f = fakeApp(2, [[7, 3, 25, 2]], { "7:3": [44, 70] });
     wireTrafficJump(f.app);
+    patchTopBar({}); // the game draws the bar at boot
     const el = document.getElementById("traffic")!;
     el.click();
     el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));

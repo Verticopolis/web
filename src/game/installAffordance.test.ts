@@ -10,6 +10,7 @@ import {
 import { __resetPwaInstallForTest, canPromptInstall } from "../pwaInstall";
 import * as analytics from "../analytics";
 import { mountPage, drawFragment, renderToFragment } from "../ui/testing/litTestUtils";
+import { patchTopBar } from "../ui/topBar";
 import type { TemplateResult } from "lit-html";
 import { html } from "lit-html";
 import { drawMenuBar } from "./menuBarHost";
@@ -36,10 +37,11 @@ const CHIP_FLAG = "vc-install-chip-shown";
 function mountDom(): void {
   mountPage(html`
     <div id="menubar-host"></div>
-    <button id="btn-install" hidden></button>
+    <header id="topbar"></header>
     <dialog id="modal"></dialog>
   `);
   drawMenuBar();
+  patchTopBar({}); // the game draws the Information bar at boot
 }
 
 const chip = () => document.getElementById("btn-install") as HTMLButtonElement;
@@ -134,7 +136,7 @@ describe("play-gated chip, once ever (CAP-1)", () => {
   it("does not burn the once-ever flag when the chip element is absent", () => {
     initInstallAffordance(makeApp());
     makeInstallable();
-    document.getElementById("btn-install")?.remove(); // e.g. not the app page
+    document.getElementById("topbar")?.remove(); // e.g. not the app page
     tickInstallAffordance(makeApp({ units: 2 }));
     expect(localStorage.getItem(CHIP_FLAG)).toBeNull(); // flag intact for a real future appearance
   });

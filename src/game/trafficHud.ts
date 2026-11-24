@@ -9,6 +9,7 @@ import {
   type WaitingLine,
 } from "@verticopolis/components/presentation/traffic";
 import { floorLabel } from "../ui/floorLabel";
+import { onTopBar, patchTopBar, topBarView } from "../ui/topBar";
 import { noteFrameError } from "./frameErrors";
 import { trackAppAction } from "../analytics";
 import { spotlightTraffic, type SpotSpan } from "@verticopolis/components/render/excalibur/trafficSpotlight";
@@ -89,34 +90,19 @@ function drawTraffic(app: GameApp, line: WaitingLine | null): void {
   // and the "B1"/"B2" grammar for a basement, so a screen reader announces the
   // same floor identity the visible tag shows.
   const aria = floor !== null ? `Traffic: ${word}, worst line on floor ${floorLabel(floor)}` : `Traffic: ${word}`;
-  const glyphEl = document.getElementById("traffic-glyph");
-  const labelEl = document.getElementById("traffic-label");
-  const floorEl = document.getElementById("traffic-floor");
-  const wrapEl = document.getElementById("traffic");
   const level = trafficLevel(tier);
-  if (glyphEl && glyphEl.dataset.level !== level) glyphEl.dataset.level = level;
-  const labelChanged = labelEl != null && labelEl.textContent !== word;
-  const floorChanged = floorEl != null && floorEl.textContent !== floorText;
-  if (labelChanged) labelEl!.textContent = word;
-  if (floorChanged) floorEl!.textContent = floorText;
-  if (labelChanged || floorChanged) {
-    wrapEl?.setAttribute("aria-label", aria);
-    wrapEl?.classList.toggle("traffic-warn", tier >= 2); // red is a redundant cue, not the only one
-  }
+  const shown = topBarView().traffic;
+  // A refresh that changes nothing passes the readout the bar holds, which
+  // draws nothing. Red is a redundant cue, never the only one.
+  const same = shown.level === level && shown.word === word && shown.floor === floorText;
+  patchTopBar({ traffic: same ? shown : { level, word, floor: floorText, spoken: aria, warn: tier >= 2 } });
 }
 
 /** The readout as a control: above Smooth, a click, a tap, Enter or Space on
  *  it brings the tower to the waiting line it names and lights it up
  *  ({@link jumpToTraffic}). Wired once at boot. */
 export function wireTrafficJump(app: GameApp): void {
-  const el = document.getElementById("traffic");
-  if (!el) return;
-  el.addEventListener("click", () => jumpToTraffic(app));
-  el.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter" && e.key !== " ") return;
-    e.preventDefault();
-    jumpToTraffic(app);
-  });
+  onTopBar("traffic", () => void jumpToTraffic(app));
 }
 
 /** Zoom in on the worst waiting line the readout names: the camera centers on

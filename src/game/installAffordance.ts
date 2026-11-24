@@ -11,6 +11,7 @@ import { trackAppAction, trackAppActionOnce } from "../analytics";
 import { showInstallHelp } from "../ui/uiDialogs";
 import { isSplashUp } from "./interactionState";
 import { onMenuItem, setMenuState } from "./menuBarHost";
+import { onTopBar, patchTopBar } from "../ui/topBar";
 
 /**
  * The install-affordance controller (SPEC-pwa-install). Ties the browser install
@@ -86,8 +87,7 @@ function refreshMenu(): void {
 }
 
 function hideChip(): void {
-  const chip = document.getElementById("btn-install") as HTMLButtonElement | null;
-  if (chip) chip.hidden = true;
+  patchTopBar({ install: false });
 }
 
 /** Hide the splash front-door button. Its visibility is otherwise decided once at
@@ -173,8 +173,7 @@ export function initInstallAffordance(app: GameApp): void {
   // surface as an unhandledrejection and the installed error tracking would
   // promote it to crash telemetry. The offer is best-effort chrome. Each surface
   // passes its own name so the CAP-4 tap signal is attributed.
-  const chip = document.getElementById("btn-install");
-  if (chip) chip.addEventListener("click", () => void activateInstall(app, "chip").catch(() => {}));
+  onTopBar("install", () => void activateInstall(app, "chip").catch(() => {}));
   onMenuItem("btn-install-menu", () => void activateInstall(app, "menu").catch(() => {}));
   refreshMenu();
 }
@@ -200,11 +199,8 @@ export function tickInstallAffordance(app: GameApp): void {
   if (!hasReallyPlayed(app)) return; // not yet playing; keep the cheap wait
   // In-game now: decide the chip once, whatever the availability, then stop.
   if (installAvailability() === "prompt" && !chipShownEver()) {
-    const chip = document.getElementById("btn-install") as HTMLButtonElement | null;
-    if (chip) {
-      chip.hidden = false;
-      markChipShownEver(); // set the flag ONLY once the chip actually surfaced
-    }
+    // Set the flag ONLY once the chip actually surfaced.
+    if (patchTopBar({ install: true })) markChipShownEver();
   }
   chipResolved = true;
 }

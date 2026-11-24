@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mountAppDom, makeUI } from "../uiFixture";
+import { patchTopBar } from "../../ui/topBar";
 import { HELP_BAR_CHANNEL, isGameStatus, type BarRequest, type GameStatus } from "../../ui/helpBarProtocol";
 
 /**
@@ -55,10 +56,9 @@ describe("the game's side of the Help bar", () => {
     vi.restoreAllMocks();
   });
 
-  it("answers a bar with the status bar's own words", async () => {
+  it("answers a bar with the Information bar's own words", async () => {
     makeUI();
-    document.getElementById("stat-money")!.textContent = "$1,234";
-    document.getElementById("stat-pop")!.textContent = "567";
+    patchTopBar({ funds: "$1,234", population: "567" }); // what a status pass shows
     const status = await ask("hello");
     expect(status.hud.money).toBe("$1,234");
     expect(status.hud.population).toBe("567");

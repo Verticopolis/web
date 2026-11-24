@@ -9,7 +9,8 @@ import { mountPage } from "../ui/testing/litTestUtils";
  * Unit coverage for the color-blind-safe traffic HUD. `refreshTraffic` (the
  * refresh `updateTraffic` wraps, minus its catch, so a failed draw fails the
  * test) reads the renderer's queue projection (the engine's `queueView`),
- * then draws the worst line with the app's smoothed tier into four DOM cells.
+ * then draws the worst line with the app's smoothed tier into the Information
+ * bar's traffic meter.
  * The fake app's `queueView` is a spy answering one landing, and
  * `lastTrafficTier` is read and written in place so we can assert the
  * hysteresis gate from both directions. The ordering and failure cases are in
@@ -31,12 +32,7 @@ function fakeApp(count: number, lineFloor: number, lastTier: number, waitTier: 0
 }
 
 beforeEach(() => {
-  mountPage(html`
-    <div id="traffic">
-      <span id="traffic-glyph"></span>
-      <span id="traffic-label"></span>
-      <span id="traffic-floor"></span>
-    </div>`);
+  mountPage(html`<header id="topbar"></header>`);
 });
 
 const level = () => document.getElementById("traffic-glyph")!.dataset.level;
@@ -89,7 +85,6 @@ describe("refreshTraffic", () => {
     expect(floor()).toBe(" · B1");
     expect(wrap().getAttribute("aria-label")).toBe("Traffic: Backed up, worst line on floor B1");
 
-    document.getElementById("traffic-floor")!.textContent = "";
     const b2 = fakeApp(25, -1, 2);
     refreshTraffic(b2);
     expect(floor()).toBe(" · B2");
