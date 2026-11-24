@@ -9,6 +9,7 @@ import { trackAppAction, trackAppActionOnce } from "../../analyticsActions";
 import { DESK_MINIMIZED_CLASS } from "@verticopolis/components/windows/desk/deskWindow";
 import { DESK_ANY_SCREEN_MQ, DESK_MQ } from "@verticopolis/components/windows/desk/deskScreen";
 import { DESK_CLASS, DESK_KEY, DeskController, deskActive, wireDesk } from "./deskController";
+import { deskManual } from "./deskHelpWindow";
 
 /** The page the desk works on: the game's own elements, in their usual places. */
 const PAGE = html`
@@ -381,6 +382,23 @@ describe("DeskController", () => {
     expect(Object.keys(JSON.parse(localStorage.getItem(DESK_KEY.layout)!))).toEqual(
       expect.arrayContaining(["map", "bulletin", "info"]),
     );
+  });
+
+  it("opens Help's page in the Player's Manual window, on the taskbar, and remembers only the tower's maximize", () => {
+    new DeskController(doc).start();
+    const help = doc.getElementById("desk-win-help")!;
+    expect(help.hidden).toBe(true);
+    deskManual()!.show("/help/", "game_menu");
+    expect(help.hidden).toBe(false);
+    expect(doc.querySelector('.desk-task[data-win="help"]')).not.toBeNull();
+    doc.getElementById("menubar")!.getBoundingClientRect = () => ({ bottom: 40 }) as DOMRect;
+    doc.querySelector<HTMLElement>("#desk-win-tower .desk-btn-max")!.click();
+    expect(localStorage.getItem(DESK_KEY.max)).toBe("tower");
+    const helpMax = help.querySelector<HTMLElement>(".desk-btn-max")!;
+    helpMax.click();
+    expect(help.classList.contains("desk-maximized")).toBe(true);
+    helpMax.click();
+    expect(localStorage.getItem(DESK_KEY.max)).toBe("tower");
   });
 
   it("shows a sound toggled from the Control Panel on the tray and the Sounds icon, with no menu opened", async () => {

@@ -41,6 +41,7 @@ import {
 } from "./deskAnalytics";
 import { CONTROL_ITEM, CONTROL_ITEMS, CONTROL_PANEL_ITEM, startItems, towerTitleText, towerName } from "./deskGlue";
 import { setDeskMenus } from "./deskMenus";
+import { addDeskManual, removeDeskManual } from "./deskHelpWindow";
 
 /**
  * The 1994 desk (option C, picked by the owner on 2026-11-15): on a computer,
@@ -76,7 +77,7 @@ export function deskActive(doc: Document = document): boolean {
 }
 
 /** The taskbar order: the tower first, then the small windows. */
-const ORDER: readonly DeskWindowId[] = ["tower", "info", "tools", "map", "bulletin", "towerInfo", "control"];
+const ORDER: readonly DeskWindowId[] = ["tower", "info", "tools", "map", "bulletin", "towerInfo", "control", "help"];
 
 /** One element the desk moved, and where it came from. */
 interface Moved {
@@ -380,6 +381,8 @@ export class DeskController {
         close: () => control.close(),
       }),
     );
+    // Help, the Player's Manual: the full desk only, since phones keep the browser tab.
+    if (!pocket) manager.add(addDeskManual(doc, desk, () => this.manager?.bringUp("help")));
 
     // The pocket desk opens with the Map over the tower.
     if (pocket && map?.hidden) item("mb-win-map")();
@@ -396,6 +399,7 @@ export class DeskController {
     this.watcher = null;
     this.manager?.dispose();
     this.manager = null;
+    removeDeskManual();
     this.doc.querySelectorAll(".desk-added").forEach((e) => e.remove());
     for (const { node, parent, next } of this.moved.reverse()) {
       parent.insertBefore(node, next && next.parentNode === parent ? next : null);

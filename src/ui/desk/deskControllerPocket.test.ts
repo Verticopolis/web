@@ -9,6 +9,7 @@ import { trackAppActionOnce } from "../../analyticsActions";
 import { DESK_MINIMIZED_CLASS } from "@verticopolis/components/windows/desk/deskWindow";
 import { DESK_ANY_SCREEN_MQ, DESK_MQ } from "@verticopolis/components/windows/desk/deskScreen";
 import { DESK_CLASS, DESK_KEY, DeskController } from "./deskController";
+import { deskManual, setDeskManual } from "./deskHelpWindow";
 import {
   DESK_POCKET_CLASS,
   DESK_TOUCH_CLASS,
@@ -54,6 +55,7 @@ beforeEach(() => {
     })),
   );
   vi.mocked(trackAppActionOnce).mockClear();
+  setDeskManual(null);
 });
 
 afterEach(() => {
@@ -142,6 +144,13 @@ describe("the pocket desk", () => {
     expect(doc.body.classList.contains(DESK_POCKET_CLASS)).toBe(false);
     expect(doc.body.classList.contains(DESK_TOUCH_CLASS)).toBe(true);
     expect(parent("topbar")?.closest("#desk-win-info")).not.toBeNull();
+    expect(deskManual()).not.toBeNull();
+  });
+
+  it("leaves Help to a browser tab on a phone, with no manual window", () => {
+    new DeskController(doc).start();
+    expect(deskManual()).toBeNull();
+    expect(doc.querySelector(".desk-help-bar")).toBeNull();
   });
 
   it("lets ?desk=pocket bring the pocket desk to a computer", () => {
