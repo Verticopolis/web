@@ -15,13 +15,22 @@ import { drawElement } from "./testing/litTestUtils";
 
 let strip: HTMLElement;
 
+/** The status bar, whose `#tool-info` box shows the card. */
+let bar: HTMLElement;
+/** The card's box in the status bar. */
+const toolInfo = (): HTMLElement => document.getElementById("tool-info")!;
+
 beforeEach(() => {
+  bar = drawElement(html`<footer id="statusbar"></footer>`);
   strip = drawElement<HTMLDivElement>(html`<div></div>`);
   strip.id = "bulldoze-drag-strip";
   strip.hidden = true;
-  document.body.append(strip);
+  document.body.append(strip, bar);
 });
-afterEach(() => strip.remove());
+afterEach(() => {
+  strip.remove();
+  bar.remove();
+});
 
 const pressed = (root: ParentNode) =>
   [...root.querySelectorAll("button")].map((b) => [b.textContent, b.getAttribute("aria-pressed")]);
@@ -53,24 +62,22 @@ describe("bulldozePickerFor", () => {
       },
       pick: vi.fn((c: DragClears) => (clears = c)),
     };
-    const toolInfo = drawElement<HTMLDivElement>(html`<div></div>`);
-    const ui = { cb: { bulldozeDrag: () => choice }, tool: { type: "bulldoze" }, el: { toolInfo } } as unknown as UI;
+    const ui = { cb: { bulldozeDrag: () => choice }, tool: { type: "bulldoze" } } as unknown as UI;
     syncBulldozeDragStrip(ui.tool, bulldozePickerFor(ui));
     strip.querySelectorAll("button")[1]!.click();
     expect(choice.pick).toHaveBeenCalledExactlyOnceWith("everything");
-    expect(pressed(toolInfo.querySelector(".ti-drag-clears")!)).toEqual([
+    expect(pressed(toolInfo().querySelector(".ti-drag-clears")!)).toEqual([
       ["One kind", "false"],
       ["Everything", "true"],
     ]);
     expect(pressed(strip).map(([, on]) => on)).toEqual(["false", "true"]);
-    expect(toolInfo.textContent).toContain("everything it crosses");
+    expect(toolInfo().textContent).toContain("everything it crosses");
   });
 });
 
 describe("renderToolCard", () => {
   it("draws the Bulldoze card with its Drag clears choice and shows the strip, then hides it for another tool", () => {
     const choice = { clears: "everything" as DragClears, pick: vi.fn() };
-    const toolInfo = drawElement<HTMLDivElement>(html`<div></div>`);
     const ui = {
       cb: {
         bulldozeDrag: () => choice,
@@ -78,13 +85,12 @@ describe("renderToolCard", () => {
         getCatalog: () => catalogFor("modern"),
       },
       tool: { type: "bulldoze" },
-      el: { toolInfo },
     } as unknown as UI;
     renderToolCard(ui, { type: "bulldoze" });
-    expect(pressed(toolInfo.querySelector(".ti-drag-clears")!).map(([, on]) => on)).toEqual(["false", "true"]);
+    expect(pressed(toolInfo().querySelector(".ti-drag-clears")!).map(([, on]) => on)).toEqual(["false", "true"]);
     expect(strip.hidden).toBe(false);
     renderToolCard(ui, { type: "inspect" });
-    expect(toolInfo.querySelector(".ti-drag-clears")).toBeNull();
+    expect(toolInfo().querySelector(".ti-drag-clears")).toBeNull();
     expect(strip.hidden).toBe(true);
   });
 });

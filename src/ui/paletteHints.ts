@@ -1,3 +1,5 @@
+import { showHintInStatusBar } from "./statusBar";
+
 /**
  * The status bar's help for the Tools window, the way a 1995 program explained
  * its toolbar buttons (party, 2026-11-14): while the mouse pointer or the
@@ -35,10 +37,7 @@ export function wirePaletteHints(palette: HTMLElement, doc: Document = palette.o
 /** Show `item`'s name and description in the bar, or hand the cell back to
  *  the picked tool's card. */
 function showHint(item: HTMLElement | null, doc: Document): void {
-  const hint = doc.getElementById("sb-hint");
-  if (!hint) return;
   const name = item?.querySelector(".pal-name")?.textContent?.trim();
   const description = item?.querySelector(".pal-desc")?.textContent?.trim();
-  hint.textContent = name && description ? `${name}: ${description}` : "";
-  hint.hidden = !hint.textContent;
+  showHintInStatusBar(name && description ? `${name}: ${description}` : "", doc);
 }

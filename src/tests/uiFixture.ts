@@ -59,7 +59,7 @@ export function mountAppDom(): void {
     <div id="a11y-live"></div>
     <div id="palette-tabs"></div>
     <div id="palette-scroll"></div>
-    <div id="tool-info"></div>
+    <footer id="statusbar" class="statusbar"></footer>
     <input id="tower-name" />
     <button id="btn-mode" class="mode-badge is-classic btn">This tower: Classic</button>
     <div id="tower-stats"></div>

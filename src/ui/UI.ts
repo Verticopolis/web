@@ -114,7 +114,6 @@ export class UI {
     date: document.getElementById("stat-date")!,
     palette: document.getElementById("palette-scroll")!,
     paletteTabs: document.getElementById("palette-tabs")!,
-    toolInfo: document.getElementById("tool-info")!,
     towerStats: document.getElementById("tower-stats")!,
     log: document.getElementById("log")!,
     toast: document.getElementById("toast-wrap")!,
@@ -147,10 +146,6 @@ export class UI {
     this.cb = cb;
     buildPalette(this);
     this.wireControls();
-    // selectTool below renders the tool-info panel through lit; clear the static
-    // HTML placeholder first so lit's first render never appends after it (one
-    // container, one renderer). Invisible: selectTool repaints it immediately.
-    this.el.toolInfo.replaceChildren();
     this.selectTool({ type: "inspect" });
     // The editor card's [data-edit] actions and its ✕ dispatch through ONE
     // delegated listener on the container, so lit re-renders never need

@@ -222,7 +222,7 @@ function hud(header: Partial<typeof HEADER> = {}) {
 
 describe("resetLog", () => {
   it("opens the Bulletin with the arrival line on top of an empty engine log, and shows it in the status bar", () => {
-    mountPage(html`<span id="sb-news"></span>`);
+    mountPage(html`<footer id="statusbar"></footer>`);
     const { ui, el } = hud();
     resetLog(ui, source().src, "Loaded Skyspire.");
     expect(el.log.textContent).toBe("Loaded Skyspire.");

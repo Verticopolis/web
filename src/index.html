@@ -190,12 +190,9 @@
       </main>
       <!-- The Win95 status bar: the picked tool, the tower and its rules, and
            the newest bulletin line. Desktop only (Window > Status Bar). -->
-      <footer id="statusbar" class="statusbar">
-        <div id="sb-hint" class="sb-cell sb-grow" aria-hidden="true" hidden></div>
-        <div id="tool-info" class="sb-cell sb-grow">Pick a facility from the left.</div>
-        <div id="sb-tower" class="sb-cell"></div>
-        <div id="sb-news" class="sb-cell sb-news" aria-hidden="true"></div>
-      </footer>
+      <!-- Drawn by the components package's status bar (src/ui/statusBar.ts):
+           the Tools hint, the picked tool's card, the tower and the news. -->
+      <footer id="statusbar" class="statusbar"></footer>
       <!-- The newest bulletin line for a screen reader while the Bulletin
            window is closed (src/ui/statusBar.ts). Outside the status bar, so
            hiding the bar, or a phone, never silences it. -->

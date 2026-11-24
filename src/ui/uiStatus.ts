@@ -3,7 +3,7 @@ import { type Catalog } from "@verticopolis/engine/catalog/catalogTypes";
 import { catalogFacility } from "@verticopolis/components/render/catalogIndex";
 import type { FacilityKind, GameMode } from "@verticopolis/engine/model/types";
 import { RULE_SET_NAME } from "./ruleSetName";
-import { showNewsInStatusBar, showTowerInStatusBar } from "./statusBar";
+import { showNewsInStatusBar, showToolInStatusBar, showTowerInStatusBar } from "./statusBar";
 import type { EnginePort } from "@verticopolis/engine/port/enginePort";
 import type { PortCodes } from "@verticopolis/engine/port/portCodes";
 import { clockOf } from "../engineHost/headerClock";
@@ -121,7 +121,7 @@ export function update(ui: UI, src: HudSource): void {
     bindViewWorld(catalog.world);
     bindViewKinds(catalog);
     relabelPalette(ui, catalog);
-    if (ui.tool.type === "build") render(toolInfoFor(catalog, ui.tool.kind, ui.lobbyPicker()), ui.el.toolInfo);
+    if (ui.tool.type === "build") showToolInStatusBar(toolInfoFor(catalog, ui.tool.kind, ui.lobbyPicker()));
   }
 
   // Dirty-gate the palette lock/afford scan (E5-S3): its DOM pass depends on the

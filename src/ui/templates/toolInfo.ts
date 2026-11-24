@@ -15,8 +15,8 @@ import type { DragClears } from "../../game/bulldozeDrag";
  * transitional guards, retired with the string builders). The facility `name`/`description` copy is trusted
  * static text and now auto-escapes through lit; the conditional
  * capacity/customers row uses lit's `nothing` in place of the legacy `""`.
- * `#tool-info` is lit's container exclusively after the constructor clears its
- * static placeholder (one container, one renderer).
+ * `#tool-info` is one box of the package's status bar, and
+ * `showToolInStatusBar` is its one writer.
  */
 export function toolInfoTemplate(
   f: { name: string; cost: number; population: number; description: string },
