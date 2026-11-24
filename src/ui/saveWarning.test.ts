@@ -44,6 +44,22 @@ describe("save-failure notice", () => {
     expect(rail.querySelector(`#${SAVE_WARNING_ID}`)).toBeNull();
   });
 
+  it("rewords in place: the focused button stays focused, and calls the newest export", () => {
+    document.body.append(rail);
+    const first = vi.fn();
+    const second = vi.fn();
+    showSaveWarning(rail, "first", first);
+    const exportButton = rail.querySelector<HTMLButtonElement>('[data-act="export"]')!;
+    exportButton.focus();
+    showSaveWarning(rail, "second", second);
+    expect(rail.querySelector('[data-act="export"]')).toBe(exportButton);
+    expect(document.activeElement).toBe(exportButton);
+    exportButton.click();
+    expect(second).toHaveBeenCalledTimes(1);
+    expect(first).not.toHaveBeenCalled();
+    rail.remove();
+  });
+
   it("clears only the notice", () => {
     showSaveWarning(rail, "text", vi.fn());
     clearSaveWarning(rail);
