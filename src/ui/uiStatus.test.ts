@@ -135,6 +135,17 @@ describe("toast rail", () => {
     expect((rail.lastElementChild as HTMLElement).getAttribute("role")).toBe("alert");
   });
 
+  it("keeps engine text as text in a toast, swapping only a known leading emoji for its icon (#721)", () => {
+    const { ui, rail } = makeUI();
+    toast(ui, "🔥 <b>Fire</b> on 3", "bad");
+    const t = rail.lastElementChild as HTMLElement;
+    expect(t.className).toBe("toast bad");
+    expect(t.getAttribute("role")).toBe("alert");
+    expect(t.querySelector("svg")?.namespaceURI).toBe("http://www.w3.org/2000/svg");
+    expect(t.querySelector("b")).toBeNull();
+    expect(t.textContent).toContain("<b>Fire</b> on 3");
+  });
+
   it("leaves routine good/info toasts polite (no assertive role)", () => {
     const { ui, rail } = makeUI();
     toast(ui, "saved", "good");
@@ -221,6 +232,18 @@ describe("resetLog", () => {
     resetLog(ui, source().src);
     expect(el.log.childElementCount).toBe(0); // an undo step adds no line
     document.body.replaceChildren();
+  });
+
+  it("keeps engine text as text in a bulletin line, swapping only a known leading emoji for its icon (#721)", () => {
+    const { ui, el } = hud();
+    const { src } = source();
+    const port = { ...src.port, logAfter: () => Float64Array.from([3, 0, 60]), logText: () => "🔥 <b>Fire</b> on 3" };
+    resetLog(ui, { ...src, port } as HudSource);
+    const line = el.log.firstElementChild as HTMLElement;
+    expect(line.className).toBe("log-line info");
+    expect(line.querySelector("svg")?.namespaceURI).toBe("http://www.w3.org/2000/svg");
+    expect(line.querySelector("b")).toBeNull();
+    expect(line.textContent).toContain("<b>Fire</b> on 3");
   });
 
   it("leaves a log the engine already wrote (a new tower's welcome) as its own words", () => {
