@@ -5,15 +5,8 @@ import { resolve } from "node:path";
 const { trackAppAction } = vi.hoisted(() => ({ trackAppAction: vi.fn() }));
 vi.mock("./analyticsActions", () => ({ trackAppAction }));
 
-import {
-  MANUAL_LINKS,
-  MIDDLE_BUTTON,
-  msToNextMinute,
-  notFoundLinks,
-  notFoundPageTemplate,
-  notFoundSite,
-  trayClock,
-} from "./notFoundPage";
+import { MIDDLE_BUTTON } from "@verticopolis/components/windows/notFoundDesk";
+import { MANUAL_LINKS, notFoundLinks, notFoundPageTemplate, notFoundSite } from "./notFoundPage";
 import { renderToFragment } from "./ui/testing/litTestUtils";
 
 /**
@@ -57,21 +50,6 @@ describe("notFoundLinks", () => {
 
   it("links the manual's pages at this build's address for them", () => {
     expect(MANUAL_LINKS.map((l) => l.href)).toEqual(["/help", "/help/changelog", "/help/rooms"]);
-  });
-});
-
-describe("trayClock", () => {
-  it("reads like the 1995 tray clock", () => {
-    expect(trayClock(new Date(2026, 10, 15, 0, 5))).toBe("12:05 AM");
-    expect(trayClock(new Date(2026, 10, 15, 9, 41))).toBe("9:41 AM");
-    expect(trayClock(new Date(2026, 10, 15, 12, 0))).toBe("12:00 PM");
-    expect(trayClock(new Date(2026, 10, 15, 16, 34))).toBe("4:34 PM");
-  });
-
-  it("waits until just after the minute turns over", () => {
-    expect(msToNextMinute(new Date(2026, 10, 15, 9, 41, 0, 0))).toBe(60_050);
-    expect(msToNextMinute(new Date(2026, 10, 15, 9, 41, 59, 900))).toBe(150);
-    expect(msToNextMinute(new Date(2026, 10, 15, 9, 41, 30, 250))).toBe(29_800);
   });
 });
 
