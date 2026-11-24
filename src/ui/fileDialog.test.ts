@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { viewTemplate } from "./testing/litTestUtils";
+import { viewTemplate, drawElement } from "./testing/litTestUtils";
 import type { ModalView } from "@verticopolis/components/windows/uiModal";
-import { render } from "lit-html";
+import { html, render } from "lit-html";
 
 const m = vi.hoisted(() => ({ track: vi.fn() }));
 vi.mock("../analytics", () => ({ trackAppAction: m.track }));
@@ -75,7 +75,7 @@ beforeEach(() => {
   box = null;
   ui = {
     openModal: vi.fn((tpl: ModalView) => {
-      box = document.createElement("div");
+      box = drawElement<HTMLDivElement>(html`<div></div>`);
       render(viewTemplate(tpl), box);
       document.body.append(box);
       return box;

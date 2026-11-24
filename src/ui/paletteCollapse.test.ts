@@ -10,9 +10,10 @@ import {
 } from "./paletteCollapse";
 
 import { html, render } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 /** The Tools window as index.html writes it. */
 function toolsWindow(): HTMLElement {
-  const win = document.createElement("aside");
+  const win = drawElement(html`<aside></aside>`);
   win.id = "palette";
   render(
     html`<div class="win-title">Tools</div><div class="palette-tabs" id="palette-tabs"></div><div class="palette-scroll" id="palette-scroll"></div>`,
@@ -102,7 +103,7 @@ describe("the Tools window's fold button", () => {
   });
 
   it("adds nothing to a window with no title bar", () => {
-    const win = document.createElement("aside");
+    const win = drawElement(html`<aside></aside>`);
     expect(wirePaletteCollapse(win, memoryStore(), () => {})).toBeNull();
     expect(win.querySelector("button")).toBeNull();
   });
@@ -122,7 +123,7 @@ describe("openFoldedPaletteAround", () => {
 
   function foldedWindowWithTool() {
     const win = toolsWindow();
-    const tool = document.createElement("div");
+    const tool = drawElement<HTMLDivElement>(html`<div></div>`);
     win.querySelector(".palette-scroll")!.append(tool);
     document.body.append(win);
     const store = memoryStore({ [PALETTE_COLLAPSED_STORAGE_KEY]: PALETTE_COLLAPSED_VALUE.collapsed });

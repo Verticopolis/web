@@ -9,6 +9,8 @@ import {
   isEditorBusy,
 } from "./interactionState";
 import { CRASH_SCREEN_ID } from "../ui/crashScreen";
+import { html } from "lit-html";
+import { drawFragment } from "../ui/testing/litTestUtils";
 
 /** Minimal chrome-state stub. Only the fields the module reads exist. */
 function makeApp(
@@ -22,11 +24,10 @@ function makeApp(
   } as unknown as GameApp;
 }
 
-function mount(id: string, tag = "div", open = false): void {
-  const el = document.createElement(tag);
-  el.id = id;
-  if (open) (el as HTMLDialogElement).open = true;
-  document.body.appendChild(el);
+function mount(id: string, tag: "div" | "dialog" = "div", open = false): void {
+  document.body.append(
+    drawFragment(tag === "dialog" ? html`<dialog id=${id} ?open=${open}></dialog>` : html`<div id=${id}></div>`),
+  );
 }
 
 beforeEach(() => {

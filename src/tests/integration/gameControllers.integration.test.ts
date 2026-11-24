@@ -23,8 +23,9 @@ import { EditorActions } from "../../game/editorActions";
 import { SaveLoad } from "../../game/saveLoad";
 import { InspectorController } from "../../game/inspector";
 import { KeyboardPlay } from "../../game/keyboardPlay";
-import { render, type TemplateResult } from "lit-html";
+import { html, render, type TemplateResult } from "lit-html";
 import { portDeps } from "../../game/portDeps.fixture";
+import { drawElement } from "../../ui/testing/litTestUtils";
 
 const CAT = catalogFor("classic");
 /** A kind's catalog entry (Classic). */
@@ -56,7 +57,7 @@ function renderedText(tpl: TemplateResult): string {
  *  structure assertions (the string builders these tests once read retired
  *  with the final sweep). */
 function renderedCard(tpl: TemplateResult): HTMLElement {
-  const div = document.createElement("div");
+  const div = drawElement<HTMLDivElement>(html`<div></div>`);
   render(tpl, div);
   return div;
 }
@@ -224,7 +225,7 @@ describe.skipIf(noEngine)("EditorActions (editor-card money paths)", () => {
     f = fakes();
     sel = null;
     undo = { captures: [], commits: 0 };
-    root = document.createElement("div");
+    root = drawElement<HTMLDivElement>(html`<div></div>`);
     const build = new BuildActions({
       ...portDeps(sim).deps,
       ui: f.ui,

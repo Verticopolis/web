@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { compareTemplate, towerRulesModalTemplate } from "./compare";
-import { renderToFragment } from "../testing/litTestUtils";
+import { renderToFragment, drawElement } from "../testing/litTestUtils";
 import type { CatalogRules } from "@verticopolis/engine/catalog/catalogTypes";
 import { catalogFor } from "../../tests/catalogFixture";
+import { html } from "lit-html";
 
 /**
  * The Classic and Modern summary the founding screen and the in-game Compare
@@ -107,7 +108,7 @@ describe("a manual link in the summary", () => {
 
   it("opens its page in a new tab, marked as opened by the game, and leaves the game where it is", () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
-    const host = document.createElement("div");
+    const host = drawElement<HTMLDivElement>(html`<div></div>`);
     host.append(renderToFragment(compareTemplate()));
     document.body.append(host);
     const link = host.querySelector<HTMLAnchorElement>('a[href="/help/tower/clock/"]')!;

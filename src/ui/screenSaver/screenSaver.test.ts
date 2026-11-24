@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { ctxDouble } from "./saverTestKit.fixture";
 import { GRACE_MS, MOVE_PX, SAVER_HINT, SWALLOW_MS, runScene, showScreenSaver } from "./screenSaver";
+import { html } from "lit-html";
+import { drawElement } from "../testing/litTestUtils";
 
 function scene() {
   return { step: vi.fn(), draw: vi.fn() };
@@ -132,7 +134,7 @@ describe("runScene", () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
       ctxDouble() as unknown as CanvasRenderingContext2D,
     );
-    const canvas = document.createElement("canvas");
+    const canvas = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
     document.body.append(canvas);
     const s = scene();
     runScene(canvas, s, false);

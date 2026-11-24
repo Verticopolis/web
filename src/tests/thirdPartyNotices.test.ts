@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { render } from "lit-html";
+import { html, render } from "lit-html";
 import {
   INJECTED_CODE,
   collectPackageDirs,
@@ -19,6 +19,7 @@ import {
 } from "../build/thirdPartyNotices";
 import { engineRecordPackages, portVersionProblems } from "../build/rustNotices";
 import { helpAboutBody } from "../ui/templates/helpContent";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /** The header a generated file opens with: the script that wrote it and the package it copies. */
 const GENERATED_HEADER = /AUTO-GENERATED(?: by (scripts\/[\w.-]+))?[^\n]*\bfrom (@?[\w.-]+(?:\/[\w.-]+)?)@/;
@@ -216,7 +217,7 @@ describe("third-party notices (#951)", () => {
   });
 
   it("always shows the About licenses link and honors a custom href", () => {
-    const host = document.createElement("div");
+    const host = drawElement<HTMLDivElement>(html`<div></div>`);
     render(helpAboutBody("1.0.0"), host);
     expect(host.querySelector("a")?.getAttribute("href")).toBe("third-party-notices.txt");
     render(helpAboutBody("1.0.0", "", "/third-party-notices.txt"), host);

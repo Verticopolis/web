@@ -15,6 +15,8 @@ import {
   towerSource,
   viewCanvas,
 } from "./overviewMapWindow.fixture";
+import { html } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 
 beforeEach(() => vi.restoreAllMocks());
 afterEach(() => disposeRigs());
@@ -458,7 +460,7 @@ describe("overview map window: focus and keys (CAP-5)", () => {
 
   it("never marks itself drawn without a 2D context to paint the tower with", () => {
     // happy-dom's canvases have no 2D context, as a browser that refuses one.
-    expect(document.createElement("canvas").getContext("2d")).toBeNull();
+    expect(drawElement<HTMLCanvasElement>(html`<canvas></canvas>`).getContext("2d")).toBeNull();
     const r = rig();
     expect(r.win.isOpen()).toBe(true);
     expect(rootEl().dataset.mapDrawn).toBeUndefined();

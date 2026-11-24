@@ -32,6 +32,8 @@ import {
   type CardManifest,
   type HelpCardPage,
 } from "../../scripts/help-card-pages.mjs";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 const pagesDir = resolve(__dirname, "../..", HELP_PAGES_DIR);
 
@@ -471,9 +473,9 @@ describe("isSponsorLink (the help site's sponsor_click listener)", () => {
 describe("sponsorTapListener (the help site's sponsor_click listener)", () => {
   /** A link the listener's event lands on (or inside). */
   function linkTo(href: string): HTMLAnchorElement {
-    const a = document.createElement("a");
+    const a = drawElement<HTMLAnchorElement>(html`<a></a>`);
     a.href = href;
-    a.append(document.createElement("span"));
+    a.append(drawElement<HTMLSpanElement>(html`<span></span>`));
     return a;
   }
   function tap(type: "click" | "auxclick", target: Element, button = 0): MouseEvent {
@@ -497,7 +499,7 @@ describe("sponsorTapListener (the help site's sponsor_click listener)", () => {
     const listen = sponsorTapListener(track);
     listen(tap("auxclick", linkTo(SPONSOR_URL), 2));
     listen(tap("click", linkTo("https://github.com/Verticopolis/web")));
-    listen(tap("click", document.createElement("p")));
+    listen(tap("click", drawElement<HTMLParagraphElement>(html`<p></p>`)));
     expect(track).not.toHaveBeenCalled();
   });
 });

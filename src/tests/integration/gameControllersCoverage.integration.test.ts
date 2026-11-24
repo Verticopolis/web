@@ -26,7 +26,7 @@ import {
   editorPortDeps,
   inspectorPortDeps,
 } from "../../game/cardKit.fixture";
-import { render, type TemplateResult } from "lit-html";
+import { html, render, type TemplateResult } from "lit-html";
 import { SaveGame } from "../../storage/SaveGame";
 import { closeFileSpaceForTests, fileSpace } from "../../storage/fileSpace";
 import { FakeIndexedDb } from "../fakeIndexedDb";
@@ -51,6 +51,7 @@ const itTdt = (name: string, body: () => Promise<void>) => it.skipIf(!hasWasmPac
 import { saveOf, loadAuto, withPorts } from "../fixtures/saveText";
 import { showGraphicsRecovery } from "../../ui/graphicsRecovery";
 import { isRecoveringGraphics } from "../../game/interactionState";
+import { drawElement } from "../../ui/testing/litTestUtils";
 
 /** Coverage companion to gameControllers.integration.test.ts: the same harness idioms
  *  (recording fakes, fixture placements asserted with .ok, the Rust engine)
@@ -100,7 +101,7 @@ function last<T>(arr: T[]): T {
  *  hand this to handleEditAction the way production hands it the live card
  *  (the string builders these tests once read retired with the final sweep). */
 function renderedCard(tpl: TemplateResult): HTMLElement {
-  const div = document.createElement("div");
+  const div = drawElement<HTMLDivElement>(html`<div></div>`);
   render(tpl, div);
   return div;
 }
@@ -471,7 +472,7 @@ describe.skipIf(noEngine)("EditorActions (dialogs, extend billing, per-kind butt
     announced = [];
     batchDlg = null;
     scheduleDlg = null;
-    root = document.createElement("div");
+    root = drawElement<HTMLDivElement>(html`<div></div>`);
     const build = new BuildActions({
       ...portDeps(sim).deps,
       ui: f.ui,
@@ -1223,7 +1224,7 @@ describe.skipIf(noEngine)("SaveLoad (persistence, update flush, GPU-loss recover
   });
 
   it("saveBeforeUpdate behind the first-run splash saves nothing (the boot sim is throwaway)", () => {
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     saveLoad.saveBeforeUpdate();
@@ -1519,7 +1520,7 @@ describe.skipIf(noEngine)("SaveLoad (persistence, update flush, GPU-loss recover
     stubReload();
     saveLoad.recoverFromContextLoss();
     // A parallel loss flow put the crash card up while the rebuild ran.
-    const card = document.createElement("dialog");
+    const card = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     card.id = "crash-screen";
     document.body.appendChild(card);
     try {
@@ -1643,7 +1644,7 @@ describe.skipIf(noEngine)("SaveLoad (persistence, update flush, GPU-loss recover
   });
 
   it("a context loss behind the splash recovers in place without persisting or changing the tower", () => {
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     const logBefore = sim.log!.length;
@@ -1663,7 +1664,7 @@ describe.skipIf(noEngine)("SaveLoad (persistence, update flush, GPU-loss recover
 
   it("a context loss behind the splash whose recovery fails shows the screen worded for no tower in play", () => {
     stubReload();
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     saveLoad.recoverFromContextLoss();

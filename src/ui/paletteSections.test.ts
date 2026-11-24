@@ -8,10 +8,11 @@ import {
 } from "./paletteSections";
 
 import { html, render } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 /** The palette's item container as buildPalette lays it out: the pinned Tools
  *  cluster, then a section per category, one with a Modern sub-band. */
 function paletteRoot(): HTMLElement {
-  const root = document.createElement("div");
+  const root = drawElement<HTMLDivElement>(html`<div></div>`);
   render(
     html`
     <div class="pal-pinned"><div class="pal-group-title">Tools</div><div class="pal-item" data-tool="inspect"></div></div>

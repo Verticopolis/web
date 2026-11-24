@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import type { Unit } from "@verticopolis/engine/model/types";
 import type { Transport } from "@verticopolis/engine/model/types";
 import { fakeContext, importRemovingWindowListeners } from "./spriteReviewPageHarness";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * The gallery derives its column width from its container, which measures zero
@@ -64,7 +66,7 @@ beforeAll(async () => {
   Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, get: () => 0 });
   vi.stubGlobal("requestAnimationFrame", () => 0);
 
-  const app = document.createElement("div");
+  const app = drawElement<HTMLDivElement>(html`<div></div>`);
   app.id = "app";
   document.body.append(app);
 

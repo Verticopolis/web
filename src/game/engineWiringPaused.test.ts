@@ -5,6 +5,8 @@ import { wireEngine } from "./engineWiring";
 import { placeSimpleBuild, isPaintTool, isTransportTool } from "./buildPreview";
 import { NO_GESTURE } from "./appHistory";
 import { UNPAUSE_TO_BUILD } from "./pausedBuild";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * The pointer and touch build paths while paused (#1936). Classic's catalog
@@ -50,7 +52,7 @@ function makeApp(mode: GameMode, speed: number, tool: Record<string, unknown>) {
     enginePort: { generation: () => 1 },
     reader: { header: { mode } },
     speed,
-    canvas: document.createElement("canvas"),
+    canvas: drawElement<HTMLCanvasElement>(html`<canvas></canvas>`),
     audio: { start: vi.fn(), sfx: vi.fn() },
     keyboard: { pointerDrew: vi.fn(), followTower: vi.fn() },
     tool,

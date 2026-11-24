@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { TemplateResult } from "lit-html";
 import type { UI } from "./UI";
-import { renderToFragment } from "./testing/litTestUtils";
+import { renderToFragment, drawElement } from "./testing/litTestUtils";
 
 // The controller's one decision about the release notes link: a browser tab
 // shows it, the installed app does not (a new tab would leave the app).
@@ -9,11 +9,12 @@ const standalone = vi.hoisted(() => ({ isInstalledStandalone: vi.fn(() => false)
 vi.mock("./standalone", () => standalone);
 
 import { showUpdatePrompt } from "./uiDialogs";
+import { html } from "lit-html";
 
 function fakeUI(): { ui: UI; openModal: ReturnType<typeof vi.fn> } {
-  const openModal = vi.fn((_t: TemplateResult) => document.createElement("div"));
+  const openModal = vi.fn((_t: TemplateResult) => drawElement<HTMLDivElement>(html`<div></div>`));
   const ui = {
-    el: { modal: document.createElement("dialog") },
+    el: { modal: drawElement<HTMLDialogElement>(html`<dialog></dialog>`) },
     openModal,
     closeModal: vi.fn(),
   } as unknown as UI;

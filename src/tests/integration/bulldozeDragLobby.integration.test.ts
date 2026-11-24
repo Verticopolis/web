@@ -12,6 +12,8 @@ import { pickEntityAt } from "@verticopolis/components/render/excalibur/towerInp
 import type { TowerEngine } from "@verticopolis/components/render/excalibur/TowerEngine";
 import { FLOOR, TILE } from "@verticopolis/components/render/scale";
 import { look, must, newEngine, noEngine } from "../portKit/rustEngine";
+import { html } from "lit-html";
+import { drawElement } from "../../ui/testing/litTestUtils";
 
 /**
  * A bulldoze drag across a sky lobby, on the Rust engine the game ships, and
@@ -74,7 +76,7 @@ function wired(t: Tower) {
     engine: hooks,
     enginePort: t.port,
     reader: t.reader,
-    canvas: document.createElement("canvas"),
+    canvas: drawElement<HTMLCanvasElement>(html`<canvas></canvas>`),
     audio: { start: () => {}, sfx: () => {} },
     keyboard: { pointerDrew: () => {}, followTower: () => {} },
     tool: { type: "bulldoze" },

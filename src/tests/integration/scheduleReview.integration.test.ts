@@ -5,6 +5,8 @@ import { scheduleSlots } from "@verticopolis/engine/port/scheduleSlots";
 import { keepAct, recoverAct, reviewAct } from "../../ui/templates/scheduleReview";
 import { diffPaths, load, memory, play } from "./scheduleReview.fixture";
 import { look, noEngine } from "../portKit/rustEngine";
+import { html } from "lit-html";
+import { drawElement } from "../../ui/testing/litTestUtils";
 
 /** A staggered day: off through the small hours, two cars until noon, five after. */
 function hoursOnShift(hour: number): number {
@@ -139,7 +141,7 @@ describe.skipIf(noEngine)("what the player is told, and what they decide (#1548)
   });
 
   it("says nothing while the title screen is up, and mentions the tower once it is gone", () => {
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     const g = play(load("split-tower-4"));
@@ -290,7 +292,7 @@ describe.skipIf(noEngine)("what the player is told, and what they decide (#1548)
 
 describe.skipIf(noEngine)("the review's notices, focus and copy (#1548)", () => {
   it("waits out an open dialog before mentioning the tower, so the toast is not hidden behind it", () => {
-    const dialog = document.createElement("dialog");
+    const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     dialog.id = "modal";
     dialog.setAttribute("open", "");
     document.body.appendChild(dialog);

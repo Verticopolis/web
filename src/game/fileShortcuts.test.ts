@@ -9,6 +9,8 @@ vi.mock("./interactionState", () => ({
 }));
 
 import { fileCommandFor, typesText, wireFileShortcuts, type FileCommands } from "./fileShortcuts";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 let target: EventTarget;
 let commands: { [K in keyof FileCommands]: Mock<() => void> };
@@ -101,12 +103,12 @@ describe("the File menu's keys", () => {
   it("leave a text box its keys: nothing runs and the browser keeps the press", () => {
     const own = { open: vi.fn<() => void>(), save: vi.fn<() => void>(), saveAs: vi.fn<() => void>() };
     const heard = vi.fn();
-    const root = document.createElement("div");
+    const root = drawElement<HTMLDivElement>(html`<div></div>`);
     document.body.append(root);
     wireFileShortcuts(own, root, heard);
-    const box = Object.assign(document.createElement("input"), { type: "text" });
-    const area = document.createElement("textarea");
-    const check = Object.assign(document.createElement("input"), { type: "checkbox" });
+    const box = Object.assign(drawElement<HTMLInputElement>(html`<input>`), { type: "text" });
+    const area = drawElement<HTMLTextAreaElement>(html`<textarea></textarea>`);
+    const check = Object.assign(drawElement<HTMLInputElement>(html`<input>`), { type: "checkbox" });
     root.append(box, area, check);
     /** A press that starts in `el` and bubbles to the listener. */
     const pressIn = (el: Element, key: string, mods: KeyboardEventInit) => {

@@ -9,6 +9,8 @@ import { ScheduleReview } from "../../game/scheduleReview";
 import { browserAcknowledgements } from "../../game/scheduleRecovery";
 import type { ReviewRow } from "../../ui/templates/scheduleReview";
 import { engineFromSave } from "../portKit/rustEngine";
+import { html } from "lit-html";
+import { drawElement } from "../../ui/testing/litTestUtils";
 
 /**
  * The schedule review's integration harness (#1548): the game's own pieces around one tower on the Rust engine
@@ -66,7 +68,7 @@ export function play(raw: SerializedGame, store: Parameters<typeof browserAcknow
       showScheduleReview: (rows, handlers, focus) => {
         shown.push({ rows, handlers: handlers ?? {}, focus });
         order.push("open");
-        return document.createElement("div");
+        return drawElement<HTMLDivElement>(html`<div></div>`);
       },
     },
     audio: { sfx: () => {} },

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { drawFragment, mountPage } from "../ui/testing/litTestUtils";
+import { drawFragment, mountPage, drawElement } from "../ui/testing/litTestUtils";
 import { html } from "lit-html";
 import type { GameApp } from "../main";
 
@@ -59,7 +59,7 @@ function mount(): void {
 function fakeApp(): GameApp {
   const ui = {
     cb: { onSave: vi.fn(), onToggleAudio: vi.fn(), isMuted: vi.fn(() => false), onReplayOnboarding: vi.fn() },
-    el: { undo: null, redo: null, towerName: document.createElement("input") },
+    el: { undo: null, redo: null, towerName: drawElement<HTMLInputElement>(html`<input>`) },
     sayVisibly: vi.fn(),
   };
   return { ui, mobileMq: { matches: false } } as unknown as GameApp;

@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { pgMarkModalPhaseTarget, pgStopModalPhaseWatch, pgWatchModalPhase } from "./screenshotPhaseWatch.ts";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * Pins the contract of the screenshot dialog phase watch (#762 / #843): the
@@ -15,20 +17,20 @@ const frame = (): Promise<void> => new Promise((r) => requestAnimationFrame(() =
 function openDialog(): HTMLDialogElement {
   let dlg = document.getElementById("modal") as HTMLDialogElement | null;
   if (!dlg) {
-    dlg = document.createElement("dialog");
+    dlg = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     dlg.id = "modal";
     document.body.appendChild(dlg);
   }
-  const box = document.createElement("div");
+  const box = drawElement<HTMLDivElement>(html`<div></div>`);
   box.className = "modal-box";
-  const title = document.createElement("h2");
+  const title = drawElement<HTMLHeadingElement>(html`<h2></h2>`);
   title.className = "win-title";
   // The structure the components' ModalShell draws: the title text in
   // its own labelled span, the ✕ button beside it inside the heading.
-  const label = document.createElement("span");
+  const label = drawElement<HTMLSpanElement>(html`<span></span>`);
   label.id = "verticopolis-modal-title";
   label.textContent = "Schedule: Standard Elevator";
-  const close = document.createElement("button");
+  const close = drawElement<HTMLButtonElement>(html`<button></button>`);
   close.className = "modal-x";
   close.textContent = "✕";
   title.append(label, close);

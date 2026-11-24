@@ -4,6 +4,8 @@ import type { DragClears } from "../game/bulldozeDrag";
 import { catalogFor } from "../tests/catalogFixture";
 import { renderToolCard } from "./toolCard";
 import type { UI } from "./UI";
+import { html } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 
 /**
  * The Bulldoze card's "Drag clears" choice and the phone's strip for it: the
@@ -14,7 +16,7 @@ import type { UI } from "./UI";
 let strip: HTMLElement;
 
 beforeEach(() => {
-  strip = document.createElement("div");
+  strip = drawElement<HTMLDivElement>(html`<div></div>`);
   strip.id = "bulldoze-drag-strip";
   strip.hidden = true;
   document.body.append(strip);
@@ -51,7 +53,7 @@ describe("bulldozePickerFor", () => {
       },
       pick: vi.fn((c: DragClears) => (clears = c)),
     };
-    const toolInfo = document.createElement("div");
+    const toolInfo = drawElement<HTMLDivElement>(html`<div></div>`);
     const ui = { cb: { bulldozeDrag: () => choice }, tool: { type: "bulldoze" }, el: { toolInfo } } as unknown as UI;
     syncBulldozeDragStrip(ui.tool, bulldozePickerFor(ui));
     strip.querySelectorAll("button")[1]!.click();
@@ -68,7 +70,7 @@ describe("bulldozePickerFor", () => {
 describe("renderToolCard", () => {
   it("draws the Bulldoze card with its Drag clears choice and shows the strip, then hides it for another tool", () => {
     const choice = { clears: "everything" as DragClears, pick: vi.fn() };
-    const toolInfo = document.createElement("div");
+    const toolInfo = drawElement<HTMLDivElement>(html`<div></div>`);
     const ui = {
       cb: {
         bulldozeDrag: () => choice,

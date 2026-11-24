@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { render } from "lit-html";
+import { html, render } from "lit-html";
 import * as privacy from "../../help-site/src/content/docs/privacy.md";
 import {
   HELP_PAGES_DIR,
@@ -12,6 +12,7 @@ import {
   parseHelpPage,
   templateLiteralText,
 } from "./helpMarkdown";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 const PAGE = `---
 title: "Keyboard: play"
@@ -107,9 +108,9 @@ describe("the help pages", () => {
   });
 
   it("an imported page renders its compiled Markdown through lit", () => {
-    const root = document.createElement("div");
+    const root = drawElement<HTMLDivElement>(html`<div></div>`);
     render(privacy.body(), root);
-    const expected = document.createElement("div");
+    const expected = drawElement<HTMLDivElement>(html`<div></div>`);
     expected.innerHTML = compileHelpPage(readFileSync(resolve(dir, "privacy.md"), "utf8")).html;
     expect(root.querySelectorAll("p").length).toBeGreaterThan(2);
     expect(root.textContent?.trim()).toBe(expected.textContent?.trim());

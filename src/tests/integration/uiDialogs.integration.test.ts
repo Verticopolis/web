@@ -21,6 +21,7 @@ import { unitEditorTemplate } from "../../ui/templates/editor";
 import { toggleMute } from "../../game/audioPrefs";
 import { loadPrefs } from "../../storage/Prefs";
 import { noEngine } from "../portKit/rustEngine";
+import { drawElement } from "../../ui/testing/litTestUtils";
 
 /** Each mode's schedule dialog options, from the engine catalog's rules as the
  *  game reads them (`editorActions.ts`). */
@@ -167,14 +168,14 @@ describe("wireActions — the anti-dead-button contract", () => {
     // handler with a missing button (that's the bug this guards against), so
     // this one contract is exercised by direct call.
     const { ui } = makeUI();
-    const box = document.createElement("div");
+    const box = drawElement<HTMLDivElement>(html`<div></div>`);
     render(html`<button data-act="close">Close</button>`, box);
     expect(() => (ui as any).wireActions(box, { apply: () => {} })).toThrow();
   });
 
   it("throws when the default close button is absent — unless opts.close is false", () => {
     const { ui } = makeUI();
-    const box = document.createElement("div"); // no [data-act="close"] anywhere
+    const box = drawElement<HTMLDivElement>(html`<div></div>`); // no [data-act="close"] anywhere
     expect(() => (ui as any).wireActions(box)).toThrow();
     expect(() => (ui as any).wireActions(box, {}, { close: false })).not.toThrow();
   });
@@ -500,7 +501,7 @@ describe("openModal: every dialog wears the window grammar", () => {
     // UI hands the modal `isEngineStopped`; a late modal (an import report
     // finishing after the stop) would cover the message's Reload button.
     const { ui } = makeUI();
-    const failure = document.createElement("div");
+    const failure = drawElement<HTMLDivElement>(html`<div></div>`);
     failure.id = "engine-failure";
     document.body.appendChild(failure);
     try {
@@ -1244,7 +1245,7 @@ describe("About this game: the privacy link", () => {
     // showAbout reads #splash to gate the button. With the splash mounted the
     // Replay button must render disabled, which is the real production backstop
     // (a browser then suppresses the click) against replaying mid-title.
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     try {
@@ -1760,7 +1761,7 @@ describe("showSettings: the Settings dialog", () => {
   });
 
   it("leaves the bridging switch out on the title screen, where no tower is chosen yet", () => {
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.append(splash);
     const { ui } = makeUI({ getCatalog: () => catalogFor("modern") });

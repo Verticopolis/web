@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { anchorBeside } from "./UI";
 import { anchorInspector } from "./uiPanels";
 import type { UI } from "./UI";
+import { html } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 
 describe("anchorBeside — world-anchored panel placement", () => {
   const size = { w: 200, h: 120 };
@@ -29,7 +31,7 @@ describe("anchorBeside — world-anchored panel placement", () => {
 
 describe("anchorInspector: flip-aware card placement", () => {
   function fakeUi() {
-    const inspector = document.createElement("div");
+    const inspector = drawElement<HTMLDivElement>(html`<div></div>`);
     return { ui: { el: { inspector }, inspectorSize: { w: 240, h: 80 } } as unknown as UI, inspector };
   }
 

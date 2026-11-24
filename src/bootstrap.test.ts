@@ -4,7 +4,7 @@ import { isEngineStopped } from "./game/interactionState";
 import { autosaveIfLive } from "./game/autosaveSchedule";
 
 import { html } from "lit-html";
-import { mountPage } from "./ui/testing/litTestUtils";
+import { mountPage, drawElement } from "./ui/testing/litTestUtils";
 // The telemetry SDKs are gated on the host and best-effort; stub them so boot
 // never touches the real endpoints (the gate's own tests are in
 // bootstrap.telemetry.test.ts).
@@ -336,7 +336,7 @@ describe("showEngineFailure", () => {
     // Focus lands on Reload, the one control left.
     expect(document.activeElement).toBe(document.querySelector("#boot-fallback button:not([data-act])"));
     // A surface mounted after the stop goes inert too.
-    const late = document.createElement("div");
+    const late = drawElement<HTMLDivElement>(html`<div></div>`);
     document.body.appendChild(late);
     await Promise.resolve();
     expect(late.inert).toBe(true);

@@ -3,6 +3,8 @@ import { catalogFor } from "./catalogFixture";
 import { FLOOR, TILE } from "@verticopolis/components/render/scale";
 import type { Transport, Unit } from "@verticopolis/engine/model/types";
 import { fakeContext, importRemovingWindowListeners } from "./spriteReviewPageHarness";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * Shift-left guard: the two sprite-review pages draw at the world's proportions.
@@ -112,10 +114,10 @@ beforeAll(async () => {
   // each page draws synchronously on import.
   vi.stubGlobal("requestAnimationFrame", () => 0);
 
-  const previewCanvas = document.createElement("canvas");
+  const previewCanvas = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
   previewCanvas.id = "preview";
   document.body.append(previewCanvas);
-  const app = document.createElement("div");
+  const app = drawElement<HTMLDivElement>(html`<div></div>`);
   app.id = "app";
   document.body.append(app);
 

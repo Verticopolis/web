@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { makeApp, pointer, press, release, tap } from "./inputKeys.fixture";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * Where focus goes during a Space press, two of the places the game tells
@@ -31,7 +33,7 @@ function repeatIsCanceled(key: string, target: EventTarget = window, code = ""):
 }
 
 function openDialog(): void {
-  const dialog = document.createElement("dialog");
+  const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
   dialog.id = "modal";
   document.body.appendChild(dialog);
   dialog.open = true;
@@ -41,16 +43,16 @@ function openDialog(): void {
 const CONTROLS: Record<string, () => HTMLElement> = {
   // Stands in for the Map's button, which gets focus when a narrower
   // window closes the Map.
-  button: () => document.createElement("button"),
+  button: () => drawElement<HTMLButtonElement>(html`<button></button>`),
   "palette item": () => {
-    const item = document.createElement("div");
+    const item = drawElement<HTMLDivElement>(html`<div></div>`);
     item.setAttribute("role", "button");
     item.tabIndex = 0;
     return item;
   },
-  checkbox: () => Object.assign(document.createElement("input"), { type: "checkbox" }),
-  radio: () => Object.assign(document.createElement("input"), { type: "radio" }),
-  "input button": () => Object.assign(document.createElement("input"), { type: "button" }),
+  checkbox: () => Object.assign(drawElement<HTMLInputElement>(html`<input>`), { type: "checkbox" }),
+  radio: () => Object.assign(drawElement<HTMLInputElement>(html`<input>`), { type: "radio" }),
+  "input button": () => Object.assign(drawElement<HTMLInputElement>(html`<input>`), { type: "button" }),
 };
 
 describe("focus and Space", () => {
@@ -87,7 +89,7 @@ describe("focus and Space", () => {
     ] as const) {
       const app = makeApp();
       press(init.key, init);
-      const control = document.body.appendChild(document.createElement("button"));
+      const control = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
       control.focus();
       expect(repeatIsCanceled(init.key, control, init.code), `a repeat of Space known by ${name}`).toBe(true);
       expect(releaseIsCanceled(init), `the release of Space known by ${name}`).toBe(true);
@@ -107,7 +109,9 @@ describe("focus and Space", () => {
     // alone keeps the clicked button out.
     const STARTS: Record<string, () => void> = {
       "typed into a field": () => {
-        document.body.appendChild(Object.assign(document.createElement("input"), { type: "text" })).focus();
+        document.body
+          .appendChild(Object.assign(drawElement<HTMLInputElement>(html`<input>`), { type: "text" }))
+          .focus();
         press(" ");
       },
       "pressed as a chord": () => press(" ", { ctrlKey: true }),
@@ -115,7 +119,7 @@ describe("focus and Space", () => {
     for (const [name, start] of Object.entries(STARTS)) {
       const app = makeApp();
       start();
-      const button = document.body.appendChild(document.createElement("button"));
+      const button = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
       pointer("pointerdown", 1, button);
       button.focus(); // the click's focus
       pointer("pointerup", 1, button);
@@ -128,8 +132,8 @@ describe("focus and Space", () => {
 
   it("a text field or dropdown that gets focus with nothing covering the world still gets Space's repeats", () => {
     const FIELDS: Record<string, () => HTMLElement> = {
-      "text field": () => Object.assign(document.createElement("input"), { type: "text" }),
-      dropdown: () => document.createElement("select"),
+      "text field": () => Object.assign(drawElement<HTMLInputElement>(html`<input>`), { type: "text" }),
+      dropdown: () => drawElement<HTMLSelectElement>(html`<select></select>`),
     };
     for (const [name, make] of Object.entries(FIELDS)) {
       for (const firstSeen of ["a press", "repeats"]) {
@@ -145,7 +149,7 @@ describe("focus and Space", () => {
 
   it("a control focused before a Space first seen as repeats gets neither", () => {
     const app = makeApp();
-    const toggle = document.body.appendChild(document.createElement("button"));
+    const toggle = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
     toggle.focus();
     expect(repeatIsCanceled(" ", toggle), "a repeat does not arm it").toBe(true);
     expect(releaseIsCanceled(), "the release does not press it").toBe(true);
@@ -156,12 +160,14 @@ describe("focus and Space", () => {
     for (const firstSeen of ["a press", "repeats"]) {
       const app = makeApp();
       openDialog();
-      const choice = document.getElementById("modal")!.appendChild(document.createElement("button"));
+      const choice = document
+        .getElementById("modal")!
+        .appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
       choice.focus();
       if (firstSeen === "a press") press(" ");
       else expect(repeatIsCanceled(" ", choice), "a Space first seen as repeats is not the cover's").toBe(true);
       document.getElementById("modal")!.remove();
-      const opener = document.body.appendChild(document.createElement("button"));
+      const opener = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
       opener.focus(); // the dialog hands focus back to what opened it
       expect(repeatIsCanceled(" ", opener), `Space first seen as ${firstSeen}: its repeat`).toBe(true);
       expect(releaseIsCanceled(), `Space first seen as ${firstSeen}: its release`).toBe(true);
@@ -174,7 +180,7 @@ describe("focus and Space", () => {
     makeApp();
     press(" ");
     release("Meta"); // ends the hold with Space still down
-    const toggle = document.body.appendChild(document.createElement("button"));
+    const toggle = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
     toggle.focus();
     expect(repeatIsCanceled(" ", toggle), "its repeat").toBe(true);
     expect(releaseIsCanceled(), "its release").toBe(true);
@@ -182,9 +188,9 @@ describe("focus and Space", () => {
 
   it("leaves the release alone when focus moves to something that does not act on it", () => {
     const TARGETS: Record<string, () => HTMLElement> = {
-      link: () => Object.assign(document.createElement("a"), { href: "#help" }),
+      link: () => Object.assign(drawElement<HTMLAnchorElement>(html`<a></a>`), { href: "#help" }),
       "Map canvas": () => {
-        const map = document.createElement("canvas");
+        const map = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
         map.tabIndex = 0;
         map.setAttribute("role", "application");
         return map;
@@ -212,7 +218,7 @@ describe("focus and Space", () => {
     tap("Spacebar"); // with nothing focused, each builds
     tap("\u00a0", { code: "Space" });
     expect(app.keyboard.commitCursor, "each is a Space").toHaveBeenCalledTimes(2);
-    document.body.appendChild(document.createElement("button")).focus();
+    document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`)).focus();
     tap("Spacebar");
     tap("\u00a0", { code: "Space" });
     expect(app.keyboard.commitCursor, "a focused button keeps its Space").toHaveBeenCalledTimes(2);
@@ -220,7 +226,7 @@ describe("focus and Space", () => {
 
   it("a context menu the page kept closed leaves the hold", () => {
     const app = makeApp();
-    const panel = document.body.appendChild(document.createElement("div"));
+    const panel = document.body.appendChild(drawElement<HTMLDivElement>(html`<div></div>`));
     panel.addEventListener("contextmenu", (e) => e.preventDefault());
     press(" ");
     panel.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
@@ -244,9 +250,11 @@ describe("focus and Space", () => {
 describe("focus and a held Enter (#1842)", () => {
   it("a dialog that closes on Enter hands focus back, and the opener gets none of the repeats", () => {
     const app = makeApp();
-    const opener = document.body.appendChild(document.createElement("button"));
+    const opener = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
     openDialog();
-    const close = document.getElementById("modal")!.appendChild(document.createElement("button"));
+    const close = document
+      .getElementById("modal")!
+      .appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
     close.focus();
     close.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
     document.getElementById("modal")!.remove();
@@ -260,7 +268,7 @@ describe("focus and a held Enter (#1842)", () => {
 
   it("the control that got the press keeps its repeats", () => {
     makeApp();
-    const button = document.body.appendChild(document.createElement("button"));
+    const button = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
     button.focus();
     button.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
     const heard = vi.fn();
@@ -271,8 +279,8 @@ describe("focus and a held Enter (#1842)", () => {
 
   it("a new press, a release or the page losing focus starts the record over", () => {
     makeApp();
-    const first = document.body.appendChild(document.createElement("button"));
-    const second = document.body.appendChild(document.createElement("button"));
+    const first = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
+    const second = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
     first.focus();
     press("Enter");
     second.focus();
@@ -290,7 +298,7 @@ describe("focus and a held Enter (#1842)", () => {
   it("other keys' repeats still reach a control focused since their press", () => {
     makeApp();
     press("Tab"); // a key the game leaves alone
-    const button = document.body.appendChild(document.createElement("button"));
+    const button = document.body.appendChild(drawElement<HTMLButtonElement>(html`<button></button>`));
     button.focus();
     expect(repeatIsCanceled("Tab", button)).toBe(false);
   });

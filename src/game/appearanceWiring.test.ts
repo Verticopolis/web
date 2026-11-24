@@ -33,7 +33,7 @@ describe("the appearance wiring", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    root = document.createElement("html");
+    root = document.implementation.createHTMLDocument().documentElement;
     mountPage(html`<div id="menubar-host"></div>`);
     drawMenuBar();
   });

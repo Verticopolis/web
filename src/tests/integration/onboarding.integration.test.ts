@@ -199,7 +199,7 @@ describeEngines("Onboarding — controller lifecycle", (leg: Leg) => {
 import { vi, afterEach } from "vitest";
 
 import { html } from "lit-html";
-import { mountPage } from "../../ui/testing/litTestUtils";
+import { mountPage, drawElement } from "../../ui/testing/litTestUtils";
 /** A controller wired with spy opts and an mq whose change handler is capturable. */
 function makeSpyController(mobile = false) {
   mountPage(html`<div id="hint"></div><div id="palette-scroll"></div><div id="speed"></div>`);
@@ -383,7 +383,7 @@ describe("Onboarding — splash / title screen", () => {
     // A returning player with a save now sees the splash on any boot that isn't a
     // post-update resume, and can open a modal over it. That modal owns Esc; the
     // splash's safeDismiss must not also fire and drop them into Continue.
-    const modal = document.createElement("dialog");
+    const modal = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
     modal.id = "modal";
     modal.setAttribute("open", ""); // happy-dom reflects the attribute to `.open`
     document.body.appendChild(modal);

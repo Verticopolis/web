@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { html } from "lit-html";
-import { renderToFragment, dispatch, click, change, input } from "./litTestUtils";
+import { renderToFragment, dispatch, click, change, input, drawElement } from "./litTestUtils";
 
 /**
  * Unit tests for the lit test harness itself, so every template test can trust
@@ -32,7 +32,7 @@ describe("renderToFragment", () => {
 
 describe("event-dispatch helpers", () => {
   it("dispatch fires a bubbling event that a listener receives", () => {
-    const el = document.createElement("button");
+    const el = drawElement<HTMLButtonElement>(html`<button></button>`);
     const spy = vi.fn();
     el.addEventListener("custom", spy);
     dispatch(el, "custom");
@@ -40,7 +40,7 @@ describe("event-dispatch helpers", () => {
   });
 
   it("click/change/input fire their named events", () => {
-    const el = document.createElement("input");
+    const el = drawElement<HTMLInputElement>(html`<input>`);
     const clicked = vi.fn();
     const changed = vi.fn();
     const inputted = vi.fn();

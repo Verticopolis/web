@@ -1,8 +1,8 @@
-import { render } from "lit-html";
+import { html, render } from "lit-html";
 import type { ModalView } from "@verticopolis/components/windows/uiModal";
 import { describe, expect, it, vi } from "vitest";
 import type { TowerVersion } from "../storage/fileVersions";
-import { viewTemplate } from "./testing/litTestUtils";
+import { viewTemplate, drawElement } from "./testing/litTestUtils";
 import { showVersionsDialog, versionWhen } from "./versionsDialog";
 
 const NOW = new Date(2026, 10, 17, 18, 0).getTime();
@@ -11,8 +11,8 @@ const at = (day: number, hour: number) => new Date(2026, 10, day, hour, 4).getTi
 /** A modal host the dialog draws into, as the UI's is: a box in the one
  *  shared `<dialog>`. */
 function makeUi() {
-  const box = document.createElement("div");
-  const dialog = document.createElement("dialog");
+  const box = drawElement<HTMLDivElement>(html`<div></div>`);
+  const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
   const ui = {
     openModal: vi.fn((view: ModalView) => {
       document.body.replaceChildren(dialog);

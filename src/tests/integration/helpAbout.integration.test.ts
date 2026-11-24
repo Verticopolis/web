@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mountAppDom, makeUI } from "../uiFixture";
 import { PAUSED_FOR_HELP } from "../../ui/helpPause";
 import { trackAppAction } from "../../analytics";
+import { html } from "lit-html";
+import { drawElement } from "../../ui/testing/litTestUtils";
 
 /**
  * In-game Help (src/ui/uiHelp.ts) on the real UI, with the game's
@@ -308,7 +310,7 @@ describe("About… (About this game)", () => {
   });
 
   it("says Not sure for the mode on the title screen, where no tower is open", () => {
-    const splash = document.createElement("div");
+    const splash = drawElement<HTMLDivElement>(html`<div></div>`);
     splash.id = "splash";
     document.body.appendChild(splash);
     const { cb } = openAbout();

@@ -4,6 +4,8 @@ import { wireEngine } from "./engineWiring";
 import { placeSimpleBuild, isPaintTool, isTransportTool } from "./buildPreview";
 import { NO_GESTURE } from "./appHistory";
 import { BulldozeDragChoice } from "./bulldozeDrag";
+import { html } from "lit-html";
+import { drawElement } from "../ui/testing/litTestUtils";
 
 /**
  * A build or bulldoze drag changes the tower only inside the undo gesture its
@@ -45,7 +47,7 @@ function makeApp(tool: Record<string, unknown>) {
     engine: {} as DragHooks,
     enginePort,
     reader,
-    canvas: document.createElement("canvas"),
+    canvas: drawElement<HTMLCanvasElement>(html`<canvas></canvas>`),
     audio: { start: vi.fn(), sfx: vi.fn() },
     keyboard: { pointerDrew: vi.fn(), followTower: vi.fn() },
     tool,

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { viewTemplate } from "./testing/litTestUtils";
+import { viewTemplate, drawElement } from "./testing/litTestUtils";
 import type { ModalView } from "@verticopolis/components/windows/uiModal";
-import { render } from "lit-html";
+import { html, render } from "lit-html";
 import { showStarUp } from "./uiStarUp";
 import type { UI } from "./UI";
 import type { ModalOpts } from "@verticopolis/components/windows/modalPrecedence";
@@ -14,7 +14,7 @@ import type { ModalOpts } from "@verticopolis/components/windows/modalPrecedence
  */
 
 function stage() {
-  const dialog = document.createElement("dialog");
+  const dialog = drawElement<HTMLDialogElement>(html`<dialog></dialog>`);
   document.body.replaceChildren(dialog);
   let opts: ModalOpts = {};
   const ui = {

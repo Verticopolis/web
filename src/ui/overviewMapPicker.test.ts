@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { MAP_VIEWS, type MapViewId } from "@verticopolis/components/render/overviewMap/views";
 import { MAP_PICKER_DOM, MapViewPicker } from "./overviewMapPicker";
+import { html } from "lit-html";
+import { drawElement } from "./testing/litTestUtils";
 
 function build(): { picker: MapViewPicker; chosen: MapViewId[] } {
   const chosen: MapViewId[] = [];
@@ -44,7 +46,7 @@ describe("the map's View dropdown", () => {
 
   it("keeps the selected view for a value no view has", () => {
     const { picker, chosen } = build();
-    const odd = document.createElement("option");
+    const odd = drawElement<HTMLOptionElement>(html`<option></option>`);
     odd.value = "notAView";
     picker.select.append(odd);
     choose(picker, "notAView");
@@ -61,7 +63,7 @@ describe("the map's View dropdown", () => {
 
   it("gives focus back to what held it after a choice made with a pointer", () => {
     const { picker } = build();
-    const map = document.createElement("canvas");
+    const map = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
     map.tabIndex = 0;
     document.body.append(map);
     map.focus();
@@ -91,7 +93,7 @@ describe("the map's View dropdown", () => {
 
   it("forgets a pointer press that chose nothing once a key is pressed on the select", () => {
     const { picker } = build();
-    const map = document.createElement("canvas");
+    const map = drawElement<HTMLCanvasElement>(html`<canvas></canvas>`);
     map.tabIndex = 0;
     document.body.append(map);
     map.focus();
