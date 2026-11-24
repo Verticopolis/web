@@ -29,16 +29,20 @@ export function fullScreenOffered(state: {
   return !(state.phone && state.installed);
 }
 
-/** The Full Screen item and the line above Options' display toggles. */
+/** The Full Screen item, the line above Options' display toggles, and the
+ *  line above the desk's Window menu's Status Bar and Full Screen. */
 export const FULL_SCREEN_ITEM = "mb-fullscreen";
 export const DISPLAY_SEPARATOR = "mb-display-sep";
+export const WINDOW_SEPARATOR = "mb-window-sep";
 
 /**
- * Whether Full Screen shows, read as the Options menu opens. On a phone the
- * line above it goes with it: Tools and Status Bar are a computer's items, so
- * Full Screen is the only thing under that line there.
+ * Whether Full Screen shows, read as a menu opens. On a phone the line above
+ * it goes with it, in Options and in the desk's Window menu alike: Tools and
+ * Status Bar are a computer's items, so Full Screen is the only thing under
+ * that line there.
  */
 export function fullScreenStates(phone: boolean, doc: Document = document): Record<string, MenuEntryState> {
   const offered = fullScreenOffered({ phone, installed: isInstalledStandalone(), filling: !!doc.fullscreenElement });
-  return { [FULL_SCREEN_ITEM]: { hidden: !offered }, [DISPLAY_SEPARATOR]: { hidden: phone && !offered } };
+  const line = { hidden: phone && !offered };
+  return { [FULL_SCREEN_ITEM]: { hidden: !offered }, [DISPLAY_SEPARATOR]: line, [WINDOW_SEPARATOR]: line };
 }

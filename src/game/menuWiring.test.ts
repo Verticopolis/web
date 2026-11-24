@@ -273,6 +273,21 @@ describe("wireMenus", () => {
     expect($("mb-fullscreen").hidden).toBe(false);
   });
 
+  it("opening Options on the desk leaves Screen Saver and Appearance to the Control Panel, and off the desk keeps them", () => {
+    const bar = wireMenus(fakeApp().app)!;
+    const shown = () =>
+      ["mb-screensaver", "mb-appearance", "mb-control-sep", "mb-control-panel", "mb-display-sep"].map(
+        (id) => !$(id).hidden,
+      );
+    bar.open($("mb-options") as HTMLButtonElement, false);
+    expect(shown()).toEqual([true, true, false, false, true]);
+    bar.close(false);
+    document.body.classList.add("desk");
+    bar.open($("mb-options") as HTMLButtonElement, false);
+    // Full Screen's own refresh would show the display line; the desk's runs after it.
+    expect(shown()).toEqual([false, false, true, true, false]);
+  });
+
   it("Close, Open, Save and Save As gray out once the game stopped on its engine, and come back with a live tower", () => {
     const { app } = fakeApp();
     const bar = wireMenus(app)!;

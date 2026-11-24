@@ -56,14 +56,15 @@ describe("the title screen on the desk", () => {
 
   it("runs a Verticopolis menu item, and leaves out Close, since there is no tower to close", () => {
     new DeskController(doc).start();
-    const about = vi.fn();
-    onMenuItem("btn-about", about, doc);
+    const open = vi.fn();
+    onMenuItem("mb-import", open, doc);
     doc.getElementById("mb-close")!.hidden = true;
     doc.querySelector<HTMLElement>(".desk-start")!.click();
-    expect(doc.querySelector('.desk-start-menu [data-item="mb-close"]')).toBeNull();
-    doc.querySelector<HTMLElement>('.desk-start-menu [data-item="btn-about"]')!.click();
-    expect(about).toHaveBeenCalledTimes(1);
-    expect(trackAppAction).toHaveBeenCalledWith("desk_start", "btn-about");
+    const items = [...doc.querySelectorAll(".desk-start-menu [data-item]")].map((b) => b.getAttribute("data-item"));
+    expect(items).toEqual(["btn-new", "mb-import"]);
+    doc.querySelector<HTMLElement>('.desk-start-menu [data-item="mb-import"]')!.click();
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(trackAppAction).toHaveBeenCalledWith("desk_start", "mb-import");
   });
 
   it("shows the sound on its tray's speaker as the game switches it", async () => {

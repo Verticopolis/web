@@ -148,6 +148,30 @@ test.describe("the desk on a computer", () => {
     await expect(page.locator(".desk-start")).toBeFocused();
   });
 
+  test("Options keeps Settings and Sound, and its Control Panel… opens the panel from the keyboard", async ({
+    page,
+  }) => {
+    await load(page);
+    await enterTower(page);
+    await page.keyboard.press("Alt+o");
+    const options = page.locator("#mb-options-menu");
+    await expect(options).toBeVisible();
+    const shown = options.locator(".mb-item:visible, .mb-sep:visible");
+    await expect(shown).toHaveCount(4);
+    await expect(options.locator(".mb-item:visible")).toHaveText(["Settings…", "Sound", "Control Panel…"]);
+    await page.keyboard.press("ArrowUp");
+    await expect(page.locator("#mb-control-panel")).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#desk-win-control")).toBeVisible();
+    await expect(page.locator('#desk-win-control [data-control="display"]')).toBeFocused();
+    // A screen too small for the desk gives Options all of its items back.
+    await page.setViewportSize(PHONE);
+    await page.locator("#mb-options").click();
+    await expect(page.locator("#mb-screensaver")).toBeVisible();
+    await expect(page.locator("#mb-appearance")).toBeVisible();
+    await expect(page.locator("#mb-control-panel")).toBeHidden();
+  });
+
   test("no window is ever lost: Info and Tools never close, and the Window menu brings back a closed or minimized one", async ({
     page,
   }) => {
@@ -233,6 +257,30 @@ test.describe("the desk on a touch phone", () => {
     const map = await box(page.locator("#overview-map .overview-map-body"));
     expect(Math.round(map.width)).toBe(150);
     expect(Math.round(map.height)).toBe(216);
+  });
+});
+
+test.describe("the pocket desk in the installed app on a phone", () => {
+  test.use({ viewport: PHONE, isMobile: true, hasTouch: true });
+
+  test("Window and Options end on an item, with no line left over Full Screen", async ({ page }) => {
+    await page.addInitScript(() => {
+      const real = window.matchMedia.bind(window);
+      window.matchMedia = (q: string) => real(q.includes("display-mode: standalone") ? "all" : q);
+    });
+    await load(page);
+    await enterTower(page);
+    await expect(body(page)).toHaveClass(/\bdesk-pocket\b/);
+    for (const [title, last] of [
+      ["#mb-window", "Tower Info"],
+      ["#mb-options", "Control Panel…"],
+    ]) {
+      await page.locator(title).tap();
+      const shown = page.locator(`${title}-menu > :visible`);
+      await expect(shown.last()).toHaveText(last);
+      await page.keyboard.press("Escape");
+    }
+    await expect(page.locator("#mb-fullscreen")).toBeHidden();
   });
 });
 

@@ -329,6 +329,41 @@ describe("DeskController", () => {
     expect(trackAppAction).toHaveBeenCalledWith("desk_start", "desk-control-panel");
   });
 
+  it("keeps the Verticopolis menu to commands no other menu holds", () => {
+    new DeskController(doc).start();
+    doc.querySelector<HTMLElement>(".desk-start")!.click();
+    const entries = doc.querySelectorAll(".desk-start-menu .mb-item, .desk-start-menu .mb-sep");
+    const lines = [...entries].map((el) => (el.matches(".mb-sep") ? "-" : el.textContent?.trim()));
+    expect(lines).toEqual(["New…", "Open…", "-", "Control Panel…", "-", "Close Verticopolis"]);
+  });
+
+  it("leaves Screen Saver and Appearance to the Control Panel while it is up, and Options opens it", () => {
+    new DeskController(doc).start();
+    const options = ["mb-screensaver", "mb-appearance", "mb-control-panel"];
+    const shown = () => options.map((id) => !doc.getElementById(id)!.hidden);
+    expect(shown()).toEqual([false, false, true]);
+    doc.getElementById("mb-control-panel")!.click();
+    const panel = doc.getElementById("desk-win-control")!;
+    expect(panel.hidden).toBe(false);
+    expect(doc.activeElement).toBe(panel.querySelector('[data-control="display"]'));
+    // Display and Appearance still run their Options twins, hidden or not.
+    const saver = vi.fn();
+    const looks = vi.fn();
+    onMenuItem("mb-screensaver", saver, doc);
+    onMenuItem("mb-appearance", looks, doc);
+    panel.querySelector<HTMLElement>('[data-control="display"]')!.click();
+    panel.querySelector<HTMLElement>('[data-control="appearance"]')!.click();
+    expect([saver.mock.calls.length, looks.mock.calls.length]).toEqual([1, 1]);
+    // The desk going down, and up and down again, gives Options all of them back.
+    screen();
+    fireMediaChange();
+    screen(DESK_MQ, DESK_ANY_SCREEN_MQ);
+    fireMediaChange();
+    screen();
+    fireMediaChange();
+    expect(shown()).toEqual([true, true, false]);
+  });
+
   it("starts once per page, and says whether the desk is up", () => {
     expect(deskActive(doc)).toBe(false);
     expect(wireDesk(doc)).toBeInstanceOf(DeskController);
@@ -359,12 +394,12 @@ describe("DeskController", () => {
     expect(mapButton().getAttribute("aria-pressed")).toBe("false");
     doc.getElementById("overview-map")!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
     expect(mapButton().getAttribute("aria-pressed")).toBe("true");
-    const about = vi.fn();
-    onMenuItem("btn-about", about, doc);
+    const newTower = vi.fn();
+    onMenuItem("btn-new", newTower, doc);
     doc.querySelector<HTMLElement>(".desk-start")!.click();
-    doc.querySelector<HTMLElement>('.desk-start-menu [data-item="btn-about"]')!.click();
-    expect(about).toHaveBeenCalledTimes(1);
-    expect(trackAppAction).toHaveBeenCalledWith("desk_start", "btn-about");
+    doc.querySelector<HTMLElement>('.desk-start-menu [data-item="btn-new"]')!.click();
+    expect(newTower).toHaveBeenCalledTimes(1);
+    expect(trackAppAction).toHaveBeenCalledWith("desk_start", "btn-new");
   });
 
   it("keeps the small windows off a maximized tower's menu bar, puts them back on restore, and remembers the maximize", () => {
