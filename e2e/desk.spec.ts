@@ -331,6 +331,23 @@ async function seed(page: Page): Promise<void> {
   }, SAVED);
 }
 
+/**
+ * Stop the page's installed clock a moment from now. The round trip can
+ * outlast the moment on a busy machine, and the clock refuses a time in its
+ * past, so it tries again from the new time.
+ */
+async function stopClock(page: Page): Promise<void> {
+  for (let tries = 1; ; tries++) {
+    const now = await page.evaluate(() => Date.now());
+    try {
+      await page.clock.pauseAt(now + 200);
+      return;
+    } catch (error) {
+      if (tries >= 5) throw error;
+    }
+  }
+}
+
 /** True when two boxes share any area. */
 function overlap(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -387,6 +404,8 @@ for (const viewport of [
       await expect(page.locator("body")).toHaveClass(/desk-title-pocket/);
       const notice = page.locator("#toast-wrap .toast", { hasText: "Press Continue to go back to it." });
       await expect(notice).toBeInViewport({ ratio: 1 });
+      // The page's clock stops so the notice stays up while it and the menus are checked.
+      await stopClock(page);
       const covered = [page.locator("#splash .splash-word"), page.locator("#splash .splash-tag")];
       covered.push(...(await page.locator("#splash .splash-btn").all()));
       expect(covered.length).toBeGreaterThanOrEqual(6);
@@ -396,8 +415,6 @@ for (const viewport of [
         expect(overlap(shown, await box(part)), `the notice clears ${name}`).toBe(false);
       }
       // The menus open over the notice: every item they hold stays tappable.
-      // The page's clock stops so the notice stays up while they are checked.
-      await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 50);
       await page.getByRole("button", { name: "Start" }).click();
       const starts = await page.locator("#desk-start-menu [role=menuitem]:visible").all();
       expect(starts.length).toBeGreaterThanOrEqual(2);
