@@ -25,6 +25,11 @@ prompt already tells players it is an engine update and shows the new version.
 Entries below 1.51.1 were curated from the commit history after the fact, so they
 are documentation only: no build that a client fetches carries them.
 
+## 4.17.1
+
+- The main button on the opening screen (**Continue**, or **New Tower** before your first tower) is colored again so it stands out from the others: amber in Classic, violet in Skyline and yellow in High Contrast, on computers and phones.
+- With the Player's Manual open on the desktop, closing About this game or the Classic vs Modern comparison no longer starts your tower again. It stays paused until the manual window closes too.
+
 ## 4.17.0
 
 - On a phone or an upright tablet, the opening screen sits in its own window on the teal desktop, with the taskbar below, as it does on a computer. The taskbar's first button now reads **Start**.
