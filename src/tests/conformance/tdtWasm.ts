@@ -1,4 +1,4 @@
-import type { SerializedGame } from "@verticopolis/engine/model/types";
+import type { SerializedGame, SerializedView } from "@verticopolis/engine/model/types";
 import { PortCodes } from "@verticopolis/engine/port/portCodes";
 import { exportFacts, importFacts } from "@verticopolis/engine/port/tdtRecords";
 import { exportReport, type ExportReport } from "../../storage/tdtExportReport";
@@ -76,4 +76,18 @@ export function buildTDT(save: SerializedGame | string): BuiltTdt {
   } finally {
     engine.free();
   }
+}
+
+/** A `.TDT` file for the game's tests that open one, written by the engine's
+ *  own exporter from a new Classic tower: `money` and `star` land in the
+ *  header's balance and level, `view` in its view words. */
+export function tdtFile(over: { money?: number; star?: number; view?: SerializedView } = {}): Uint8Array {
+  const engine = wasm().Engine.newGame(1, "classic");
+  let save: SerializedGame;
+  try {
+    save = JSON.parse(engine.serialize()) as SerializedGame;
+  } finally {
+    engine.free();
+  }
+  return buildTDT({ ...save, ...over }).bytes;
 }

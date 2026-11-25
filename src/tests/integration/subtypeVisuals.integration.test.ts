@@ -1,6 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { LOT_WIDTH, newSeededDraft } from "../portKit/draftFixtures";
-import type { Draft } from "../portKit/drafts";
 import { catalogFor } from "../catalogFixture";
 import { catalogFacility } from "@verticopolis/components/render/catalogIndex";
 import {
@@ -13,7 +11,6 @@ import {
   RESTAURANT_LOOKS,
   SHOP_LOOKS,
 } from "@verticopolis/components/render/pixelSprites";
-import { buildTDT, describeWithCodec, parseTDT } from "../conformance/tdtWasm";
 import type { FacilityKind } from "@verticopolis/engine/model/types";
 
 /** `kind`'s subtypes as the engine's Modern catalog lists them. */
@@ -35,10 +32,9 @@ const CLINIC_SUBTYPES = subtypes("clinic");
  *   - Within a kind, every look is distinct: "different visuals for every
  *     different type" is the feature, so two variants collapsing onto the
  *     same colors is a regression even though nothing crashes.
- *   - The look is a pure function of `Unit.subtype`, which round-trips
- *     through the TDT variant byte; the exhaustive loop below proves every
- *     canon variant survives export -> import, which is exactly the claim
- *     that the visuals carry over into the 1994 save format and back.
+ *   - The look is a pure function of `Unit.subtype`. That every canon
+ *     variant survives a `.TDT` export and import is the engine's to prove
+ *     (`tests/tdt_carry.rs` in Verticopolis/engine).
  */
 
 const KINDS: [FacilityKind, readonly string[], Record<string, unknown>][] = [
@@ -66,9 +62,7 @@ describe("retail subtype look tables", () => {
 });
 
 // The Modern Food Hall's stalls carry the same "every variant is visually
-// distinct" guarantee, but they are Modern-only content and so are deliberately
-// NOT in the TDT round-trip loop below: a Modern tower is never exported to the
-// 1994 .TDT format, so these stalls have no ordinal and never touch it.
+// distinct" guarantee. They are Modern-only, so a .TDT file never holds them.
 describe("Modern Food Hall stall looks", () => {
   it("every stall has a look, and no look is orphaned", () => {
     expect(Object.keys(FOODHALL_LOOKS).sort()).toEqual([...FOODHALL_SUBTYPES].sort());
@@ -92,9 +86,7 @@ describe("Modern Food Hall stall looks", () => {
 });
 
 // The Modern Amusements attractions carry the same "every variant is visually
-// distinct" guarantee, and like the Food Hall they are Modern-only and so are
-// deliberately NOT in the TDT round-trip loop below: a Modern tower is never
-// exported to the 1994 .TDT format, so these attractions have no ordinal.
+// distinct" guarantee. They are Modern-only, so a .TDT file never holds them.
 describe("Modern Amusements attraction looks", () => {
   it("every attraction has a look, and no look is orphaned", () => {
     expect(Object.keys(AMUSEMENTS_LOOKS).sort()).toEqual([...AMUSEMENTS_SUBTYPES].sort());
@@ -121,9 +113,7 @@ describe("Modern Amusements attraction looks", () => {
 });
 
 // The Modern Boutique Bay trades carry the same "every variant is visually
-// distinct" guarantee, and like the other Modern containers they are Modern-only
-// and so are deliberately NOT in the TDT round-trip loop below: a Modern tower is
-// never exported to the 1994 .TDT format, so these trades have no ordinal.
+// distinct" guarantee. They are Modern-only, so a .TDT file never holds them.
 describe("Modern Boutique Bay trade looks", () => {
   it("every trade has a look, and no look is orphaned", () => {
     expect(Object.keys(BOUTIQUE_LOOKS).sort()).toEqual([...BOUTIQUE_SUBTYPES].sort());
@@ -150,9 +140,7 @@ describe("Modern Boutique Bay trade looks", () => {
 });
 
 // The Modern Fitness Club formats carry the same "every variant is visually
-// distinct" guarantee, and like the other Modern containers they are Modern-only
-// and so are deliberately NOT in the TDT round-trip loop below: a Modern tower is
-// never exported to the 1994 .TDT format, so these formats have no ordinal.
+// distinct" guarantee. They are Modern-only, so a .TDT file never holds them.
 describe("Modern Fitness Club format looks", () => {
   it("every format has a look, and no look is orphaned", () => {
     expect(Object.keys(FITNESS_LOOKS).sort()).toEqual([...FITNESS_SUBTYPES].sort());
@@ -178,10 +166,8 @@ describe("Modern Fitness Club format looks", () => {
   });
 });
 
-// The Modern Clinic practices carry the same "every variant is visually distinct"
-// guarantee, and like the other Modern containers they are Modern-only and so are
-// deliberately NOT in the TDT round-trip loop below: a Modern tower is never
-// exported to the 1994 .TDT format, so these practices have no ordinal.
+// The Modern Clinic practices carry the same "every variant is visually
+// distinct" guarantee. They are Modern-only, so a .TDT file never holds them.
 describe("Modern Clinic practice looks", () => {
   it("every practice has a look, and no look is orphaned", () => {
     expect(Object.keys(CLINIC_LOOKS).sort()).toEqual([...CLINIC_SUBTYPES].sort());
@@ -203,31 +189,4 @@ describe("Modern Clinic practice looks", () => {
     expect(walls.size, "two practices share a wall color").toBe(CLINIC_SUBTYPES.length);
     expect(practices.size, "two practices share an interior").toBe(CLINIC_SUBTYPES.length);
   });
-});
-
-describeWithCodec("every canon subtype survives the TDT round-trip (visuals carry over)", () => {
-  /** One Classic tower with a single retail unit of `kind`, ready to export. */
-  function fixture(kind: FacilityKind): { sim: Draft; unitId: number } {
-    const sim = newSeededDraft(3);
-    sim.money = 1e12;
-    const x0 = Math.floor(LOT_WIDTH / 2) - 20;
-    for (let i = 0; i < 40; i++) sim.tower.place("floor", 2, x0 + i);
-    sim.buildTransport("elevatorStandard", x0 + 30, 1, 2);
-    const r = sim.tower.place(kind, 2, x0)!;
-    return { sim, unitId: r.unitId! };
-  }
-
-  for (const [kind, names] of KINDS) {
-    it(`${kind}: all ${names.length} canon variants round-trip through export and import`, () => {
-      const { sim, unitId } = fixture(kind);
-      for (const name of names) {
-        (sim.tower.getUnit(unitId) as unknown as { subtype?: string }).subtype = name;
-        sim.settle(); // the engine holds the variant the file is written from
-        const { bytes } = buildTDT(sim.serialize());
-        const back = parseTDT(bytes.buffer as ArrayBuffer, "R.TDT").save;
-        const unit = back.units.find((u) => u.kind === kind);
-        expect(unit?.subtype, `${kind} variant "${name}" lost in round-trip`).toBe(name);
-      }
-    });
-  }
 });

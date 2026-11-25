@@ -5,9 +5,8 @@ import { viewWorld } from "@verticopolis/components/presentation/viewWorld";
 import type { SerializedGame, SerializedView } from "@verticopolis/engine/model/types";
 import { SKY_HEADROOM_FLOORS } from "@verticopolis/components/render/cameraBounds";
 import { SaveLoad } from "../../game/saveLoad";
-import { buildTDT, parseTDT } from "../conformance/tdtWasm";
+import { tdtFile } from "../conformance/tdtWasm";
 import { hasWasmPackage } from "../conformance/wasmEngine";
-import { buildTdt, sampleTowerSpec } from "../fixtures/tdtBuilder";
 import { loadAuto, withPorts } from "../fixtures/saveText";
 import { draftTower, type Draft } from "../portKit/drafts";
 import { noEngine } from "../portKit/rustEngine";
@@ -32,16 +31,6 @@ function decodeVctower(file: Uint8Array): SerializedGame {
   expect(new TextDecoder().decode(file.subarray(0, 9))).toBe("VCTOWER2\n");
   return JSON.parse(new TextDecoder().decode(inflateSync(file.subarray(9)))) as SerializedGame;
 }
-
-/** The New Tower default view words (header 0x26/0x28). */
-const TDT_DEFAULT_VIEW_X = 1105;
-const TDT_DEFAULT_VIEW_Y = 3491;
-/** The words for a view centered on tile 200, floor 20 (the engine maps tile x
- *  8 px less half the 640 px window, and the floor's 36 px row less half the
- *  469 px window). */
-const WORDS_200_20 = { x: 1280, y: 3024 };
-
-const readHdrU16 = (bytes: Uint8Array, off: number): number => bytes[off] | (bytes[off + 1] << 8);
 
 describe.skipIf(noEngine)("SaveLoad stamps the live camera onto the CURRENT tower's saves", () => {
   const camera: SerializedView = { tile: 42, floor: 3, zoom: 1.5 };
@@ -146,8 +135,7 @@ describe.skipIf(noEngine)("SaveLoad stamps the live camera onto the CURRENT towe
   it.skipIf(!hasWasmPackage())(
     "importLegacy: the imported sim keeps the TDT file's view, never the live camera's; the pre-adopt flush keeps the live one",
     async () => {
-      const words = WORDS_200_20;
-      const buf = buildTdt({ ...sampleTowerSpec(), viewX: words.x, viewY: words.y });
+      const buf = tdtFile({ view: { tile: 200, floor: 20 } });
       await saveLoad.importLegacy(buf.buffer as ArrayBuffer, "MOVED.TDT");
       importReports[0].open();
       // The adopted tower carries the FILE's view (zoomless, fractional: the
@@ -272,49 +260,5 @@ describe("TowerEngine gesture zoom floor (prototype on a fake: no canvas)", () =
     const lo = proto.dynamicMinZoom.call(f);
     expect(lo).toBeLessThan(0.5);
     expect(proto.clampGestureZoom.call(f, 1e-4)).toBeCloseTo(lo, 10);
-  });
-});
-
-describe.skipIf(!hasWasmPackage())("TDT export/import carry the view words", () => {
-  /** A realistic serialized tower (the sample fixture through the importer). */
-  function sampleSave(): SerializedGame {
-    const buf = buildTdt(sampleTowerSpec());
-    return parseTDT(buf.buffer as ArrayBuffer, "SAMPLE.TDT").save;
-  }
-
-  it("buildTDT writes the save's view at 0x26/0x28, and the defaults when absent", () => {
-    const save = sampleSave();
-    delete save.view;
-    const plain = buildTDT(save).bytes;
-    expect(readHdrU16(plain, 0x26)).toBe(TDT_DEFAULT_VIEW_X);
-    expect(readHdrU16(plain, 0x28)).toBe(TDT_DEFAULT_VIEW_Y);
-
-    save.view = { tile: 200, floor: 20, zoom: 2 }; // zoom is dropped: 1994 has none
-    const words = WORDS_200_20;
-    const stamped = buildTDT(save).bytes;
-    expect(readHdrU16(stamped, 0x26)).toBe(words.x);
-    expect(readHdrU16(stamped, 0x28)).toBe(words.y);
-  });
-
-  it("parseTDT brings the words back as a zoomless view; absent words stay absent", () => {
-    const words = WORDS_200_20;
-    const withView = parseTDT(
-      buildTdt({ ...sampleTowerSpec(), viewX: words.x, viewY: words.y }).buffer as ArrayBuffer,
-      "VIEW.TDT",
-    ).save;
-    expect(withView.view!.tile).toBeCloseTo(200, 1);
-    expect(withView.view!.floor).toBeCloseTo(20, 1);
-    expect(withView.view!.zoom).toBeUndefined();
-
-    const without = parseTDT(buildTdt(sampleTowerSpec()).buffer as ArrayBuffer, "PLAIN.TDT").save;
-    expect("view" in without).toBe(false);
-  });
-
-  it("a full export/import round trip recovers the view within one tile/floor", () => {
-    const save = sampleSave();
-    save.view = { tile: 178, floor: 7 };
-    const back = parseTDT(buildTDT(save).bytes.buffer as ArrayBuffer, "ROUND.TDT").save;
-    expect(Math.abs(back.view!.tile - 178)).toBeLessThanOrEqual(1);
-    expect(Math.abs(back.view!.floor - 7)).toBeLessThanOrEqual(1);
   });
 });
