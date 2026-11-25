@@ -194,12 +194,18 @@ test.describe("the menu bar on a desktop", () => {
     await page.locator("#mb-close").click();
     await expect(page.locator("#splash")).toBeVisible();
     await expect(page.locator('#splash [data-splash="continue"]')).toBeFocused();
-    // The title screen shows only File, Options and Help, and File leaves
-    // out Save, Save As and Close.
+    // The title screen shows only File, Options and Help, and File keeps
+    // Save, Save As and Close, grayed, as with no document open.
     for (const menu of ["#mb-edit", "#mb-tower"]) await expect(page.locator(menu)).toBeHidden();
     await page.locator("#mb-file").click();
     await expect(page.locator("#btn-new")).toBeVisible();
-    for (const item of ["#mb-quick-save", "#mb-export", "#mb-close"]) await expect(page.locator(item)).toBeHidden();
+    for (const item of ["#mb-quick-save", "#mb-export", "#mb-close"]) {
+      await expect(page.locator(item)).toBeVisible();
+      await expect(page.locator(item)).toHaveAttribute("aria-disabled", "true");
+    }
+    // A grayed Close does nothing: the title screen stays.
+    await page.locator("#mb-close").click({ force: true });
+    await expect(page.locator("#splash")).toBeVisible();
     await page.keyboard.press("Escape");
     await page.locator('#splash [data-splash="continue"]').click();
     await expect(page.locator("#splash")).toHaveCount(0);

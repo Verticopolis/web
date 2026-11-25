@@ -448,7 +448,10 @@ with none open until the menus close. Each trip sends one `menu_open`, then one
 `menu_pick` or one `menu_dismiss`; pointing from menu to menu inside a trip
 sends nothing and is counted in `browsed` instead. A grayed item's click sends
 a `menu_pick` with `grayed: true` and the trip goes on, so a trip can carry
-more than one pick row. Every value is a code from a closed list: never an
+more than one pick row. From 4.17.0 the title screen shows File's Save, Save As… and Close and
+Help's Replay Getting Started grayed (up to 4.16 they were hidden there), so
+`screen: title` picks of `quick_save`, `export`, `close` and `replay` arrive only
+with `grayed: true`. Every value is a code from a closed list: never an
 item's label, and never anything the player typed (Rename reports the pick,
 never the name).
 
@@ -530,11 +533,11 @@ The windows and cards that came with the menu bar report through `app_action`:
 | `desk_window` | `<window>_<verb>`: windows `tower`, `info`, `tools`, `map`, `bulletin`, `tower_info`, `control_panel`, `help` (the Help window, components 2.2.0 and later); verbs `min`, `restore`, `max`, `unmax`, `resize`, `move`, `close` | A desk window changed: minimized, brought back, maximized or put back (from its title-bar buttons, a double-click on its title, its taskbar button or its window menu), resized from its grip, or moved for the first time in a page life. `close` is the tower's ✕ (it runs File > Close) or the Control Panel's ✕ only; the Map, Bulletin and Tower Info ✕ keep their own events (`docs/ui/desk-windows.md`) |
 | `desk_task` | `<window>_front`, `<window>_min` or `<window>_restore`, the window `title` on the title screen | A taskbar window button: it brought the window to the front, minimized the front window, or brought a minimized one back. The change itself is also a `desk_window` row, so `desk_task` says how many came from the taskbar |
 | `desk_start_open` | `title` or `tower` | The taskbar's Start button opened its menu, over the title screen or a tower |
-| `desk_start` | the menu item it ran (`btn-new`, `mb-import`, `desk-control-panel`, `mb-close`; before #2600 also `btn-help`, `mb-screensaver`, `btn-settings`, `btn-about`) | A pick on the taskbar's Start menu. It is never also a `menu_pick`. Options > Control Panel… on the desk is a `menu_pick` with item `control_panel` |
-| `desk_tray` | `display` or `sound` | A tray button: the monitor (opens the Control Panel) or the speaker (sound on or off, which also sends `mute`) |
+| `desk_start` | the menu item it ran (`btn-new`, `mb-import`, `desk-control-panel`; up to 4.16 also `mb-close`, and before #2600 `btn-help`, `mb-screensaver`, `btn-settings`, `btn-about`) | A pick on the taskbar's Start menu, over a tower or the title screen (the same items on both from 4.17.0; up to 4.16 the title screen had only `btn-new` and `mb-import`). It is never also a `menu_pick`. Options > Control Panel… on the desk is a `menu_pick` with item `control_panel` |
+| `desk_tray` | `display` or `sound` | A tray button: the monitor (opens the Control Panel) or the speaker (sound on or off, which also sends `mute`). From 4.17.0 the title screen's tray has the monitor too |
 | `desk_win_menu_open` | `taskbar` or `title_bar` | A window menu opened, from a taskbar button (right-click, Shift+F10 or the context menu key) or a window's title bar (right-click) |
 | `desk_win_menu` | `<window>_<command>`, commands `restore`, `minimize`, `maximize`, `close` | A window menu pick. Restore, Minimize and Maximize also send their `desk_window` row |
-| `desk_control` | `display`, `appearance`, `sounds` or `settings` | A Control Panel icon (the Screen Saver dialog, the Appearance dialog, sound on or off, or Settings) |
+| `desk_control` | `display`, `appearance`, `sounds` or `settings` | A Control Panel icon (the Screen Saver dialog, the Appearance dialog, sound on or off, or Settings), over a tower or, from 4.17.0, the title screen |
 | `desk_help_menu` | `open_browser`, `print`, `exit`, `find`, `copy_link`, `theme_light`, `theme_dark`, `theme_auto`, `whats_new`, `report` or `sponsor` | A pick on the Help window's own menu bar (File, Edit, Options, Help; from the release after this change). The manual page in the window sends no `help_menu_pick` for it |
 
 ## `engine_status`

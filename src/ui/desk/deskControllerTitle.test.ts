@@ -37,16 +37,62 @@ afterEach(() => {
 });
 
 describe("the title screen on the desk", () => {
-  it("puts the title screen in a Verticopolis window with its own taskbar, and no Control Panel", () => {
+  it("puts the title screen in a Verticopolis window with its own taskbar and the same Start menu as a tower", () => {
     new DeskController(doc).start();
     expect(doc.body.classList.contains(DESK_TITLE_CLASS)).toBe(true);
     expect(doc.querySelectorAll(".desk-title-bar")).toHaveLength(1);
     expect([...doc.querySelectorAll(".desk-taskbar-title .desk-task")].map((b) => b.textContent?.trim())).toEqual([
       "Verticopolis",
     ]);
-    expect(doc.querySelector(".desk-tray-display")).toBeNull();
     doc.querySelector<HTMLElement>(".desk-start")!.click();
-    expect(doc.querySelector('.desk-start-menu [data-item="desk-control-panel"]')).toBeNull();
+    const entries = doc.querySelectorAll(".desk-start-menu .mb-item, .desk-start-menu .mb-sep");
+    const lines = [...entries].map((el) => (el.matches(".mb-sep") ? "-" : el.textContent?.trim()));
+    expect(lines).toEqual(["New…", "Open…", "-", "Control Panel…"]);
+  });
+
+  it("opens the Control Panel over the title screen from the Start menu, the tray and Options, and runs its icons", () => {
+    new DeskController(doc).start();
+    const panel = () => doc.getElementById("desk-win-control")!;
+    expect(panel().hidden).toBe(true);
+    doc.querySelector<HTMLElement>(".desk-start")!.click();
+    doc.querySelector<HTMLElement>('.desk-start-menu [data-item="desk-control-panel"]')!.click();
+    expect(panel().hidden).toBe(false);
+    expect(trackAppAction).toHaveBeenCalledWith("desk_start", "desk-control-panel");
+    panel().querySelector<HTMLElement>(".desk-btn-close")!.click();
+    expect(panel().hidden).toBe(true);
+    expect(trackAppAction).toHaveBeenCalledWith("desk_window", "control_panel_close");
+    doc.querySelector<HTMLElement>(".desk-tray-display")!.click();
+    expect(panel().hidden).toBe(false);
+    expect(trackAppAction).toHaveBeenCalledWith("desk_tray", "display");
+    panel().querySelector<HTMLElement>(".desk-btn-close")!.click();
+    // Options leaves Screen Saver and Appearance to the panel, and opens it
+    // with the keyboard on Display.
+    const options = ["mb-screensaver", "mb-appearance", "mb-control-panel"];
+    expect(options.map((id) => !doc.getElementById(id)!.hidden)).toEqual([false, false, true]);
+    doc.getElementById("mb-control-panel")!.click();
+    expect(panel().hidden).toBe(false);
+    expect(doc.activeElement).toBe(panel().querySelector('[data-control="display"]'));
+    const saver = vi.fn();
+    onMenuItem("mb-screensaver", saver, doc);
+    panel().querySelector<HTMLElement>('[data-control="display"]')!.click();
+    expect(saver).toHaveBeenCalledOnce();
+    expect(trackAppAction).toHaveBeenCalledWith("desk_control", "display");
+  });
+
+  it("gives Options its display items back when the title screen leaves a desk that does not come up", () => {
+    new DeskController(doc).start();
+    expect(doc.getElementById("mb-screensaver")!.hidden).toBe(true);
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: false, addEventListener: () => {} })),
+    );
+    doc.body.classList.remove("splash-up");
+    doc.body.classList.add("splash-up");
+    return Promise.resolve().then(() => {
+      expect(doc.body.classList.contains(DESK_TITLE_CLASS)).toBe(false);
+      const options = ["mb-screensaver", "mb-appearance", "mb-control-panel"];
+      expect(options.map((id) => !doc.getElementById(id)!.hidden)).toEqual([true, true, false]);
+    });
   });
 
   it("focuses the title screen's first button from its taskbar button", () => {
@@ -55,14 +101,13 @@ describe("the title screen on the desk", () => {
     expect(doc.activeElement).toBe(doc.querySelector("#splash .primary"));
   });
 
-  it("runs a Start menu item, and leaves out Close, since there is no tower to close", () => {
+  it("runs a Start menu item", () => {
     new DeskController(doc).start();
     const open = vi.fn();
     onMenuItem("mb-import", open, doc);
-    doc.getElementById("mb-close")!.hidden = true;
     doc.querySelector<HTMLElement>(".desk-start")!.click();
     const items = [...doc.querySelectorAll(".desk-start-menu [data-item]")].map((b) => b.getAttribute("data-item"));
-    expect(items).toEqual(["btn-new", "mb-import"]);
+    expect(items).toEqual(["btn-new", "mb-import", "desk-control-panel"]);
     doc.querySelector<HTMLElement>('.desk-start-menu [data-item="mb-import"]')!.click();
     expect(open).toHaveBeenCalledTimes(1);
     expect(trackAppAction).toHaveBeenCalledWith("desk_start", "mb-import");

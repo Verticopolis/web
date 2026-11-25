@@ -42,8 +42,15 @@ import {
   trackWindowMenuPick,
   type DeskScreen,
 } from "./deskAnalytics";
-import { CONTROL_ITEM, CONTROL_ITEMS, CONTROL_PANEL_ITEM, startItems, towerTitleText, towerName } from "./deskGlue";
-import { setDeskMenus, wireOptionsControlPanel } from "./deskMenus";
+import {
+  CONTROL_ITEM,
+  CONTROL_PANEL_ITEM,
+  controlPanelOptions,
+  startItems,
+  towerTitleText,
+  towerName,
+} from "./deskGlue";
+import { deskOptionStates, setDeskMenus, wireOptionsControlPanel } from "./deskMenus";
 import { addDeskManual, removeDeskManual } from "./deskHelpWindow";
 
 /**
@@ -53,9 +60,8 @@ import { addDeskManual, removeDeskManual } from "./deskHelpWindow";
  * bar, the tower and the status bar; Info, Tools, the Map, the Bulletin and
  * Tower Info are windows of their own beside it. A sideways tablet gets the
  * same desk with touch chrome; phones and upright tablets get the pocket desk.
- * Small computer windows keep today's layout, and so does the title screen.
- *
- * The windows, the taskbar, the title screen's window and the Control Panel
+ * Small computer windows keep today's layout. The windows, the taskbar, the
+ * title screen's window (with a Control Panel of its own) and the Control Panel
  * are the components package's (`windows/desk/*`); this file is the game's
  * glue. It moves the game's own elements into the windows and puts them back
  * when the desk goes away, so every id, listener and test that knows them
@@ -116,11 +122,7 @@ export class DeskController {
     // The title screen's class on <body> decides too.
     new MutationObserver(() => this.decide()).observe(this.doc.body, { attributes: true, attributeFilter: ["class"] });
     const sound = this.doc.getElementById(CONTROL_ITEM.sounds);
-    if (sound)
-      new MutationObserver(() => this.syncSound()).observe(sound, {
-        attributes: true,
-        attributeFilter: ["aria-checked"],
-      });
+    if (sound) new MutationObserver(() => this.syncSound()).observe(sound, { attributeFilter: ["aria-checked"] });
     this.wireMenuItems();
     this.decide();
   }
@@ -132,7 +134,11 @@ export class DeskController {
     const want = mode !== null && !splash && !!this.doc.getElementById("stage") ? mode : null;
     // The title screen sits in its own window on the desk, the pocket one included.
     if (mode && splash) this.showTitle(mode === "pocket");
-    else this.title?.hide();
+    else if (this.title?.up) {
+      this.title.hide();
+      // Options has them all again, unless the desk comes up next.
+      setMenuState(deskOptionStates(false), this.doc);
+    }
     // Turning a tablet can change the desk: the old one goes first.
     if (this.desk && want !== this.mode) this.down();
     this.mode = want;
@@ -180,9 +186,10 @@ export class DeskController {
   }
 
   /** The Start menu, the tray and the presses both taskbars share. */
-  private taskbarCommon(screen: DeskScreen): Omit<TaskbarOptions, "task" | "items"> {
+  private taskbarCommon(screen: DeskScreen): Omit<TaskbarOptions, "task"> {
     const doc = this.doc;
     return {
+      items: startItems(),
       shown: (id) => id === CONTROL_PANEL_ITEM || doc.getElementById(id)?.hidden !== true,
       start: (itemId) => {
         trackAppAction("desk_start", itemId);
@@ -204,9 +211,9 @@ export class DeskController {
       this.title = new DeskTitle({
         host,
         title: "Verticopolis",
+        controlPanel: controlPanelOptions(this.doc),
         taskbar: {
           ...this.taskbarCommon("title"),
-          items: startItems(false),
           // The title screen's window is the only one, and it stays up.
           task: () => {
             trackDeskTask(DESK_TITLE_WINDOW, "front");
@@ -216,6 +223,7 @@ export class DeskController {
       });
     }
     this.title.show(pocket);
+    setMenuState(deskOptionStates(true), this.doc);
     this.syncSound();
     trackAppActionOnce("desk_title_shown", pocket ? "pocket" : "desk");
   }
@@ -280,15 +288,7 @@ export class DeskController {
     if (palette?.classList.contains(PALETTE_COLLAPSED_CLASS)) doc.getElementById(PALETTE_COLLAPSE_BUTTON_ID)?.click();
 
     // The Control Panel: closed until the Start menu or the tray opens it.
-    const control = new ControlPanel(doc, {
-      items: CONTROL_ITEMS,
-      closeLabel: "Close Control Panel",
-      picked: (icon) => {
-        trackAppAction("desk_control", icon);
-        doc.getElementById(CONTROL_ITEM[icon])?.click();
-      },
-      closed: () => trackDeskClose("control"),
-    });
+    const control = new ControlPanel(doc, controlPanelOptions(doc));
     desk.appendChild(control.root);
     this.control = control;
 
@@ -322,7 +322,6 @@ export class DeskController {
 
     this.taskbar = new DeskTaskbar(doc, {
       ...this.taskbarCommon("tower"),
-      items: startItems(true),
       task: (id) => this.taskPressed(id as DeskWindowId),
       controlPanel: () => this.openControl(),
       windowMenu: manager.windowMenu({
@@ -428,6 +427,7 @@ export class DeskController {
   };
 
   private openControl(): void {
+    if (this.title?.up) return this.title.openControl();
     this.control?.open();
     this.manager?.bringUp("control");
   }
@@ -460,7 +460,7 @@ export class DeskController {
     const on = this.doc.getElementById(CONTROL_ITEM.sounds)?.getAttribute("aria-checked") !== "false";
     this.taskbar?.setSound(on);
     this.title?.taskbar?.setSound(on);
-    this.control?.setLabel("sounds", `Sounds: ${on ? "On" : "Off"}`);
+    for (const panel of [this.control, this.title?.control]) panel?.setLabel("sounds", `Sounds: ${on ? "On" : "Off"}`);
   }
 
   /** Hear what the manager does not: the tower's name, Tools unfolding, the

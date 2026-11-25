@@ -77,14 +77,43 @@ test.describe("the desk on a computer", () => {
     await expect(body(page)).toHaveClass(/\bdesk-title\b/);
     await expect(page.locator(".desk-title-bar")).toBeVisible();
     await expect(page.locator(".desk-taskbar-title")).toBeVisible();
-    // The title screen's taskbar has no Control Panel.
-    await expect(page.locator(".desk-taskbar-title .desk-tray-display")).toHaveCount(0);
     await enterTower(page);
     await expect(body(page)).toHaveClass(/\bdesk\b/);
     await expect(body(page)).not.toHaveClass(/\bdesk-title\b/);
     for (const id of ["#desk-win-tower", "#desk-win-info", "#overview-map", "#bulletin-win"])
       await expect(page.locator(id)).toBeVisible();
     for (const id of ["tower", "info", "tools", "map", "bulletin"]) await expect(task(page, id)).toHaveCount(1);
+  });
+
+  test("the title screen opens the Control Panel over its window, under the menus", async ({ page }) => {
+    await load(page);
+    const panel = page.locator("#desk-win-control");
+    await expect(panel).toBeHidden();
+    await press(page, page.locator(".desk-taskbar-title .desk-start"));
+    await press(page, page.locator('.desk-start-menu [data-item="desk-control-panel"]'));
+    await expect(panel).toBeVisible();
+    // Over the title window, so a click reaches its icons.
+    const display = panel.locator('[data-control="display"]');
+    const hit = await display.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return el.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2));
+    });
+    expect(hit).toBe(true);
+    // A menu opens on top of it.
+    await press(page, page.locator("#mb-options"));
+    const item = page.locator("#mb-control-panel");
+    await expect(item).toBeVisible();
+    const onTop = await item.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return el.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2));
+    });
+    expect(onTop).toBe(true);
+    await page.keyboard.press("Escape");
+    await press(page, panel.locator(".desk-btn-close"));
+    await expect(panel).toBeHidden();
+    // The tray's monitor opens it too.
+    await press(page, page.locator(".desk-taskbar-title .desk-tray-display"));
+    await expect(panel).toBeVisible();
   });
 
   test("a window minimizes to the taskbar and comes back from it", async ({ page }) => {
