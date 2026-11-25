@@ -208,11 +208,7 @@ function openPageInTab(ui: UI, href: string, source: GameHelpSource, blocked: ()
   // holds until that window closes (src/ui/desk/deskHelpWindow.ts).
   const manual = background ? null : deskManual();
   if (manual) {
-    if (!manual.isOpen()) {
-      const pause = helpPause(ui);
-      pause.begin();
-      manual.whenClosed(() => pause.end());
-    }
+    if (!manual.isOpen()) manual.whenClosed(helpPause(ui).hold());
     manual.show(href, source);
     return true;
   }
@@ -291,7 +287,7 @@ export function wireHelpBar(ui: UI): void {
     getSpeed: () => barUi!.cb.getSpeed(),
     setSpeed: (speed) => barUi!.cb.onSpeed(speed),
     heldForHelp: () => pause().held,
-    endHelpPause: () => pause().end(),
+    endHelpPause: () => pause().endAll(),
     pauseForHelp: () => {
       pause().begin();
       pause().untilReturn({ win: window, doc: document });

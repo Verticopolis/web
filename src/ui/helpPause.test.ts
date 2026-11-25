@@ -123,6 +123,73 @@ describe("HelpPause in-game", () => {
   });
 });
 
+describe("HelpPause with the desk's manual window open", () => {
+  it("stays paused when About opens and closes over the manual, and comes back when the manual closes", () => {
+    const { p, speed } = ports(2);
+    const pause = new HelpPause(p);
+    const closeManual = pause.hold();
+    expect(speed()).toBe(0);
+    pause.begin();
+    pause.end();
+    expect(pause.held).toBe(true);
+    expect(speed()).toBe(0);
+    closeManual();
+    expect(pause.held).toBe(false);
+    expect(speed()).toBe(2);
+    expect(p.announce).toHaveBeenLastCalledWith(backAt(2));
+  });
+
+  it("stays paused when the manual closes under an open Help dialog, until the dialog closes", () => {
+    const { p, speed } = ports(3);
+    const pause = new HelpPause(p);
+    const closeManual = pause.hold();
+    pause.begin();
+    closeManual();
+    expect(speed()).toBe(0);
+    pause.end();
+    expect(speed()).toBe(3);
+  });
+
+  it("counts each release once", () => {
+    const { p, speed } = ports(1);
+    const pause = new HelpPause(p);
+    const first = pause.hold();
+    const second = pause.hold();
+    first();
+    first();
+    expect(speed()).toBe(0);
+    second();
+    expect(speed()).toBe(1);
+    expect(p.setSpeed).toHaveBeenCalledTimes(2);
+  });
+
+  it("lets go of every hold for the Help bar's run, and a later release changes nothing", () => {
+    const { p, playerSets, speed } = ports(2);
+    const pause = new HelpPause(p);
+    const closeManual = pause.hold();
+    pause.begin();
+    pause.endAll();
+    expect(pause.held).toBe(false);
+    expect(speed()).toBe(2);
+    playerSets(0);
+    closeManual();
+    expect(speed()).toBe(0);
+  });
+
+  it("drops the manual's hold when the player picks a speed, keeping that speed", () => {
+    const { p, playerSets, speed } = ports(2);
+    const pause = new HelpPause(p);
+    const closeManual = pause.hold();
+    playerSets(1);
+    pause.release();
+    pause.begin();
+    pause.end();
+    expect(speed()).toBe(1);
+    closeManual();
+    expect(speed()).toBe(1);
+  });
+});
+
 describe("HelpPause for Help in a new tab", () => {
   it("does not count the opening click as a return: the tab never left", () => {
     const { p, speed } = ports(2);
