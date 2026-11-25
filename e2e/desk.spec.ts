@@ -322,6 +322,20 @@ const SAVED: Record<string, string> = JSON.parse(
   readFileSync(new URL("./fixtures/storage-4.2.json", import.meta.url), "utf8"),
 );
 
+/** Seed the site storage the 4.2.0 game wrote, once per test. */
+async function seed(page: Page): Promise<void> {
+  await page.addInitScript((seeded) => {
+    if (sessionStorage.getItem("seeded")) return;
+    sessionStorage.setItem("seeded", "1");
+    for (const [key, value] of Object.entries(seeded)) localStorage.setItem(key, value);
+  }, SAVED);
+}
+
+/** True when two boxes share any area. */
+function overlap(a: Box, b: Box): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
 /** True when a tap at the control's center lands on it, after scrolling it into view. */
 async function reachable(control: Locator): Promise<boolean> {
   await control.scrollIntoViewIfNeeded();
@@ -344,11 +358,7 @@ for (const viewport of [
     test.use({ viewport, hasTouch: true });
 
     test("every control on the title screen can be reached and tapped", async ({ page }) => {
-      await page.addInitScript((seeded) => {
-        if (sessionStorage.getItem("seeded")) return;
-        sessionStorage.setItem("seeded", "1");
-        for (const [key, value] of Object.entries(seeded)) localStorage.setItem(key, value);
-      }, SAVED);
+      await seed(page);
       await load(page);
       await expect(page.locator("body")).toHaveClass(/desk-title-pocket/);
       await expect(page.locator('#splash [data-splash="continue"]')).toBeVisible();
@@ -364,6 +374,43 @@ for (const viewport of [
       }
       await page.locator("#splash .splash-attrib").scrollIntoViewIfNeeded();
       await expect(page.locator("#splash .splash-attrib")).toBeInViewport();
+    });
+
+    test("the notice that a closed tower is saved covers neither the logo nor the buttons, and the menus open over it", async ({
+      page,
+    }) => {
+      await page.clock.install();
+      await seed(page);
+      await load(page);
+      await enterTower(page);
+      await page.evaluate(() => document.getElementById("mb-close")!.click());
+      await expect(page.locator("body")).toHaveClass(/desk-title-pocket/);
+      const notice = page.locator("#toast-wrap .toast", { hasText: "Press Continue to go back to it." });
+      await expect(notice).toBeInViewport({ ratio: 1 });
+      const covered = [page.locator("#splash .splash-word"), page.locator("#splash .splash-tag")];
+      covered.push(...(await page.locator("#splash .splash-btn").all()));
+      expect(covered.length).toBeGreaterThanOrEqual(6);
+      const shown = await box(notice);
+      for (const part of covered) {
+        const name = (await part.getAttribute("data-splash")) ?? (await part.getAttribute("class"));
+        expect(overlap(shown, await box(part)), `the notice clears ${name}`).toBe(false);
+      }
+      // The menus open over the notice: every item they hold stays tappable.
+      // The page's clock stops so the notice stays up while they are checked.
+      await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 50);
+      await page.getByRole("button", { name: "Start" }).click();
+      const starts = await page.locator("#desk-start-menu [role=menuitem]:visible").all();
+      expect(starts.length).toBeGreaterThanOrEqual(2);
+      for (const item of starts) expect(await reachable(item), `${await item.textContent()} can be tapped`).toBe(true);
+      await page.keyboard.press("Escape");
+      for (const title of await page.locator(".menubar .mb-title:visible").all()) {
+        await title.click();
+        const items = await page.locator(".menubar .mb-pop:visible > .mb-item:visible").all();
+        expect(items.length, `${await title.textContent()} has items`).toBeGreaterThan(0);
+        for (const item of items) expect(await reachable(item), `${await item.textContent()} can be tapped`).toBe(true);
+        await page.keyboard.press("Escape");
+      }
+      await expect(notice).toBeVisible();
     });
   });
 }
