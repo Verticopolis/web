@@ -291,18 +291,20 @@ describe("the card kit's unit and shaft lines over the port", () => {
   });
 
   it("treat a room as inert in exactly the states the engine does", () => {
-    const all: UnitState[] = [
-      "construction",
-      "empty",
-      "occupied",
-      "moving_in",
-      "vacating",
-      "asleep",
-      "dirty",
-      "infested",
-      "fire",
-      "gutted",
-    ];
+    // Keyed by UnitState, so a state the engine adds fails the type check until it is listed here.
+    const every: Record<UnitState, true> = {
+      construction: true,
+      empty: true,
+      occupied: true,
+      moving_in: true,
+      vacating: true,
+      asleep: true,
+      dirty: true,
+      infested: true,
+      fire: true,
+      gutted: true,
+    };
+    const all = Object.keys(every) as UnitState[];
     for (const state of all) expect(INERT_STATES.has(state), state).toBe(!isOperational({ state }));
   });
 });
