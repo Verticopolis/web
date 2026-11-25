@@ -25,6 +25,18 @@ prompt already tells players it is an engine update and shows the new version.
 Entries below 1.51.1 were curated from the commit history after the fact, so they
 are documentation only: no build that a client fetches carries them.
 
+## 4.17.0
+
+- On a phone or an upright tablet, the opening screen sits in its own window on the teal desktop, with the taskbar below, as it does on a computer.
+- The taskbar's first button now reads **Start**, so it is easy to tell apart from the Verticopolis window.
+- On a phone's opening screen, a notice such as "Your tower is saved" shows at the foot of the picture, clear of the logo and the buttons, and the menus open over it.
+- On a short phone held sideways, the sun on the opening screen stays below the tagline.
+- The Start menu is the same on the opening screen as over a tower: **New…**, **Open…** and **Control Panel…**. Closing a tower belongs to its window (its ✕, or **File > Close**), so **Close Verticopolis** has left the Start menu.
+- The Control Panel opens over the opening screen too, from the Start menu, the tray's monitor or **Options > Control Panel…**, and the opening screen's **Options** matches the tower's.
+- On the opening screen, **File** and **Help** show every command, with the ones that need a tower (**Save**, **Save As…**, **Close** and **Replay Getting Started**) grayed until you open one.
+- On the desktop, each command now has one home: the Verticopolis menu keeps New…, Open…, Control Panel… and Close Verticopolis, Options keeps Settings… and Sound and opens the Control Panel, and the screen saver and Appearance live in the Control Panel. Without the desktop, Options keeps everything.
+- In the game installed on a phone, the Window and Options menus no longer end with a stray line where Full Screen is left out.
+
 ## 4.16.0
 
 - On the desktop, Help opens the Player's Manual in its own window instead of a new browser tab, from Help > Player's Manual, F1 and the Help links in the game. The window has the manual's own File, Edit, Options and Help menus (File > Exit closes it), with Contents, Back, Forward and Open in Browser below them. Search works inside it, links out of the manual open in a browser tab, and your tower pauses until you close it.
