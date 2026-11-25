@@ -61,18 +61,18 @@ export function unitInspectorTemplate(
   // in the title, suppress the extra line so a shop renamed "Chinese Cafe"
   // (matching its subtype) doesn't render the name twice.
   const labelIsExtra = u.label !== f.name && u.label !== title;
-  // Commercial venues contribute their LIVE customers to the census, so show
-  // that number (plus a closed marker), never a static "N/25" that reads as a
-  // flat, always-full population. "(closed)" only for a tenanted venue outside
-  // business hours; vacancy/construction already reads from the Status row.
-  // Attendance venues (cinema / party hall / wedding hall, catalog population
-  // 0) show the same live line from their routed attendance tally: a mid-show
-  // house must never inspect as empty while the audience is visibly seated.
+  // A venue people come to in person shows the customers inside it now (plus
+  // a closed marker), never a static "N/25" that reads as always full.
+  // "(closed)" only for a tenanted venue outside business hours; vacancy and
+  // construction read from the Status row. Attendance venues (cinema, party
+  // hall, wedding hall) show the same live line. The engine sends null for a
+  // venue nobody is sent to in person (a spa, a shop): its patronage block
+  // counts its customers, so it gets no live line rather than an always-0 one.
   const closed = isTenanted(u) && !catalogOpenAt(f, hour);
   let peopleLine: TemplateResult | typeof nothing = nothing;
-  if ((isCommercialKind(u.kind) && f.population > 0) || f.attendance !== null)
-    peopleLine = html`<div>Customers: ${u.customersIn ?? 0}${closed ? " (closed)" : ""}</div>`;
-  else if (f.population)
+  if ((isCommercialKind(u.kind) && f.population > 0) || f.attendance !== null) {
+    if (u.customersIn !== null) peopleLine = html`<div>Customers: ${u.customersIn}${closed ? " (closed)" : ""}</div>`;
+  } else if (f.population)
     peopleLine = html`<div>Occupants: ${occupantsText(u.occupants, catalogResidents(f, u.residents), u.workersComing)}</div>`;
   return html`<h4 class="win-title">${title}</h4><div>${labelIsExtra ? html`${u.label}<br />` : nothing}${
     u.floor >= 1 ? `Floor ${u.floor}` : `B${1 - u.floor}`
