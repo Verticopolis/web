@@ -256,6 +256,28 @@ describe("About… (About this game)", () => {
     }
   });
 
+  it("on the desk, keeps the tower paused when About opens and closes over the manual window", () => {
+    const speed = speedAt(3);
+    makeUI({ getSpeed: speed.getSpeed, onSpeed: speed.onSpeed });
+    const manual = new ManualWindow(document, { closed: () => {}, shown: () => {}, menuPicked: () => {} });
+    document.body.append(manual.frame.root);
+    setDeskManual(manual);
+    try {
+      (document.getElementById("btn-help") as HTMLButtonElement).click();
+      expect(speed.now()).toBe(0);
+      (document.getElementById("btn-about") as HTMLButtonElement).click();
+      expect(dialog().open).toBe(true);
+      inDialog<HTMLButtonElement>('[data-act="close"]').click();
+      expect(dialog().open).toBe(false);
+      expect(speed.now()).toBe(0);
+      manual.close();
+      expect(speed.now()).toBe(3);
+    } finally {
+      setDeskManual(null);
+      manual.dispose();
+    }
+  });
+
   it("opens the manual from the title screen in a new tab, holding the pause until the player is back", () => {
     const speed = speedAt(3);
     const { ui } = makeUI({ getSpeed: speed.getSpeed, onSpeed: speed.onSpeed });

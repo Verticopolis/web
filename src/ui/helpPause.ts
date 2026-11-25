@@ -8,6 +8,10 @@
  * - Help in a new tab ends it when the game tab is visible and focused again,
  *   after it was first left, so the click that opens the tab never counts as
  *   a return.
+ * - The desk's Player's Manual window holds it ({@link HelpPause.hold}) until
+ *   the window closes. A Help dialog or tab that opens and closes meanwhile
+ *   leaves the tower paused; the speed comes back when the last of them is
+ *   done.
  *
  * The pause only restores what it took. A tower that was already paused stays
  * paused, and a player who picked a speed while Help was open keeps that
@@ -56,6 +60,10 @@ export class HelpPause {
   private swapping = false;
   /** Removes the new-tab return listeners, while a watch is armed. */
   private stopWatch: (() => void) | null = null;
+  /** Whether a Help dialog or a Help tab holds the pause ({@link begin} to {@link end}). */
+  private session = false;
+  /** The open Help windows holding the pause ({@link hold}), one token each. */
+  private readonly holders = new Set<object>();
 
   constructor(private readonly ports: HelpPausePorts) {}
 
@@ -68,6 +76,28 @@ export class HelpPause {
    *  or Help reopened while a new-tab watch waits, keeps the first speed). */
   begin(): void {
     this.clearWatch();
+    this.session = true;
+    this.take();
+  }
+
+  /**
+   * Hold the pause for a Help window that stays open while other Help comes
+   * and goes (the desk's Player's Manual). Returns its release, which counts
+   * once; the speed comes back when the last holder lets go and no Help
+   * dialog or tab still holds the pause.
+   */
+  hold(): () => void {
+    const token = {};
+    this.holders.add(token);
+    this.take();
+    return () => {
+      if (!this.holders.delete(token)) return;
+      if (this.holders.size === 0 && !this.session) this.restore();
+    };
+  }
+
+  /** Pause the tower for Help, unless a pause is already held. */
+  private take(): void {
     if (this.prev !== null) return;
     const speed = this.ports.getSpeed();
     this.prev = speed;
@@ -77,10 +107,25 @@ export class HelpPause {
     this.ports.announce(PAUSED_FOR_HELP);
   }
 
-  /** End the Help pause, once. Restores the prior speed only when the tower
-   *  is still at the pause Help set. */
+  /** End a Help dialog's or tab's hold on the pause, once. The speed comes
+   *  back unless a Help window still holds it ({@link hold}). */
   end(): void {
     this.clearWatch();
+    this.session = false;
+    if (this.holders.size === 0) this.restore();
+  }
+
+  /** End every hold at once (the Help bar's "Keep my tower running"). */
+  endAll(): void {
+    this.clearWatch();
+    this.session = false;
+    this.holders.clear();
+    this.restore();
+  }
+
+  /** Give the speed back, once. Restores the prior speed only when the tower
+   *  is still at the pause Help set. */
+  private restore(): void {
     const prev = this.prev;
     if (prev === null) return;
     this.prev = null;
@@ -93,9 +138,11 @@ export class HelpPause {
 
   /** The player picked a speed while Help held the pause (the toolbar or a
    *  speed key, with Help in another tab that never took focus): Help lets go
-   *  and keeps their speed. */
+   *  and keeps their speed, dropping the manual window's hold too. */
   release(): void {
     this.clearWatch();
+    this.session = false;
+    this.holders.clear();
     if (this.prev === null) return;
     const wasRunning = this.prev !== PAUSED;
     this.prev = null;
