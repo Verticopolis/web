@@ -210,7 +210,7 @@ ${statsLine(s)}</pre
   draw();
   const win = host.querySelector<HTMLElement>(".tower3d-win")!;
   const canvas = host.querySelector<HTMLCanvasElement>("canvas")!;
-  if (!phone) mover = new MovableWindow({ win, title: "Tower in 3D", within: null });
+  if (!phone) mover = new MovableWindow({ win, title: ".win-title", within: null });
 
   void import("@verticopolis/components/render3d/Tower3dView").then(
     ({ Tower3dView }) => {
