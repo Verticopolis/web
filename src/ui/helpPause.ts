@@ -138,7 +138,7 @@ export class HelpPause {
 
   /** The player picked a speed while Help held the pause (the toolbar or a
    *  speed key, with Help in another tab that never took focus): Help lets go
-   *  and keeps their speed. */
+   *  and keeps their speed, dropping the manual window's hold too. */
   release(): void {
     this.clearWatch();
     this.session = false;
