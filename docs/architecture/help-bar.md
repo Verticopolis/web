@@ -1,9 +1,12 @@
 # The Help bar (#2035)
 
-A manual page the game opened (`?from=game`) shows a status bar along its
-bottom edge with the tower's date, money, population and stars, and buttons
-to keep the tower running, pause it, or go back to it. This page records how
-the two tabs talk, and what that depends on.
+A manual page the game opened in a browser tab (`?from=game`) shows a status
+bar along its bottom edge with the tower's date, money, population and
+stars, and buttons to keep the tower running, pause it, or go back to it.
+This page records how the two tabs talk, and what that depends on. On the
+full desk the manual opens in the game's Help window instead, where the page
+hides the bar ([help-window.md](./help-window.md)); the pocket desk, the game
+without a desk and a Ctrl or Cmd click still open a tab with it.
 
 ## The parts
 

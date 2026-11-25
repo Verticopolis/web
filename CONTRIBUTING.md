@@ -406,16 +406,24 @@ For a visual tour (layer diagram, the frame loop, the engine subsystems, input
 flow, and persistence) see **[ARCHITECTURE.md](./ARCHITECTURE.md)** (Mermaid
 diagrams). The prose conventions below are the source of truth.
 
+- **`@verticopolis/engine`**: the simulation, and the TypeScript layer a host
+  uses to reach it: the engine binding and hosts (`binding/`, `host/`,
+  `port/`), the catalog's types (`catalog/`), the model and the events.
 - **`@verticopolis/components`**: the canvas renderer and pixel-art sprites
-  (`render/`), the audio (`audio/`), the catalog handle (`catalog/`), the
-  engine binding and hosts (`binding/`, `host/`, `port/`), shared types and the
-  window chrome styles. The game imports them by subpath. The renderer reads
-  engine state and never mutates it.
-- **`src/ui/`**: DOM controls (palette, status bar, dialogs), using native
-  `<dialog>` for modals. The `UI` class is a thin shell over friend-modules that
-  take the instance: the lit-html template bodies (`templates/`), the dialog
-  controllers (`uiDialogs`), the editor/inspector panels (`uiPanels`), the
-  status/log pump (`uiStatus`), and the Tools window (`toolsWindow`).
+  (`render/`), what each room shows (`presentation/`), the audio (`audio/`),
+  every reusable window (`windows/*`: the menu bar, message boxes, the desk
+  and its taskbar, the title screen, the Information bar and status bar,
+  Tools, the Map, the Control Panel, the Help window, the Open and Save As
+  windows) and the styles. It reads a render model and knows nothing of the
+  engine. The game imports them by subpath. The renderer reads engine state
+  and never mutates it.
+- **`src/ui/`**: the game's glue for those windows and its own dialogs, using
+  native `<dialog>` for modals. The `UI` class is a thin shell over
+  friend-modules that take the instance: the lit-html template bodies
+  (`templates/`), the dialog controllers (`uiDialogs`), the editor/inspector
+  panels (`uiPanels`), the status/log pump (`uiStatus`), and the Tools window's
+  glue (`toolsWindow`). `src/ui/desk/` runs the components' desk: its
+  menus, the windows it holds and the Help window.
 - **`src/storage/`**: save and load, independent of rendering.
 - **`src/main.ts`**: the composition root that wires input, engine, and the
   game loop together.
@@ -819,9 +827,10 @@ alone.
 | Path | What |
 | --- | --- |
 | `@verticopolis/engine` (npm) | The simulation, built from [Verticopolis/engine](https://github.com/Verticopolis/engine): the Rust engine compiled to WebAssembly, the only engine the game runs. It owns the rules, caps and tuning, the catalog the UI reads, saves and `.TDT`, and undo. Its tooling and conformance packages come from the same engine release. |
-| `@verticopolis/components` (npm) | Rendering, sprites, audio, the engine binding and hosts, the catalog handle and shared types, built from [Verticopolis/components](https://github.com/Verticopolis/components). |
+| `@verticopolis/components` (npm) | Rendering, sprites, audio, the desk and every reusable window, and the styles, built from [Verticopolis/components](https://github.com/Verticopolis/components). It knows nothing of the engine. |
 | `src/game/` | Game controllers: the testable logic behind the composition root. |
-| `src/ui/` | DOM controls: palette, status bar, native `<dialog>` modals. The `UI` shell delegates to friend-modules: `templates/` (lit-html bodies), `uiDialogs`, `uiPanels`, `uiStatus`, `toolsWindow`. |
+| `src/ui/` | The game's glue for the components' windows, and its own native `<dialog>` modals. The `UI` shell delegates to friend-modules: `templates/` (lit-html bodies), `uiDialogs`, `uiPanels`, `uiStatus`, `toolsWindow`. `desk/` runs the 1994 desk and its Help window. |
+| `src/manual/` | The player's manual's side of the Help window (`manualEmbed`), and its offline worker ([`docs/architecture/help-window.md`](./docs/architecture/help-window.md)). |
 | `src/storage/` | Save/load, the `VCZ1:` storage container, `.vctower` file handling. Who owns what, and every path: [`docs/architecture/save-paths.md`](./docs/architecture/save-paths.md). |
 | `api/` | Vercel serverless functions, with their own `tsconfig.json` (typecheck and lint cover them). |
 | `scripts/`, `tools/` | Build, release, screenshot and perf scripts, and the SimTower harness in `tools/simtower/`. `scripts/tsconfig.json` type-checks both under `npm run typecheck`, and `npm run lint` covers them (and `e2e/`) with Node globals. |
