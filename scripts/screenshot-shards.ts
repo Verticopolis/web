@@ -194,15 +194,17 @@ export const SHARDS: Record<string, string[]> = {
     "desk-title-landscape-continue",
   ],
   // The appearance schemes (owner, 2026-11-17): the dialog, the canon tower's
-  // desk in Skyline and High Contrast, a phone in Skyline and the phone title
-  // screen in both; its own shard,
+  // desk in Skyline and High Contrast, a phone in Skyline and the title screen
+  // on the desk, on a computer and a phone, in both; its own shard,
   // as new features get.
   appearance: [
     "appearance",
     "appearance-skyline",
     "appearance-high-contrast",
     "appearance-skyline-phone",
+    "appearance-skyline-desk-title",
     "appearance-skyline-phone-title",
+    "appearance-high-contrast-desk-title",
     "appearance-high-contrast-phone-title",
   ],
   // The star-up message box (r/SimTower feedback, 2026-11-16): every rating's
