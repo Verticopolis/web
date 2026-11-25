@@ -33,7 +33,6 @@ import { FakeIndexedDb } from "../fakeIndexedDb";
 import { toBase64 } from "../../storage/saveCompression";
 import type { ExportReport } from "../../storage/tdtExportReport";
 import type { ImportReport } from "../../storage/tdtImportReport";
-import { buildTdt } from "../fixtures/tdtBuilder";
 import { BuildActions } from "../../game/buildActions";
 import { brushTiles } from "../../ui/placement";
 import { EditorActions } from "../../game/editorActions";
@@ -44,6 +43,7 @@ import { portDeps } from "../../game/portDeps.fixture";
 import { INVALID_COMMAND, MAX_TEXT } from "@verticopolis/engine/port/request";
 import { PortEvents } from "@verticopolis/engine/port/portEvents";
 import { hasWasmPackage } from "../conformance/wasmEngine";
+import { tdtFile } from "../conformance/tdtWasm";
 
 /** The `.TDT` tests read and write files through the Rust package, so they run
  *  where it is built (CI builds it for every project). */
@@ -1330,7 +1330,7 @@ describe.skipIf(noEngine)("SaveLoad (persistence, update flush, GPU-loss recover
   });
 
   itTdt("importLegacy: a valid .TDT shows the fidelity report first; nothing adopted until Open", async () => {
-    const bytes = buildTdt({ balance: 12345, level: 3 });
+    const bytes = tdtFile({ money: 1_234_500, star: 3 });
     await saveLoad.importLegacy(bytes.buffer as ArrayBuffer, "LEGACY.TDT");
     expect(adopted).toHaveLength(0); // report up, tower not adopted yet
     expect(f.toasts).toEqual([]);
@@ -1361,7 +1361,7 @@ describe.skipIf(noEngine)("SaveLoad (persistence, update flush, GPU-loss recover
 
   itTdt("importLegacy: the same 1994 file opened again is not kept twice", async () => {
     await fileSpace.open(new FakeIndexedDb().asFactory());
-    const bytes = buildTdt({ balance: 111 });
+    const bytes = tdtFile({ money: 11_100 });
     await saveLoad.importLegacy(bytes.slice().buffer as ArrayBuffer, "TWICE.TDT");
     f.importReports[0].open();
     await vi.waitFor(() => expect(fileSpace.list()).toHaveLength(1));
@@ -1372,7 +1372,7 @@ describe.skipIf(noEngine)("SaveLoad (persistence, update flush, GPU-loss recover
   });
 
   itTdt("importLegacy: with My Towers closed, the import still opens and says how to keep it", async () => {
-    await saveLoad.importLegacy(buildTdt().buffer as ArrayBuffer, "NOFOLDER.TDT");
+    await saveLoad.importLegacy(tdtFile().buffer as ArrayBuffer, "NOFOLDER.TDT");
     f.importReports[0].open();
     expect(adopted).toHaveLength(1);
     await vi.waitFor(() =>
@@ -1381,8 +1381,8 @@ describe.skipIf(noEngine)("SaveLoad (persistence, update flush, GPU-loss recover
   });
 
   itTdt("importLegacy: each report opens its own file, whatever was read after it", async () => {
-    await saveLoad.importLegacy(buildTdt({ balance: 111 }).buffer as ArrayBuffer, "FIRST.TDT");
-    await saveLoad.importLegacy(buildTdt({ balance: 222 }).buffer as ArrayBuffer, "SECOND.TDT");
+    await saveLoad.importLegacy(tdtFile({ money: 11_100 }).buffer as ArrayBuffer, "FIRST.TDT");
+    await saveLoad.importLegacy(tdtFile({ money: 22_200 }).buffer as ArrayBuffer, "SECOND.TDT");
     await saveLoad.importLegacy(new ArrayBuffer(4), "tiny.TDT");
     f.importReports[0].open();
     expect(adopted.map((s) => s.money)).toEqual([11_100]);

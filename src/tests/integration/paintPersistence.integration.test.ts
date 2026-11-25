@@ -1,11 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { LOT_WIDTH, newSeededDraft } from "../portKit/draftFixtures";
 import { draftFromSave, draftTower, type Draft } from "../portKit/drafts";
 import { noEngine } from "../portKit/rustEngine";
 import { catalogFor } from "../catalogFixture";
 import { catalogFacility } from "@verticopolis/components/render/catalogIndex";
 import { drawRoom, type RoomCtx } from "@verticopolis/components/render/pixelSprites";
-import { buildTDT, describeWithCodec, parseTDT } from "../conformance/tdtWasm";
 import type { FacilityKind, Unit } from "@verticopolis/engine/model/types";
 
 /** The engine catalog's facts for `kind` (the subtypes match in both modes). */
@@ -21,9 +19,11 @@ const SHOP_SUBTYPES = facts("shop").subtypes ?? [];
  * (`floor`, `x`: the geo seed for layouts, mirroring, and tints), and `id`
  * (grandfathered accent/diner seeds). This suite paints every kind and every
  * canon variety, round-trips the tower through serialize/deserialize (the
- * .vctower path) and through the TDT format, then paints again and
- * byte-compares the full paint logs. If a future visual input is added
- * without surviving the save, these tests fail the same day the art lands.
+ * .vctower path), then paints again and byte-compares the full paint logs.
+ * If a future visual input is added without surviving the save, these tests
+ * fail the same day the art lands. That the `.TDT` format keeps a room's
+ * subtype and spot is the engine's to prove (`tests/tdt_carry.rs` in
+ * Verticopolis/engine).
  */
 
 /** A recording 2D-context stand-in (mirrors the spyCtx in sprites.test.ts). */
@@ -185,62 +185,5 @@ describe.skipIf(noEngine)("save round-trip paints identical pixels (.vctower ser
       compared++;
     }
     expect(compared).toBe(before.size);
-  });
-});
-
-describeWithCodec("TDT round-trip preserves the retail varieties' paint (geometry + subtype survive)", () => {
-  it("each canon variety paints byte-identical after export -> import at its own spot", () => {
-    // Classic tower (TDT refuses modern) with one venue per variety. The TDT
-    // format preserves kind, floor, x, and the variant byte; unit ids are
-    // renumbered on import, which is exactly why the geo seed keys the art.
-    // Diner/shopper presence still reads the grandfathered hash(u.id), so the
-    // comparison paints both sides with occupants pinned and the same id to
-    // isolate the persisted inputs (subtype + geography).
-    const sim = newSeededDraft(3);
-    sim.money = 1e12;
-    // Anchor at the ensured starter lobby's left edge (the fixture lays 40
-    // lobby tiles from mid - 20) and grow rightward: lobbies and floors must
-    // connect to the existing tower, so a detached strip would be refused.
-    const x0 = Math.floor(LOT_WIDTH / 2) - 20;
-    for (let i = 40; i < 110; i++) sim.tower.place("lobby", 1, x0 + i);
-    for (let f = 2; f <= 8; f++) for (let i = 0; i < 110; i++) sim.tower.place("floor", f, x0 + i);
-    sim.buildTransport("elevatorStandard", x0 + 100, 1, 8);
-    let f = 2;
-    let x = x0;
-    const spots: { kind: FacilityKind; subtype: string; floor: number; x: number }[] = [];
-    const placeRetail = (kind: FacilityKind, subtype: string) => {
-      let width = 12;
-      if (kind === "restaurant") width = 24;
-      else if (kind === "fastFood") width = 16;
-      if (x + width >= x0 + 110) {
-        f += 1;
-        x = x0;
-      }
-      const r = sim.tower.place(kind, f, x);
-      const u = sim.tower.getUnit(r.unitId!) as unknown as Unit;
-      u.state = "occupied";
-      u.subtype = subtype;
-      spots.push({ kind, subtype, floor: f, x });
-      x += width + 2;
-    };
-    for (const name of FASTFOOD_SUBTYPES) placeRetail("fastFood", name);
-    for (const name of RESTAURANT_SUBTYPES) placeRetail("restaurant", name);
-    for (const name of SHOP_SUBTYPES) placeRetail("shop", name);
-
-    const { bytes } = buildTDT(sim.serialize());
-    const back = parseTDT(bytes.buffer as ArrayBuffer, "R.TDT").save;
-    for (const spot of spots) {
-      const orig = roomsOf(sim).find((q) => q.kind === spot.kind && q.floor === spot.floor && q.x === spot.x)!;
-      const imported = back.units.find((q) => q.kind === spot.kind && q.floor === spot.floor && q.x === spot.x);
-      expect(imported, `${spot.kind} "${spot.subtype}" lost its spot in the TDT round-trip`).toBeDefined();
-      expect(imported!.subtype).toBe(spot.subtype);
-      // Pin the transient inputs so only the persisted ones drive the compare.
-      const a = { ...orig, id: 1, occupants: 3 } as Unit;
-      const b = { ...(imported as unknown as Unit), id: 1, occupants: 3, state: "occupied" } as Unit;
-      expect(
-        paint(b, hourFor(spot.kind)),
-        `${spot.kind} "${spot.subtype}" paints differently after TDT round-trip`,
-      ).toBe(paint(a, hourFor(spot.kind)));
-    }
   });
 });

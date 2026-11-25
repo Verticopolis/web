@@ -1,10 +1,9 @@
-import type { SerializedGame } from "@verticopolis/engine/model/types";
+import type { SerializedGame, SerializedView } from "@verticopolis/engine/model/types";
 import { PortCodes } from "@verticopolis/engine/port/portCodes";
 import { exportFacts, importFacts } from "@verticopolis/engine/port/tdtRecords";
 import { exportReport, type ExportReport } from "../../storage/tdtExportReport";
 import { importReport, type ImportReport } from "../../storage/tdtImportReport";
-import { describe, it } from "vitest";
-import { hasWasmPackage, wasm } from "./wasmEngine";
+import { wasm } from "./wasmEngine";
 
 /**
  * The `.TDT` codec as the tests meet it: the Rust importer and exporter through
@@ -12,11 +11,6 @@ import { hasWasmPackage, wasm } from "./wasmEngine";
  * game builds them. A refusal throws the player-readable sentence as an `Error`
  * of one of the two classes below.
  */
-
-/** Suites that need the codec skip themselves where the engine package is not
- *  built; the CI legs that run them put the package in place first. */
-export const describeWithCodec = describe.skipIf(!hasWasmPackage());
-export const itWithCodec = it.skipIf(!hasWasmPackage());
 
 export class LegacyImportError extends Error {}
 export class LegacyExportError extends Error {}
@@ -76,4 +70,18 @@ export function buildTDT(save: SerializedGame | string): BuiltTdt {
   } finally {
     engine.free();
   }
+}
+
+/** A `.TDT` file for the game's tests that open one, written by the engine's
+ *  own exporter from a new Classic tower: `money` and `star` land in the
+ *  header's balance and level, `view` in its view words. */
+export function tdtFile(over: { money?: number; star?: number; view?: SerializedView } = {}): Uint8Array {
+  const engine = wasm().Engine.newGame(1, "classic");
+  let save: SerializedGame;
+  try {
+    save = JSON.parse(engine.serialize()) as SerializedGame;
+  } finally {
+    engine.free();
+  }
+  return buildTDT({ ...save, ...over }).bytes;
 }
