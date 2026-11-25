@@ -137,6 +137,8 @@ function gameMenus({ sponsorUrl, onSponsor }: Omit<GameMenuOptions, "pick">): Me
           { id: "mb-exterminator", label: "Call Exterminator…", hidden: true },
           sep(),
           { id: "mb-rules", label: "This Tower's Rules…" },
+          // Draft prototype (5.x Epic 1): the Tower in 3D window.
+          { id: "mb-tower-3d", label: "View in 3D…" },
         ],
       },
       // The 1994 desk's Window menu (src/ui/desk/, owner 2026-11-15): each
