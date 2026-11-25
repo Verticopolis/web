@@ -107,7 +107,7 @@ So that we only build what we know will be fast.
 **Acceptance Criteria:**
 
 **Given** the thresholds written down before the run (GDD, Technical Specifications)
-**When** the prototype runs the maxed test towers on the Android reference phone, an iPhone and the gate laptop, 5 runs each
+**When** the prototype runs the maxed Modern test towers on the Android reference phone, an iPhone and the gate laptop, 5 runs each, plus one maxed Classic tower as a smoke row
 **Then** a results file in project files records every row as pass or fail, with frame-time percentiles, draw calls and memory
 **And** a failed row stops Epics 2 and 3 until the owner decides
 
@@ -126,7 +126,7 @@ So that I choose the one we build.
 
 ## Epic 2: See my tower in 3D
 
-A Modern player opens Tower > View in 3D… and orbits a live model of their
+A player in either mode opens Tower > View in 3D… and orbits a live model of their
 own tower (rooms, transport and moving cars) on any device, and the game
 costs nothing extra while the window is closed. Stories 2.1 to 2.5 are
 Verticopolis/components PRs; 2.6 to 2.10 are Verticopolis/web PRs after
@@ -200,16 +200,16 @@ So that it stays usable.
 
 ### Story 2.6: Menu entry and window
 
-As a Modern player,
+As a player in either mode,
 I want Tower > View in 3D… to open a Tower in 3D window,
 So that I can see my tower in 3D.
 
 **Acceptance Criteria:**
 
-**Given** an eligible tower (Modern in this draft)
+**Given** any tower, Classic or Modern
 **When** I choose View in 3D…
 **Then** a desk window opens on computers and a full-screen panel on phones, with time of day, Reset view and Take a picture
-**And** the item is absent for ineligible towers
+**And** in Classic the Tower menu item is the only change: the play view and toolbar are untouched, and nothing opens or suggests the window on its own
 
 ### Story 2.7: Lazy load outside the install
 
@@ -331,7 +331,7 @@ So that the feature is documented and measurable.
 
 **Given** the feature ships
 **When** the release is cut
-**Then** the help site has a "Tower in 3D" page in the manual style, `app_action action=tower_3d_open` fires once per open, and the gallery has a screenshot shard covering the window's states (open, unavailable, phone panel) made in the pinned container
+**Then** the help site has a "Tower in 3D" page in the manual style that says this view is a Verticopolis addition the 1994 game did not have, `app_action action=tower_3d_open` fires once per open, and the gallery has a screenshot shard covering the window's states (open, unavailable, phone panel) made in the pinned container
 **And** the dashboard gets a tile only by adding one (the curated dashboard is never edited otherwise)
 
 ### Story 3.6: Gate on the release candidate

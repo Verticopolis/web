@@ -54,7 +54,7 @@ Verticopolis/components.
 | D10 | Side view while covered | Web calls the existing `holdTowerFrames` when the 3D window is maximized or full screen | n/a | Epic 3 | Reuses the screen saver's mechanism; one renderer draws at a time. |
 | D11 | Teardown | On close: dispose geometries, materials, textures, then `renderer.dispose()` and `forceContextLoss()` | n/a | Epic 2, 3 | Only one live 3D context (iOS limit, memory). |
 | D12 | Art source | All 3D looks are generated in code from one `looks3d` table keyed by `FacilityKind` | n/a | Epic 2 | No asset files; the type system and a unit test force a look for every kind. |
-| D13 | Mode gating | Web decides availability (menu item) from `RenderSim.mode`; components does not know about modes | n/a | Epic 3 | Keeps the renderer generic; the Modern-only question is a one-line web change either way. |
+| D13 | Mode gating | None: the menu item shows in every tower (party re-run 2026-11-25, 8 to 3, any tower); components does not know about modes | n/a | Epic 2 | Keeps the renderer generic and removes a branch, a grayed item and its test. |
 
 Deferred: tap-to-inspect picking (out of scope v1), WebGPU, a flyover camera
 path.

@@ -145,3 +145,107 @@ Q4. **Phones.**
 Dissent: Grumbal still thinks two renderers will drift and wants a prototype
 measured before any epic is scheduled. Priya holds that the viewer should not
 be Modern only. Owner decides Q2, Q3 and Q4; Q1 went 11 to 0 for a viewer.
+
+## Round 2: Modern towers only, or any tower? (2026-11-25, 17:55Z)
+
+The owner was unsure on the first round's 7 to 6 split and asked for a
+proper party of the right agents. The room was recast for this one question:
+the Web Game Room's design and platform voices, the SimTower veteran from the
+Player Panel, and the product and game architecture voices from the
+Cross-Cutting room. Dale (an r/SimTower regular) walked on and did not vote.
+
+Facts put on the table before the round:
+
+- The renderer reads `RenderSim`, the same shape for both modes. Every kind a
+  Classic tower can hold is also a Modern kind (the engine's `modern_only`
+  flag only removes kinds from Classic), so Classic needs no 3D art of its
+  own: the Modern look set covers it.
+- Classic's maxed towers are smaller than Modern's (Modern has the tall and
+  wide lots), so the gate measured on the maxed Modern saves bounds Classic.
+- Precedent: on 2026-11-17 the room put the optional Skyline scheme in any
+  mode, default unchanged, because a look option is not a rule.
+- The "Classic stays 1994" promise covers the rules and the play view.
+
+🌐 **Priya:** Same as this morning. It's a camera. Nobody's Classic rule
+changes when I look at my tower from the side street. And we already did
+this with Skyline: any mode, opt in.
+
+🎲 **Samus:** Skyline is a coat of paint on the same game. This is a new toy,
+and Modern needs reasons to exist. Give Modern the shiny thing.
+
+📋 **John:** Modern's reasons are its rooms and its lots. Look where we post:
+r/SimTower. Those players run Classic towers, and those are the people who
+would screenshot a 3D tower. Gate it to Modern and we hide the best launch
+picture from the audience most likely to share it.
+
+🏯 **Kenji:** I'm the one who should hate this, so let me say it carefully.
+SimTower never showed you the back of your tower. Thirty years of looking
+at the same side. A separate window doesn't touch how Classic plays, and
+the side view stays exactly 1994. I'll take any tower, with conditions: one
+menu item under Tower, nothing on the Classic toolbar, and the help page says
+plainly this is a Verticopolis addition, not something the 1994 game had.
+
+🧭 **Dale:** *(leaning in from the doorway)* If it's Modern only, the top
+comment on the post is "why can't I see MY tower," and the second is someone
+telling him to start over in Modern. Just saying.
+
+😤 **Grumbal:** And the third comment is "SimTower didn't have that." Ship
+narrow. Widening later is a one-line change; taking it away from Classic
+later is a takeaway, and players remember takeaways.
+
+🧩 **Juno:** The one line cuts both ways, Grumbal. Classic kinds are a subset
+of Modern's, so any tower costs us zero extra art and zero renderer code.
+What a Modern-only gate does add is a branch: a grayed menu item, a help
+sentence explaining why, and a test for each.
+
+🎨 **Sally:** That grayed item is my problem. A player who opens a Classic
+tower, sees View in 3D… disabled, and has to read help to learn why: that's
+a dead end in the one place this feature should feel like a gift. Same menu,
+both modes.
+
+🐉 **Cloud Dragonborn:** Architecture agrees with Juno. D13 already puts the
+gate in web, from `RenderSim.mode`. Either answer is cheap; the cheaper one
+to keep correct is no gate.
+
+⏱️ **Tess:** My worry is the gate, not the mode. I'm measuring Epic 1 on the
+maxed Modern saves; I want one Classic maxed tower as a smoke row so nobody
+says we never looked. With that I'm fine either way, but I vote Modern only
+for Epic 1's scope and widen at Epic 2. Fewer moving parts while we measure.
+
+📱 **Lucia:** On my phone I don't know which mode I'm in half the time. Any
+tower. Just keep the low tier honest.
+
+♿ **Wren:** The screen-reader summary reads the same in both modes. Any
+tower, and the menu item reads the same everywhere.
+
+😤 **Grumbal:** Fine. My price if you widen it: it never opens on its own,
+no tip, no splash, no "try 3D!" nag in Classic. The player asks for it or
+it doesn't exist.
+
+🏯 **Kenji:** Agreed. That's how 1995 software behaved anyway.
+
+### Vote
+
+| Choice | Votes | Who |
+| --- | --- | --- |
+| Any tower (Classic and Modern) | 8 | Priya, John, Kenji, Juno, Sally, Cloud Dragonborn, Lucia, Wren |
+| Modern towers only | 3 | Samus, Grumbal, Tess |
+
+**Ruling: any tower, 8 to 3.** The owner asked the party to decide this
+question, so the plan follows the ruling.
+
+Conditions the room attached:
+
+1. Classic's play view, toolbar and rules stay exactly as they are. The only
+   addition in Classic is the "View in 3D…" item under the Tower menu (Kenji).
+2. One 3D look set serves both modes; no Classic-only 3D art (Juno).
+3. The window opens only when the player asks: no tip, splash or prompt in
+   either mode (Grumbal).
+4. Epic 1 measures the maxed Modern towers and adds one maxed Classic tower
+   as a smoke row (Tess).
+5. The help page says this view is a Verticopolis addition the 1994 game did
+   not have (Kenji).
+
+Dissent: Samus still wants a reason that is only Modern's. Tess would have
+kept Epic 1 to Modern and widened at Epic 2; the smoke row is her price.
+Grumbal accepts only with condition 3.

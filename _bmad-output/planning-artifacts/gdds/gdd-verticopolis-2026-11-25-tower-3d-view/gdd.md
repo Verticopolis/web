@@ -4,7 +4,7 @@ game_type: simulation
 platforms: browser (desktop and phone, installed PWA and tab)
 created: 2026-11-25
 updated: 2026-11-25
-status: draft, awaiting owner sign-off
+status: draft, awaiting owner look pick
 ---
 
 # Verticopolis Tower in 3D - Game Design Document
@@ -32,8 +32,8 @@ the tower, never a place to build it. The side-view cutaway stays the game.
 
 ### Target Audience
 
-Modern-mode players with a tower they are proud of, on desktop and phone,
-including players who share pictures of their towers.
+Players of either mode, Classic or Modern, with a tower they are proud of,
+on desktop and phone, including players who share pictures of their towers.
 
 ### Unique Selling Points (USPs)
 
@@ -165,15 +165,17 @@ N/A. The viewer is free, adds no costs and touches no funds.
 
 ### Progression and Unlocks
 
-No unlock. Available from the first room in an eligible tower (a Modern
-tower in this draft; see Open Questions).
-[NOTE FOR DESIGNER: Modern towers only, or any tower? Party split 7 to 6
-for Modern only. Default in this draft: Modern only. Owner decides.]
+No unlock. Available from the first room in any tower, Classic or Modern
+(party re-run 2026-11-25, 8 to 3, at the owner's request). In Classic the
+only addition is the Tower menu item: the play view, toolbar and rules stay
+exactly as they are, and the window never opens or suggests itself on its
+own in either mode.
 
 ### Sandbox vs. Scenario
 
-Works in every eligible tower (as above), at any population, on every lot
-size.
+Works in every tower, in both modes, at any population, on every lot size.
+One 3D look set serves both modes: every kind a Classic tower can hold is
+also a Modern kind, so Classic needs no 3D art of its own.
 
 ---
 
@@ -303,7 +305,7 @@ release candidate.
 
 ### Gameplay Metrics
 
-- Share of Modern sessions that open the 3D view at least once (an
+- Share of sessions that open the 3D view at least once, by mode (an
   `app_action` event, `action=tower_3d_open`), read from the governed
   dashboard after release.
 - Share of opens that end in "3D isn't available on this device" (target:
@@ -318,7 +320,8 @@ v1 (5.x):
 - Replacing or restyling the side view.
 - Overlays: Eval, Pricing, Hotel, Traffic and Occupancy maps in 3D.
 - Free walking camera inside the tower, VR or AR.
-- Classic towers, unless the owner widens it (Open Questions).
+- A Classic-only 3D look, or any change to Classic's play view, toolbar or
+  rules.
 
 Later, if v1 lands well: tap a room to inspect it, a camera path for a
 tower "flyover", sharing straight to social sites.
@@ -327,11 +330,10 @@ tower "flyover", sharing straight to social sites.
 
 ## Open Questions
 
-1. Modern towers only, or any tower? Party 7 to 6 for Modern only; this
-   draft assumes Modern only. Owner decides (decision card posted
-   2026-11-25).
-2. The final 3D look: the owner picks from variants in Epic 1.
-3. Whether to start Epic 1 (the prototype and gate) at all.
+1. The final 3D look: the owner picks from variants in Epic 1.
+
+Settled: any tower, Classic and Modern (owner asked the party to decide,
+8 to 3, 2026-11-25); start Epic 1 (owner, 2026-11-25).
 
 ---
 

@@ -27,8 +27,8 @@ documents:
 
 Pillars (your tower exactly; never slower; a window to look through) each
 trace to mechanics and to stories. Performance targets carry numbers, a noise
-band and reference devices. One open design question (Modern only) is marked
-in Open Questions with a default.
+band and reference devices. The one open design question (Modern only) was
+settled after this check: any tower, by a party re-run the owner asked for.
 
 ## Epic Coverage Validation
 
@@ -60,8 +60,8 @@ and 2.8 agree on bindings. Phone panel and close button covered in 2.6.
 
 ### Critical Issues Requiring Immediate Action
 
-1. Owner decision: Modern towers only, or any tower (decision card posted).
-2. Owner go-ahead to start Epic 1.
+1. Settled: any tower, Classic and Modern (party re-run, 8 to 3).
+2. Settled: the owner chose to start Epic 1.
 3. Epics 2 and 3 wait for Story 1.2's measurements to pass and the owner's
    look pick in Story 1.3.
 
