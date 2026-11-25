@@ -3,7 +3,7 @@
  * into docs/screenshots/features/ for the Help site and the PR review: the
  * dialog over the Standard desk, then the canon tower's desk in Skyline and
  * in High Contrast (with the Start menu and the dialog open in
- * Skyline, and the Tower menu's greyed items and the update prompt's notes in High Contrast), a phone in Skyline, and the phone title screen in both schemes. A scheme scene starts the page with the
+ * Skyline, and the Tower menu's greyed items and the update prompt's notes in High Contrast), a phone in Skyline, and the title screen on the desk, on a computer and a phone, in both schemes. A scheme scene starts the page with the
  * scheme kept (`initScript`), the way a returning player's page opens.
  * Every scene runs on its own page, so a kept scheme never reaches another
  * scene. Part of the SCENES manifest (screenshot-scenes.ts). Keep ERASABLE.
@@ -166,21 +166,31 @@ export const APPEARANCE_SCENES: Scene[] = [
     assertUnits: 200,
     shots: [{ name: "appearance-skyline-phone", clock: 11 }],
   },
-  // The title screen's buttons on a phone, which the schemes restyle too.
-  {
-    id: "appearance-skyline-phone-title",
-    outDir: "features",
-    viewport: PHONE,
-    keepSplash: true,
-    initScript: keptSkyline,
-    shots: [{ name: "appearance-skyline-phone-title", wait: 400 }],
-  },
-  {
-    id: "appearance-high-contrast-phone-title",
-    outDir: "features",
-    viewport: PHONE,
-    keepSplash: true,
-    initScript: keptHighContrast,
-    shots: [{ name: "appearance-high-contrast-phone-title", wait: 400 }],
-  },
+  // The title screen in its window on the desk, on a computer and on a
+  // phone's pocket desk, where each scheme restyles the buttons and colors
+  // the main one (owner, 2026-11-25).
+  ...(
+    [
+      ["skyline", keptSkyline],
+      ["high-contrast", keptHighContrast],
+    ] as const
+  ).flatMap(([scheme, initScript]): Scene[] => [
+    {
+      id: `appearance-${scheme}-desk-title`,
+      outDir: "features",
+      desk: true,
+      keepSplash: true,
+      initScript,
+      shots: [{ name: `appearance-${scheme}-desk-title`, wait: 400, setup: park }],
+    },
+    {
+      id: `appearance-${scheme}-phone-title`,
+      outDir: "features",
+      viewport: PHONE,
+      desk: true,
+      keepSplash: true,
+      initScript,
+      shots: [{ name: `appearance-${scheme}-phone-title`, wait: 400 }],
+    },
+  ]),
 ];
