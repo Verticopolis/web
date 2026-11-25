@@ -72,7 +72,7 @@ No Rust toolchain is needed: the engine comes from npm as
 | --- | --- |
 | **[Verticopolis/web](https://github.com/Verticopolis/web)** (this one) | The game at [verticopolis.com](https://verticopolis.com), its player's manual and the release lane. Bugs and ideas from playing go here. |
 | [Verticopolis/engine](https://github.com/Verticopolis/engine) | The Rust engine as the `verticopolis-engine` crate and the `@verticopolis/engine` WebAssembly package, the conformance suite and the [engine docs](https://docs.verticopolis.com/) |
-| [Verticopolis/components](https://github.com/Verticopolis/components) | `@verticopolis/components`: the renderer, the Windows 95 windows and menus, the sprites and audio, and the engine binding |
+| [Verticopolis/components](https://github.com/Verticopolis/components) | `@verticopolis/components`: the renderer, the Windows 95 desk, windows and menus, the title screen, the sprites and audio. It reads a render model and knows nothing of the engine |
 
 The engine and the components were split out of this repository with their
 history, and the game builds from their npm packages. A change to the

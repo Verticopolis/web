@@ -46,6 +46,7 @@ flowchart LR
 | [save-paths.md](./save-paths.md) | The tower as a document: the Auto-save, My Towers and previous versions, Open Recent, every load, save, import and export path and who owns it |
 | [linked-folder.md](./linked-folder.md) | The folder on the player's computer beside My Towers (File System Access API) |
 | [help-bar.md](./help-bar.md) | The Help bar across the game and help.verticopolis.com |
+| [help-window.md](./help-window.md) | The Player's Manual in a desk window: the frame, the messages between the game and a manual page, the pause and the manual offline |
 | [../ci/pipeline.md](../ci/pipeline.md) | What runs on a pull request, the required checks, and the release path |
 
 Elsewhere:

@@ -73,7 +73,8 @@ src/
   engineRender.ts # the engine's frame and catalog, typed as the components' render model
   engineHost/   # booting, checking and repairing the engine package
   game/         # controllers: build/editor actions, save/load, input, inspector, HUD wiring
-  ui/           # the game's DOM controls: menus, dialogs, palette (lit-html templates); desk/ is the 1994 desktop
+  ui/           # the game's glue for the components' windows, its own dialogs (lit-html templates); desk/ runs the 1994 desktop and its Help window
+  manual/       # the player's manual's side of the Help window, and the manual offline
   storage/      # My Towers files and versions, the Auto-save, Open Recent, the linked folder, TDT files
   analytics*.ts # PostHog analytics
   public/       # static files; public/engine/ is copied from @verticopolis/engine on npm install
@@ -119,7 +120,7 @@ flowchart TD
 
     subgraph view["Presentation"]
         UI["src/ui/<br/>the game's UI + lit templates · Onboarding"]
-        Windows["components windows/*<br/>menu bar, windows, message boxes"]
+        Windows["components windows/*<br/>the desk, title screen, menu bar,<br/>Information bar, Tools, Map, Help window, dialogs"]
         Scene["components render/excalibur<br/>TowerEngine: render loop · camera · pointer input"]
         Audio["components audio/*<br/>AudioEngine facade"]
     end
@@ -307,6 +308,9 @@ tooling pages stay outside its scope and its precache. The Help site
 served from its own host by `vercel.json`) is never precached either (the
 `globIgnores` and `navigateFallbackDenylist` entries in `vite.config.ts`); its
 Help bar is described in [docs/architecture/help-bar.md](docs/architecture/help-bar.md).
+The manual registers a service worker of its own (`src/manual/manualWorker.ts`)
+so it opens offline once saved, and on the desk it opens in the game's Help
+window ([docs/architecture/help-window.md](docs/architecture/help-window.md)).
 
 The worker runs in `prompt` mode: a new build waits instead of taking over the
 tab, and the game asks the player whether to update now (it saves, then
