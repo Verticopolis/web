@@ -86,8 +86,8 @@ vi.mock("../../ui/uiStatus", async (importOriginal) => {
  *    cancel path — not closeModal() directly — so modals that override
  *    oncancel (the emergency choice) still resolve when dismissed via ✕.
  *  - renderEditor: lit's binding diff patches value cells in place (buttons
- *    keep identity → no swallowed clicks), and the card's [data-edit] actions
- *    and ✕ dispatch through ONE delegated listener that survives re-renders.
+ *    keep identity → no swallowed clicks), and the card's buttons and ✕ are
+ *    lit bindings to UI.editAction and UI.hideEditor that survive re-renders.
  *    (The diff/identity mechanics are covered by editorPatch.test.ts, the
  *    template structure by templates/editor.test.ts.)
  *  - toast: kind class + text land on the toast element; the stack is capped.
