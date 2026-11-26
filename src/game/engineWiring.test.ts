@@ -91,7 +91,7 @@ describe("onTap", () => {
     const app = makeApp({ type: "inspect" });
     wireEngine(app);
     const picked = { id: "u1" };
-    app.engine.onTap!(3, 4, false, picked);
+    app.engine.onTap!(3, 4, false, () => picked);
     expect(app.audio.start).toHaveBeenCalled();
     expect(app.selectPicked).toHaveBeenCalledWith(picked);
     expect(app.personCard.open).not.toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe("onTap", () => {
     wireEngine(app);
     vi.mocked(pickPersonAt).mockReturnValueOnce(42);
     const world = { x: 31, y: -40 };
-    app.engine.onTap!(3, 4, true, { id: "u1" }, world);
+    app.engine.onTap!(3, 4, true, () => ({ id: "u1" }), world);
     // The figure is picked at the tap's own world point, finer than its tile.
     expect(pickPersonAt).toHaveBeenCalledWith(app.engine, world);
     expect(app.clearSelection).toHaveBeenCalled();
@@ -116,14 +116,14 @@ describe("onTap", () => {
     vi.mocked(pickPersonAt).mockReturnValueOnce(42);
     app.personCard.open.mockReturnValueOnce(false);
     const picked = { id: "u1" };
-    app.engine.onTap!(3, 4, false, picked);
+    app.engine.onTap!(3, 4, false, () => picked);
     expect(app.selectPicked).toHaveBeenCalledWith(picked);
   });
 
   it("a touch build tap captures undo, places, and commits once the engine has answered", () => {
     const app = makeApp({ type: "build", kind: "office" });
     wireEngine(app);
-    app.engine.onTap!(3, 4, true, null);
+    app.engine.onTap!(3, 4, true, () => null);
     expect(app.captureUndo).toHaveBeenCalled();
     expect(mockPlaceSimpleBuild).toHaveBeenCalledWith(app, "office", 3, 4);
     expect(app.commitUndo).toHaveBeenCalledTimes(1);
@@ -133,7 +133,7 @@ describe("onTap", () => {
     const app = makeApp({ type: "bulldoze", kind: "office" });
     wireEngine(app);
     const picked = { id: "r1" };
-    app.engine.onTap!(3, 4, true, picked);
+    app.engine.onTap!(3, 4, true, () => picked);
     expect(app.build.bulldozePicked).toHaveBeenCalledWith(picked);
     await flush();
     expect(app.commitUndo).toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe("onTap", () => {
   it("a non-touch build tap does nothing beyond starting audio", () => {
     const app = makeApp({ type: "build", kind: "office" });
     wireEngine(app);
-    app.engine.onTap!(3, 4, false, null);
+    app.engine.onTap!(3, 4, false, () => null);
     expect(app.captureUndo).not.toHaveBeenCalled();
     expect(mockPlaceSimpleBuild).not.toHaveBeenCalled();
   });
@@ -153,7 +153,7 @@ describe("onActionDown", () => {
     mockIsPaintTool.mockReturnValue(true);
     const app = makeApp({ type: "build", kind: "office" });
     wireEngine(app);
-    app.engine.onActionDown!(5, 6, true, null);
+    app.engine.onActionDown!(5, 6, true, () => null);
     expect(app.paintAnchor).toEqual({ tile: 5, floor: 6 });
     expect(mockPlaceSimpleBuild).not.toHaveBeenCalled();
   });
@@ -162,26 +162,28 @@ describe("onActionDown", () => {
     mockPlaceSimpleBuild.mockReturnValue(null);
     const app = makeApp({ type: "build", kind: "elevatorStandard" });
     wireEngine(app);
-    app.engine.onActionDown!(7, 8, false, null);
+    app.engine.onActionDown!(7, 8, false, () => null);
     expect(app.transportStart).not.toBeNull();
     expect((app.transportStart as { floor: number }).floor).toBe(8);
   });
 });
 
 describe("onHover", () => {
-  it("build tool updates the build preview", () => {
+  it("build tool updates the build preview and never hit-tests the pointer", () => {
     const app = makeApp({ type: "build", kind: "office" });
     wireEngine(app);
-    app.engine.onHover!(1, 2, null);
+    const pick = vi.fn(() => null);
+    app.engine.onHover!(1, 2, pick);
     expect(mockUpdateBuildPreview).toHaveBeenCalledWith(app, 1, 2);
+    expect(pick, "a build ghost reads the cell, so the hover skips the transport scan").not.toHaveBeenCalled();
   });
 
   it("hands the ghost to the pointer on a hover and a press, so an undo does not redraw it at the keyboard cursor", () => {
     const app = makeApp({ type: "build", kind: "office" });
     wireEngine(app);
-    app.engine.onHover!(1, 2, null);
+    app.engine.onHover!(1, 2, () => null);
     expect(app.keyboard.pointerDrew, "the hover").toHaveBeenCalledOnce();
-    app.engine.onActionDown!(1, 2, false, null);
+    app.engine.onActionDown!(1, 2, false, () => null);
     expect(app.keyboard.pointerDrew, "the press").toHaveBeenCalledTimes(2);
   });
 
@@ -189,7 +191,7 @@ describe("onHover", () => {
     const app = makeApp({ type: "inspect" });
     wireEngine(app);
     const picked = { id: "u9" };
-    app.engine.onHover!(1, 2, picked);
+    app.engine.onHover!(1, 2, () => picked);
     expect(app.engine.preview).toBeNull();
     expect(app.inspector.inspectPicked).toHaveBeenCalledWith(picked);
   });
@@ -200,7 +202,7 @@ describe("onLongPress (touch peek)", () => {
     const app = makeApp({ type: "inspect" });
     wireEngine(app);
     const picked = { id: "u5" };
-    app.engine.onLongPress!(3, 4, picked);
+    app.engine.onLongPress!(3, 4, () => picked);
     expect(app.inspector.inspectPicked).toHaveBeenCalledWith(picked);
     expect(app.ui.setInspectorPeek).toHaveBeenCalledWith(true);
     expect(app.selectPicked).not.toHaveBeenCalled(); // a peek never opens the editor
@@ -210,7 +212,7 @@ describe("onLongPress (touch peek)", () => {
     // A hover card's dismissed latch must not swallow the next touch peek.
     const app = makeApp({ type: "inspect" });
     wireEngine(app);
-    app.engine.onLongPress!(3, 4, { id: "u5" });
+    app.engine.onLongPress!(3, 4, () => ({ id: "u5" }));
     expect(app.inspector.resetLatch).toHaveBeenCalled();
     expect(app.inspector.inspectPicked).toHaveBeenCalledWith({ id: "u5" });
     // The latch must reset before inspectPicked rechecks it.
@@ -222,7 +224,7 @@ describe("onLongPress (touch peek)", () => {
   it("empty space raises nothing beyond a null pick (no card)", () => {
     const app = makeApp({ type: "inspect" });
     wireEngine(app);
-    app.engine.onLongPress!(3, 4, null);
+    app.engine.onLongPress!(3, 4, () => null);
     expect(app.inspector.inspectPicked).toHaveBeenCalledWith(null);
   });
 
@@ -232,7 +234,7 @@ describe("onLongPress (touch peek)", () => {
     // Simulate the state onActionDown left: an anchored touch room build.
     app.buildAnchor = { tile: 3, floor: 4, oTile: 3, oFloor: 4, lifting: false };
     app.engine.preview = { kind: "office", floor: 4, x: 3, valid: true };
-    app.engine.onLongPress!(3, 4, { id: "u1" });
+    app.engine.onLongPress!(3, 4, () => ({ id: "u1" }));
     expect(app.buildAnchor).toBeNull();
     expect(app.transportStart).toBeNull();
     expect(app.engine.preview).toBeNull();
@@ -252,7 +254,7 @@ describe("onLongPress (touch peek)", () => {
     // skips onActionUp). Committing that would rewind unrelated sim state.
     const app = makeApp({ type: "bulldoze" });
     wireEngine(app);
-    app.engine.onLongPress!(3, 4, { id: "u1" });
+    app.engine.onLongPress!(3, 4, () => ({ id: "u1" }));
     expect(app.discardUndo).toHaveBeenCalled();
     expect(app.commitUndo).not.toHaveBeenCalled();
   });
@@ -270,7 +272,7 @@ describe("secondary + extend", () => {
     const app = makeApp();
     wireEngine(app);
     const picked = { id: "s1" };
-    app.engine.onSecondary!(picked);
+    app.engine.onSecondary!(() => picked);
     expect(app.selectPicked).toHaveBeenCalledWith(picked);
   });
 
@@ -379,12 +381,12 @@ describe("touch room-build offset-ghost flow", () => {
     const app = makeApp({ type: "build", kind: "office" });
     wireEngine(app);
     // Press (touch): does NOT place; previews at the FINGER (no lift yet), reason card off.
-    app.engine.onActionDown!(10, 5, true, null);
+    app.engine.onActionDown!(10, 5, true, () => null);
     expect(mockPlaceSimpleBuild).not.toHaveBeenCalled();
     expect(app.buildAnchor).toMatchObject({ tile: 10, floor: 5, lifting: false });
     expect(mockUpdateBuildPreview).toHaveBeenLastCalledWith(app, 10, 5, false);
     // Drag to a different floor: the lift latches, ghost floats above the finger (lift is 2 in the mock).
-    app.engine.onActionMove!(12, 8, null);
+    app.engine.onActionMove!(12, 8, () => null);
     expect(app.buildAnchor).toMatchObject({ tile: 12, floor: 10, lifting: true });
     expect(mockUpdateBuildPreview).toHaveBeenLastCalledWith(app, 12, 10, false);
     expect(mockLift).toHaveBeenCalled();
@@ -400,7 +402,7 @@ describe("touch room-build offset-ghost flow", () => {
   it("a quick touch tap (no drag) places a room at the FINGER, not lifted", () => {
     const app = makeApp({ type: "build", kind: "office" });
     wireEngine(app);
-    app.engine.onActionDown!(10, 5, true, null); // press, no move
+    app.engine.onActionDown!(10, 5, true, () => null); // press, no move
     app.engine.preview = { kind: "office", floor: 5, x: 10, valid: true };
     app.engine.onActionUp!();
     expect(mockPlaceSimpleBuild).toHaveBeenCalledWith(app, "office", 10, 5); // at the finger, no lift
@@ -409,8 +411,8 @@ describe("touch room-build offset-ghost flow", () => {
   it("a tap's small jitter (same floor, under two tiles) does NOT engage the lift", () => {
     const app = makeApp({ type: "build", kind: "office" });
     wireEngine(app);
-    app.engine.onActionDown!(10, 5, true, null);
-    app.engine.onActionMove!(11, 5, null); // one tile over, same floor
+    app.engine.onActionDown!(10, 5, true, () => null);
+    app.engine.onActionMove!(11, 5, () => null); // one tile over, same floor
     expect(app.buildAnchor).toMatchObject({ tile: 11, floor: 5, lifting: false });
     expect(mockUpdateBuildPreview).toHaveBeenLastCalledWith(app, 11, 5, false);
   });
@@ -418,7 +420,7 @@ describe("touch room-build offset-ghost flow", () => {
   it("cancels on release over an invalid (red) spot: no placement, no toast", () => {
     const app = makeApp({ type: "build", kind: "office" });
     wireEngine(app);
-    app.engine.onActionDown!(10, 5, true, null);
+    app.engine.onActionDown!(10, 5, true, () => null);
     app.engine.preview = { kind: "office", floor: 7, x: 10, valid: false };
     app.engine.onActionUp!();
     expect(mockPlaceSimpleBuild).not.toHaveBeenCalled();
@@ -429,7 +431,7 @@ describe("touch room-build offset-ghost flow", () => {
   it("a MOUSE room build still places on the press (no deferral, no anchor)", () => {
     const app = makeApp({ type: "build", kind: "office" });
     wireEngine(app);
-    app.engine.onActionDown!(10, 5, false, null);
+    app.engine.onActionDown!(10, 5, false, () => null);
     expect(mockPlaceSimpleBuild).toHaveBeenCalledWith(app, "office", 10, 5);
     expect(app.buildAnchor).toBeNull();
   });
@@ -438,7 +440,7 @@ describe("touch room-build offset-ghost flow", () => {
     const app = makeApp({ type: "build", kind: "office" });
     app.buildAnchor = { tile: 3, floor: 9, oTile: 3, oFloor: 9, lifting: true };
     wireEngine(app);
-    app.engine.onActionDown!(10, 5, true, null);
+    app.engine.onActionDown!(10, 5, true, () => null);
     expect(app.buildAnchor).toMatchObject({ tile: 10, floor: 5, lifting: false }); // stale anchor replaced by the fresh gesture
   });
 });
@@ -449,19 +451,19 @@ describe("the shaft drag preview", () => {
     mockIsTransportTool.mockReturnValue(true);
     wireEngine(app);
     app.transportStart = { x: 10, floor: 1 };
-    app.engine.onActionMove!(10, 2, null);
+    app.engine.onActionMove!(10, 2, () => null);
     expect(app.enginePort.quoteShaft).toHaveBeenLastCalledWith(code("kinds", "elevatorStandard"), 10, 1, 2);
     expect(app.reader.unlocked).toHaveBeenLastCalledWith("elevatorStandard");
     expect(app.engine.transportPreview).toEqual({ kind: "elevatorStandard", x: 10, bottom: 1, top: 2, valid: true });
     // A drag below the start orders the span bottom-up; the engine refuses it.
     vi.mocked(app.enginePort.quoteShaft).mockReturnValueOnce(record("quoteShaft", { ok: 0 }));
-    app.engine.onActionMove!(10, 0, null);
+    app.engine.onActionMove!(10, 0, () => null);
     expect(app.enginePort.quoteShaft).toHaveBeenLastCalledWith(code("kinds", "elevatorStandard"), 10, 0, 1);
     expect(app.engine.transportPreview).toMatchObject({ bottom: 0, top: 1, valid: false });
     // A kind the star rating has not unlocked is invalid on a fitting span.
     app.reader.unlocked.mockReturnValueOnce(false);
     app.tool = { type: "build", kind: "elevatorExpress" } as never;
-    app.engine.onActionMove!(10, 2, null);
+    app.engine.onActionMove!(10, 2, () => null);
     expect(app.engine.transportPreview).toMatchObject({ kind: "elevatorExpress", valid: false });
   });
 });
