@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { engineHosted, engineSuffix, refreshSplashVersion, versionLine } from "./engineLabel";
+import { engineHosted, engineSuffix, versionLine } from "./engineLabel";
 import { IDENTITY_FIXTURE } from "./engineIdentity.fixture";
 import { deferEngineIdentity, publishBootState, type EngineBootState } from "./engineBoot";
 import { shortId } from "@verticopolis/engine/host/enginePackageRecord";
@@ -88,12 +88,5 @@ describe("engine label", () => {
       expect(versionLine("2.29.0")).toBe(`v2.29.0${named}`);
       expect(reads).toBe(1);
     });
-  });
-
-  it("rewrites a mounted splash version line and ignores a page without one", () => {
-    const el = { textContent: "v0.0.0" } as HTMLElement;
-    refreshSplashVersion("9.9.9", { querySelector: () => el } as unknown as Document);
-    expect(el.textContent).toBe("v9.9.9 · Rust engine");
-    expect(() => refreshSplashVersion("9.9.9", { querySelector: () => null } as unknown as Document)).not.toThrow();
   });
 });

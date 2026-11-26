@@ -172,6 +172,44 @@ describe("splash mute binding (CAP-2)", () => {
   });
 });
 
+describe("splash redraw after boot reads the engine identity (#2646)", () => {
+  type BootGlobal = { __vcEngineBoot?: { engine?: string } };
+  const g = globalThis as BootGlobal;
+  afterEach(() => {
+    delete g.__vcEngineBoot;
+  });
+
+  function mountWithController(onToggleMute: () => boolean) {
+    const { ctl } = makeController();
+    ctl.showSplash({ hasSave: false, onContinue: vi.fn(), onLoadTower: vi.fn(), onNewTower: vi.fn(), onToggleMute });
+    return { ctl, el: document.getElementById("splash")! };
+  }
+
+  it("names the new engine state in the version line and keeps the mute toggle working", () => {
+    let muted = false;
+    const { ctl, el } = mountWithController(() => (muted = !muted));
+    expect(el.querySelector(".splash-version")?.textContent).not.toContain("stopped");
+
+    // The engine's state changes after the title screen first drew (here: stopped).
+    g.__vcEngineBoot = { engine: "none" };
+    ctl.redrawSplash();
+    expect(el.querySelector(".splash-version")?.textContent).toContain("Rust engine (stopped)");
+
+    // The bug: a hand-written version line left lit's markers detached, so this click threw.
+    const btn = el.querySelector<HTMLButtonElement>('[data-splash="mute"]')!;
+    expect(() => btn.click()).not.toThrow();
+    expect(btn.getAttribute("aria-pressed")).toBe("true");
+    expect(el.querySelector(".splash-version")?.textContent).toContain("Rust engine (stopped)");
+  });
+
+  it("is a no-op once the title screen is gone", () => {
+    const { ctl } = mountWithController(() => true);
+    ctl.dismissSplash();
+    expect(() => ctl.redrawSplash()).not.toThrow();
+    expect(document.getElementById("splash")).toBeNull();
+  });
+});
+
 describe("splash install button (SPEC-pwa-install CAP-5)", () => {
   it("renders the persistent install button when offered, with outcome copy and a stable name", () => {
     const el = mountSplash({ installOffered: true, onInstall: vi.fn() });

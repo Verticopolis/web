@@ -155,6 +155,7 @@ export class OnboardingController {
   private active = false;
   private step = 0;
   private splashEl: HTMLElement | null = null;
+  private splashDraw: (() => void) | null = null;
   private splashKey: ((e: KeyboardEvent) => void) | null = null;
   private panelEl: HTMLElement | null = null;
   private sendOff: ReturnType<typeof setTimeout> | null = null;
@@ -182,12 +183,10 @@ export class OnboardingController {
   showSplash(o: {
     hasSave: boolean;
     onContinue: () => void;
-    /** Open the load-only tower picker (SPEC-splash-load-tower). Deliberately
-     *  takes NO dismiss callback, unlike onNewTower: the title screen is torn
-     *  down by a tower ARRIVING (`GameApp.adoptSim` calls `dismissSplash`),
-     *  never by this dialog opening. That is what keeps Back, Esc, an
-     *  OS-picker cancel, and a failed load from costing the player the
-     *  title screen. */
+    /** Open the load-only tower picker (SPEC-splash-load-tower). No dismiss
+     *  callback, unlike onNewTower: a tower ARRIVING (`GameApp.adoptSim` calls
+     *  `dismissSplash`) tears the title screen down, so Back, Esc, an OS-picker
+     *  cancel or a failed load never cost the player the title screen. */
     onLoadTower: () => void;
     onNewTower: (dismiss: () => void) => void;
     /** Current persisted mute state, read at mount (SPEC-splash-mute CAP-2). */
@@ -222,9 +221,8 @@ export class OnboardingController {
     const premise = mobile
       ? "Raise a high-rise floor by floor and climb to the TOWER."
       : "Raise a living high-rise floor by floor: lease offices, open shops, run hotels, and thread the elevators that keep the city moving. Climb from 1★ to the legendary TOWER.";
-    // The mute toggle draws the title screen again with its new state, and lit
-    // writes only the mute's glyph and aria-pressed. An absent onToggleMute
-    // leaves the button's @click unbound, so it is inert and never lies (CAP-2).
+    // The mute toggle redraws the title screen with its new state. An absent
+    // onToggleMute leaves the @click unbound, so it is inert and never lies (CAP-2).
     const onToggleMute = o.onToggleMute;
     let muted = o.muted?.() ?? false;
     const handlers: SplashHandlers = {
@@ -237,9 +235,8 @@ export class OnboardingController {
       // down, so every way OUT of the picker that isn't a loaded tower leaves
       // the player on the title screen with time still frozen.
       onLoadTower: () => o.onLoadTower(),
-      // Keep the splash mounted + the engine paused; the host dismisses only
-      // once the (possibly-confirmed) new game is actually starting, so a
-      // cancelled confirmation leaves the title screen in place and time frozen.
+      // The host dismisses only once the (possibly confirmed) new game starts, so a
+      // cancelled confirmation leaves the title screen up and time frozen.
       onNewTower: () => o.onNewTower(() => this.teardownSplash()),
       // Help stacks over the splash (its own modal); the splash stays behind it.
       onHelp: () => this.opts.showHelp(),
@@ -249,23 +246,19 @@ export class OnboardingController {
             draw();
           }
         : undefined,
-      // The install tap keeps the splash mounted and the engine paused: the native
-      // prompt or how-to stacks over the title screen (like Help).
+      // The native prompt or how-to stacks over the mounted, paused title screen (like Help).
       onInstall: o.onInstall,
     };
-    // Read offerability ONCE at mount (CAP-5: not gated on a live event, so no
-    // reveal race), and only when a handler is present.
+    // Offerability is read ONCE at mount, with a handler (CAP-5: no reveal race).
     const installOffered = (o.installOffered?.() ?? false) && !!o.onInstall;
     const founder = o.founder?.() ?? false;
     const draw = () => litRender(splashTemplate(o.hasSave, premise, muted, installOffered, founder, handlers), el);
     draw();
     document.body.appendChild(el);
-    // Marks the title screen as mounted for CSS that must react to it: the
-    // toast rail lifts above the splash only while this class is set, so a
-    // toast raised here is visible without changing the rail's stacking
-    // anywhere else in the app.
+    // Marks the title screen as mounted for CSS: the toast rail lifts above it only while set.
     document.body.classList.add("splash-up");
     this.splashEl = el;
+    this.splashDraw = draw;
 
     const q = (sel: string) => el.querySelector<HTMLElement>(sel);
     // Move initial focus into the overlay, then TRAP Tab within it so keyboard
@@ -345,11 +338,18 @@ export class OnboardingController {
     return true;
   }
 
+  /** Draw a mounted title screen again, so its version line names the engine once boot reads its
+   *  identity (#2646). Lit owns the screen's DOM: never write into it by hand. */
+  redrawSplash(): void {
+    this.splashDraw?.();
+  }
+
   private teardownSplash(): void {
     if (this.splashKey) document.removeEventListener("keydown", this.splashKey);
     this.splashKey = null;
     this.splashEl?.remove();
     this.splashEl = null;
+    this.splashDraw = null;
     document.body.classList.remove("splash-up");
     this.opts.pauseForSplash(false);
     // Entering the tower: hand off from the splash theme to the in-game bed.
