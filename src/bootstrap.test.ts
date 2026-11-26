@@ -422,6 +422,19 @@ describe("bootGame", () => {
     expect((window as unknown as { game: unknown }).game).toBe(app);
   });
 
+  it("draws the title screen again once the engine's identity is read after the first frame (#2646)", async () => {
+    stubWebGL();
+    const redrawSplash = vi.fn();
+    const app = { onUpdateAvailable: vi.fn(), onboarding: { redrawSplash } };
+
+    await bootGame(() => app);
+    expect(redrawSplash).not.toHaveBeenCalled();
+    await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(redrawSplash).toHaveBeenCalledTimes(1);
+  });
+
   // `runIf`: `__TOOLING_BUILD__` compiles from the live VC_TOOLING env var at
   // config load (vite.config.ts `define`). A shell that still has VC_TOOLING=1
   // exported (say after a local tooling build) would inline `true` and fail
