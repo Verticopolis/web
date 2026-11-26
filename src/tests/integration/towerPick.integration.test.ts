@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as ex from "excalibur";
 import { newRenderSim, newViewReader } from "../../game/portAccess";
-import { pickEntityAt } from "@verticopolis/components/render/excalibur/towerInputCamera";
+import { pickEntityAt } from "@verticopolis/components/render/excalibur/towerPick";
 import type { TowerEngine } from "@verticopolis/components/render/excalibur/TowerEngine";
 import { FLOOR, TILE } from "@verticopolis/components/render/scale";
 import { look, newEngine, noEngine } from "../portKit/rustEngine";
@@ -10,7 +10,7 @@ import { look, newEngine, noEngine } from "../portKit/rustEngine";
  * The renderer's room pick on the Rust engine's tile index: every story of a
  * tall room resolves, with no render actor. The pick's pixel math over a
  * hand-built index is unit-tested in
- * `src/render/excalibur/towerInputCamera.test.ts`.
+ * `src/render/excalibur/towerPick.test.ts`.
  */
 
 describe.skipIf(noEngine)("picking rooms on the engine's tile index", () => {

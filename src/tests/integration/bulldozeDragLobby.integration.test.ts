@@ -8,7 +8,7 @@ import { wireEngine } from "../../game/engineWiring";
 import { NO_GESTURE } from "../../game/appHistory";
 import { catalogOf, isUnlocked, newRenderSim, newViewReader } from "../../game/portAccess";
 import { PortCodes } from "@verticopolis/engine/port/portCodes";
-import { pickEntityAt } from "@verticopolis/components/render/excalibur/towerInputCamera";
+import { pickEntityAt } from "@verticopolis/components/render/excalibur/towerPick";
 import type { TowerEngine } from "@verticopolis/components/render/excalibur/TowerEngine";
 import { FLOOR, TILE } from "@verticopolis/components/render/scale";
 import { look, must, newEngine, noEngine } from "../portKit/rustEngine";
@@ -68,8 +68,8 @@ function wired(t: Tower) {
     lobbyHeight: () => 1,
   });
   const hooks = {} as {
-    onActionDown: (tile: number, floor: number, touch: boolean, picked: unknown) => void;
-    onActionMove: (tile: number, floor: number, picked: unknown) => void;
+    onActionDown: (tile: number, floor: number, touch: boolean, pick: () => unknown) => void;
+    onActionMove: (tile: number, floor: number, pick: () => unknown) => void;
     onActionUp: () => void;
   };
   const app = {
@@ -111,8 +111,8 @@ function wired(t: Tower) {
   };
   /** Press on `from` and drag tile by tile to `to` along `floor`. */
   const drag = (floor: number, from: number, to: number) => {
-    hooks.onActionDown(from, floor, false, pick(from, floor));
-    for (let x = from + 1; x <= to; x++) hooks.onActionMove(x, floor, pick(x, floor));
+    hooks.onActionDown(from, floor, false, () => pick(from, floor));
+    for (let x = from + 1; x <= to; x++) hooks.onActionMove(x, floor, () => pick(x, floor));
     hooks.onActionUp();
     t.reader.update();
   };

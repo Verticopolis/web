@@ -30,8 +30,8 @@ vi.mock("./buildPreview", () => ({
 vi.mock("./frameLoop", () => ({ runFrame: vi.fn(), SPEEDS: [0, 3, 15, 50] }));
 
 interface DragHooks {
-  onActionDown?: (tile: number, floor: number, touch: boolean, picked: unknown) => void;
-  onActionMove?: (tile: number, floor: number, picked: unknown) => void;
+  onActionDown?: (tile: number, floor: number, touch: boolean, pick: () => unknown) => void;
+  onActionMove?: (tile: number, floor: number, pick: () => unknown) => void;
   onActionUp?: () => void;
   onActionCancel?: () => void;
   preview?: unknown;
@@ -86,28 +86,32 @@ afterEach(() => {
 describe("a drag whose undo gesture closed", () => {
   it("stops bulldozing once an undo closes the gesture", () => {
     const { app, undo, hooks } = makeApp({ type: "bulldoze" });
-    hooks.onActionDown!(5, 2, false, { id: 1 });
-    hooks.onActionMove!(6, 2, { id: 2 });
+    hooks.onActionDown!(5, 2, false, () => ({ id: 1 }));
+    hooks.onActionMove!(6, 2, () => ({ id: 2 }));
     expect(app.build.bulldozePicked).toHaveBeenCalledTimes(2);
     undo.gesture = NO_GESTURE; // Ctrl+Z mid-drag
-    hooks.onActionMove!(7, 2, { id: 3 });
+    const stale = vi.fn(() => ({ id: 3 }));
+    hooks.onActionMove!(7, 2, stale);
     expect(app.build.bulldozePicked).toHaveBeenCalledTimes(2);
+    expect(stale, "a closed drag hit-tests nothing").not.toHaveBeenCalled();
   });
 
   it("stops painting once another gesture opens over it", () => {
     vi.mocked(isPaintTool).mockReturnValue(true);
     const { app, undo, hooks } = makeApp({ type: "build", kind: "floor" });
-    hooks.onActionDown!(5, 2, false, null);
-    hooks.onActionMove!(6, 2, null);
+    const pick = vi.fn(() => null);
+    hooks.onActionDown!(5, 2, false, pick);
+    hooks.onActionMove!(6, 2, pick);
     expect(app.build.paintFloorRun).toHaveBeenCalledTimes(1);
+    expect(pick, "a paint drag reads the cell and skips the transport scan").not.toHaveBeenCalled();
     undo.gesture += 1; // keyboard play captured its own build
-    hooks.onActionMove!(7, 2, null);
+    hooks.onActionMove!(7, 2, () => null);
     expect(app.build.paintFloorRun).toHaveBeenCalledTimes(1);
   });
 
   it("places no touch room on release once the gesture closed", () => {
     const { undo, hooks } = makeApp({ type: "build", kind: "office" });
-    hooks.onActionDown!(10, 5, true, null);
+    hooks.onActionDown!(10, 5, true, () => null);
     hooks.preview = { kind: "office", floor: 5, x: 10, valid: true };
     undo.gesture = NO_GESTURE;
     hooks.onActionUp!();
@@ -118,7 +122,7 @@ describe("a drag whose undo gesture closed", () => {
     vi.mocked(placeSimpleBuild).mockReturnValue(null);
     vi.mocked(isTransportTool).mockReturnValue(true);
     const { app, hooks } = makeApp({ type: "build", kind: "elevatorStandard" });
-    hooks.onActionDown!(10, 1, false, null);
+    hooks.onActionDown!(10, 1, false, () => null);
     hooks.transportPreview = { kind: "elevatorStandard", x: 10, bottom: 1, top: 3, valid: true };
     vi.spyOn(app.enginePort, "generation").mockReturnValue(app.enginePort.generation() + 1);
     hooks.onActionUp!();
@@ -130,10 +134,10 @@ describe("a drag whose undo gesture closed", () => {
     vi.mocked(placeSimpleBuild).mockReturnValue(null);
     vi.mocked(isTransportTool).mockReturnValue(true);
     const { app, undo, hooks } = makeApp({ type: "build", kind: "elevatorStandard" });
-    hooks.onActionDown!(10, 1, false, null);
+    hooks.onActionDown!(10, 1, false, () => null);
     hooks.transportPreview = { kind: "elevatorStandard", x: 10, bottom: 1, top: 3, valid: true };
     undo.gesture = NO_GESTURE; // Ctrl+Z mid-press
-    hooks.onActionMove!(10, 4, null);
+    hooks.onActionMove!(10, 4, () => null);
     expect([hooks.transportPreview, app.transportStart]).toEqual([null, null]);
     hooks.onActionUp!();
     expect(app.build.tryBuildTransport).not.toHaveBeenCalled();
@@ -142,10 +146,10 @@ describe("a drag whose undo gesture closed", () => {
 
   it("drops a touch room's ghost once the gesture closed, and places nothing", () => {
     const { app, undo, hooks } = makeApp({ type: "build", kind: "office" });
-    hooks.onActionDown!(10, 5, true, null);
+    hooks.onActionDown!(10, 5, true, () => null);
     hooks.preview = { kind: "office", floor: 5, x: 10, valid: true };
     undo.gesture = NO_GESTURE;
-    hooks.onActionMove!(14, 6, null);
+    hooks.onActionMove!(14, 6, () => null);
     expect([hooks.preview, app.buildAnchor]).toEqual([null, null]);
     hooks.onActionUp!();
     expect(placeSimpleBuild).not.toHaveBeenCalled();
@@ -153,7 +157,7 @@ describe("a drag whose undo gesture closed", () => {
 
   it("leaves a gesture opened over it for that gesture to close", () => {
     const { app, undo, hooks } = makeApp({ type: "bulldoze" });
-    hooks.onActionDown!(5, 2, false, { id: 1 });
+    hooks.onActionDown!(5, 2, false, () => ({ id: 1 }));
     undo.gesture += 1; // another gesture opened and is still under way
     hooks.onActionUp!();
     expect(app.commitUndo).not.toHaveBeenCalled();
@@ -162,17 +166,17 @@ describe("a drag whose undo gesture closed", () => {
   it("closes its own gesture when a pinch cuts a touch paint off, and paints no more", () => {
     vi.mocked(isPaintTool).mockReturnValue(true);
     const { app, hooks } = makeApp({ type: "build", kind: "floor" });
-    hooks.onActionDown!(5, 2, true, null);
-    hooks.onActionMove!(6, 2, null); // the first move lays the strip
+    hooks.onActionDown!(5, 2, true, () => null);
+    hooks.onActionMove!(6, 2, () => null); // the first move lays the strip
     hooks.onActionCancel!(); // a second finger down: the press never releases
     expect(app.commitUndo, "the step holds what the drag did").toHaveBeenCalledOnce();
-    hooks.onActionMove!(7, 2, null);
+    hooks.onActionMove!(7, 2, () => null);
     expect(app.build.paintFloorRun).toHaveBeenCalledTimes(1);
   });
 
   it("drops the anchors and the run a cut-off press left, and places nothing", () => {
     const { app, hooks } = makeApp({ type: "build", kind: "office" });
-    hooks.onActionDown!(10, 5, true, null); // a touch room waits for its release
+    hooks.onActionDown!(10, 5, true, () => null); // a touch room waits for its release
     app.paintAnchor = { tile: 3, floor: 2 };
     app.transportStart = { x: 4, floor: 1 };
     app.build.clearPaint.mockClear();
@@ -186,12 +190,12 @@ describe("a drag whose undo gesture closed", () => {
     vi.mocked(placeSimpleBuild).mockReturnValue(null);
     vi.mocked(isTransportTool).mockReturnValue(true);
     const { app, hooks } = makeApp({ type: "build", kind: "elevatorStandard" });
-    hooks.onActionDown!(10, 1, true, null);
+    hooks.onActionDown!(10, 1, true, () => null);
     hooks.transportPreview = { kind: "elevatorStandard", x: 10, bottom: 1, top: 3, valid: true };
     hooks.preview = { kind: "office", floor: 5, x: 10, valid: true };
     hooks.onActionCancel!(); // the browser canceled the pointer mid-drag
     expect([hooks.preview, hooks.transportPreview]).toEqual([null, null]);
-    hooks.onActionDown!(30, 4, true, null);
+    hooks.onActionDown!(30, 4, true, () => null);
     hooks.onActionUp!();
     expect(app.build.tryBuildTransport).not.toHaveBeenCalled();
   });
@@ -200,10 +204,10 @@ describe("a drag whose undo gesture closed", () => {
     vi.mocked(placeSimpleBuild).mockReturnValue(null);
     vi.mocked(isTransportTool).mockReturnValue(true);
     const { app, hooks } = makeApp({ type: "build", kind: "elevatorStandard" });
-    hooks.onActionDown!(10, 1, false, null);
+    hooks.onActionDown!(10, 1, false, () => null);
     hooks.transportPreview = { kind: "elevatorStandard", x: 10, bottom: 1, top: 6, valid: true };
     // The release happened off the canvas, so no onActionUp or cancel came.
-    hooks.onActionDown!(30, 4, false, null);
+    hooks.onActionDown!(30, 4, false, () => null);
     expect(hooks.transportPreview).toBeNull();
     hooks.onActionUp!();
     expect(app.build.tryBuildTransport).not.toHaveBeenCalled();
@@ -212,7 +216,7 @@ describe("a drag whose undo gesture closed", () => {
   it("leaves a gesture opened over a pinched drag for that gesture to close", () => {
     vi.mocked(isPaintTool).mockReturnValue(true);
     const { app, undo, hooks } = makeApp({ type: "build", kind: "floor" });
-    hooks.onActionDown!(5, 2, true, null);
+    hooks.onActionDown!(5, 2, true, () => null);
     undo.gesture += 1;
     hooks.onActionCancel!();
     expect(app.commitUndo).not.toHaveBeenCalled();
@@ -222,7 +226,7 @@ describe("a drag whose undo gesture closed", () => {
     vi.mocked(placeSimpleBuild).mockReturnValue(null);
     vi.mocked(isTransportTool).mockReturnValue(true);
     const { app, hooks } = makeApp({ type: "build", kind: "elevatorStandard" });
-    hooks.onActionDown!(10, 1, false, null);
+    hooks.onActionDown!(10, 1, false, () => null);
     hooks.transportPreview = { kind: "elevatorStandard", x: 10, bottom: 1, top: 3, valid: true };
     hooks.onActionUp!();
     expect(app.build.tryBuildTransport).toHaveBeenCalledWith("elevatorStandard", 10, 1, 3);
@@ -237,27 +241,27 @@ describe("a bulldoze drag removes only the kind it first touched (#644)", () => 
 
   it("sweeps a floor's tiles and leaves the elevator it crosses", () => {
     const { app, hooks } = makeApp({ type: "bulldoze" });
-    hooks.onActionDown!(5, 2, false, FLOOR_TILE(5));
-    hooks.onActionMove!(6, 2, SHAFT);
-    hooks.onActionMove!(7, 2, OFFICE);
-    hooks.onActionMove!(8, 2, FLOOR_TILE(8));
+    hooks.onActionDown!(5, 2, false, () => FLOOR_TILE(5));
+    hooks.onActionMove!(6, 2, () => SHAFT);
+    hooks.onActionMove!(7, 2, () => OFFICE);
+    hooks.onActionMove!(8, 2, () => FLOOR_TILE(8));
     expect(vi.mocked(app.build.bulldozePicked).mock.calls.map(([p]) => p)).toEqual([FLOOR_TILE(5), FLOOR_TILE(8)]);
   });
 
   it("removes the elevator when the drag starts on it, and nothing else", () => {
     const { app, hooks } = makeApp({ type: "bulldoze" });
-    hooks.onActionDown!(6, 2, false, SHAFT);
-    hooks.onActionMove!(7, 2, FLOOR_TILE(7));
+    hooks.onActionDown!(6, 2, false, () => SHAFT);
+    hooks.onActionMove!(7, 2, () => FLOOR_TILE(7));
     expect(vi.mocked(app.build.bulldozePicked).mock.calls.map(([p]) => p)).toEqual([SHAFT]);
   });
 
   it("takes the kind of the first thing it reaches when it starts on empty sky", () => {
     const { app, hooks } = makeApp({ type: "bulldoze" });
-    hooks.onActionDown!(1, 2, false, null);
-    hooks.onActionMove!(2, 2, null);
-    hooks.onActionMove!(3, 2, OFFICE);
-    hooks.onActionMove!(4, 2, SHAFT);
-    hooks.onActionMove!(5, 2, { ...OFFICE, id: 5 });
+    hooks.onActionDown!(1, 2, false, () => null);
+    hooks.onActionMove!(2, 2, () => null);
+    hooks.onActionMove!(3, 2, () => OFFICE);
+    hooks.onActionMove!(4, 2, () => SHAFT);
+    hooks.onActionMove!(5, 2, () => ({ ...OFFICE, id: 5 }));
     expect(
       vi
         .mocked(app.build.bulldozePicked)
@@ -268,9 +272,9 @@ describe("a bulldoze drag removes only the kind it first touched (#644)", () => 
 
   it("starts fresh on the next press", () => {
     const { app, hooks } = makeApp({ type: "bulldoze" });
-    hooks.onActionDown!(5, 2, false, FLOOR_TILE(5));
+    hooks.onActionDown!(5, 2, false, () => FLOOR_TILE(5));
     hooks.onActionUp!();
-    hooks.onActionDown!(6, 2, false, SHAFT);
+    hooks.onActionDown!(6, 2, false, () => SHAFT);
     expect(vi.mocked(app.build.bulldozePicked).mock.lastCall?.[0]).toEqual(SHAFT);
   });
 });
@@ -291,16 +295,16 @@ describe("a bulldoze drag says once on release why it stopped (#2046)", () => {
   it("keeps the refusals quiet while it moves and says the reason once on release", () => {
     const { app, hooks } = makeApp({ type: "bulldoze" });
     keepFrom(app, 7);
-    hooks.onActionDown!(5, 2, false, TILE(5));
-    hooks.onActionMove!(6, 2, TILE(6));
-    hooks.onActionMove!(7, 2, TILE(7));
-    hooks.onActionMove!(8, 2, TILE(8));
+    hooks.onActionDown!(5, 2, false, () => TILE(5));
+    hooks.onActionMove!(6, 2, () => TILE(6));
+    hooks.onActionMove!(7, 2, () => TILE(7));
+    hooks.onActionMove!(8, 2, () => TILE(8));
     expect(app.ui.toast).not.toHaveBeenCalled();
     expect(app.audio.sfx).not.toHaveBeenCalled();
     hooks.onActionUp!();
     expect(app.ui.toast).toHaveBeenCalledExactlyOnceWith(FLOOR_RULE, "bad");
     expect(app.audio.sfx).toHaveBeenCalledExactlyOnceWith("error");
-    hooks.onActionDown!(1, 2, false, TILE(1));
+    hooks.onActionDown!(1, 2, false, () => TILE(1));
     hooks.onActionUp!();
     expect(app.ui.toast, "the next drag starts with nothing held").toHaveBeenCalledOnce();
   });
@@ -308,9 +312,9 @@ describe("a bulldoze drag says once on release why it stopped (#2046)", () => {
   it("does not repeat what the press already said", () => {
     const { app, hooks } = makeApp({ type: "bulldoze" });
     keepFrom(app, 0);
-    hooks.onActionDown!(5, 2, false, TILE(5));
+    hooks.onActionDown!(5, 2, false, () => TILE(5));
     expect(app.ui.toast).toHaveBeenCalledExactlyOnceWith(FLOOR_RULE, "bad");
-    hooks.onActionMove!(6, 2, TILE(6));
+    hooks.onActionMove!(6, 2, () => TILE(6));
     hooks.onActionUp!();
     expect(app.ui.toast).toHaveBeenCalledOnce();
     expect(app.audio.sfx).toHaveBeenCalledOnce();
@@ -319,8 +323,8 @@ describe("a bulldoze drag says once on release why it stopped (#2046)", () => {
   it("says nothing on release once an undo closed its gesture", () => {
     const { app, undo, hooks } = makeApp({ type: "bulldoze" });
     keepFrom(app, 6);
-    hooks.onActionDown!(5, 2, false, TILE(5));
-    hooks.onActionMove!(6, 2, TILE(6));
+    hooks.onActionDown!(5, 2, false, () => TILE(5));
+    hooks.onActionMove!(6, 2, () => TILE(6));
     undo.gesture = NO_GESTURE;
     hooks.onActionUp!();
     expect(app.ui.toast).not.toHaveBeenCalled();
@@ -337,21 +341,21 @@ describe("a bulldoze drag sweeps more than one thing", () => {
 
   it("clears every sky lobby tile it crosses, past the shaft in the hall", () => {
     const { app, hooks } = makeApp({ type: "bulldoze" });
-    hooks.onActionDown!(100, 15, false, LOBBY_TILE(100));
-    for (const x of [101, 102, 103]) hooks.onActionMove!(x, 15, LOBBY_TILE(x));
-    hooks.onActionMove!(104, 15, SHAFT);
-    hooks.onActionMove!(105, 15, LOBBY_TILE(105));
+    hooks.onActionDown!(100, 15, false, () => LOBBY_TILE(100));
+    for (const x of [101, 102, 103]) hooks.onActionMove!(x, 15, () => LOBBY_TILE(x));
+    hooks.onActionMove!(104, 15, () => SHAFT);
+    hooks.onActionMove!(105, 15, () => LOBBY_TILE(105));
     expect(swept(app)).toEqual([100, 101, 102, 103, 105].map(LOBBY_TILE));
   });
 
   it("clears everything it crosses once the Bulldoze card says Everything", () => {
     const { app, hooks } = makeApp({ type: "bulldoze" });
     app.bulldozeDrag.pick("everything");
-    hooks.onActionDown!(100, 15, false, LOBBY_TILE(100));
-    hooks.onActionMove!(101, 15, SHAFT);
-    hooks.onActionMove!(102, 15, OFFICE);
-    hooks.onActionMove!(103, 15, FLOOR_TILE(103));
-    hooks.onActionMove!(104, 15, LOBBY_TILE(104));
+    hooks.onActionDown!(100, 15, false, () => LOBBY_TILE(100));
+    hooks.onActionMove!(101, 15, () => SHAFT);
+    hooks.onActionMove!(102, 15, () => OFFICE);
+    hooks.onActionMove!(103, 15, () => FLOOR_TILE(103));
+    hooks.onActionMove!(104, 15, () => LOBBY_TILE(104));
     expect(swept(app)).toEqual([LOBBY_TILE(100), SHAFT, OFFICE, FLOOR_TILE(103), LOBBY_TILE(104)]);
   });
 
@@ -359,9 +363,9 @@ describe("a bulldoze drag sweeps more than one thing", () => {
     const { app, hooks } = makeApp({ type: "bulldoze" });
     app.bulldozeDrag.pick("everything");
     app.bulldozeDrag.pick("one kind");
-    hooks.onActionDown!(100, 15, false, LOBBY_TILE(100));
-    hooks.onActionMove!(101, 15, SHAFT);
-    hooks.onActionMove!(102, 15, LOBBY_TILE(102));
+    hooks.onActionDown!(100, 15, false, () => LOBBY_TILE(100));
+    hooks.onActionMove!(101, 15, () => SHAFT);
+    hooks.onActionMove!(102, 15, () => LOBBY_TILE(102));
     expect(swept(app)).toEqual([LOBBY_TILE(100), LOBBY_TILE(102)]);
   });
 });

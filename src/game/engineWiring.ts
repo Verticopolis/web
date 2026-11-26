@@ -89,10 +89,11 @@ export function wireEngine(app: GameApp): void {
   // Space pans only while the game follows it (inputKeys), read per press.
   app.engine.spacePanKey = (press) => app.spacePanKey(press);
 
-  // A press-without-drag: select (inspect) or, on touch, run the tool. The
-  // picked entity resolves transports by collider hit-test and units by the
-  // tower's grid lookup (pickEntityAt).
-  app.engine.onTap = (tile, floor, touch, picked, world) => {
+  // A press-without-drag: select (inspect) or, on touch, run the tool. pick()
+  // resolves transports by collider hit-test and units by the tower's grid
+  // lookup (pickEntityAt), and only when a branch asks, so a hook that never
+  // needs the entity skips the transport scan.
+  app.engine.onTap = (tile, floor, touch, pick, world) => {
     app.audio.start();
     if (app.tool.type === "inspect") {
       // A tap or click on a walking figure opens their card (#2092); the
@@ -106,7 +107,7 @@ export function wireEngine(app: GameApp): void {
       // the editor, which folds in the inspector card's diagnostics on mobile
       // (see refreshEditor / templates/editor). The floating card stays a
       // desktop-hover affordance and is never raised on touch.
-      app.selectPicked(picked);
+      app.selectPicked(pick());
       return;
     }
     if (!touch) return; // mouse pan-taps with a build/bulldoze tool do nothing
@@ -121,7 +122,7 @@ export function wireEngine(app: GameApp): void {
     app.captureUndo(
       app.tool.type === "bulldoze" ? "Bulldoze" : `Build ${catalogFacility(catalogOf(app), app.tool.kind).name}`,
     );
-    if (app.tool.type === "bulldoze") app.build.bulldozePicked(picked);
+    if (app.tool.type === "bulldoze") app.build.bulldozePicked(pick());
     else if (app.tool.type === "build") {
       // Touch taps land here for every simple placement, including the
       // stairway/escalator flight (classifyDown routes them through the
@@ -133,7 +134,7 @@ export function wireEngine(app: GameApp): void {
     app.commitUndo();
   };
 
-  app.engine.onActionDown = (tile, floor, touch, picked) => {
+  app.engine.onActionDown = (tile, floor, touch, pick) => {
     app.audio.start();
     app.keyboard.pointerDrew();
     // A fresh gesture: drop any anchor or run an earlier press left behind, so
@@ -164,6 +165,7 @@ export function wireEngine(app: GameApp): void {
       drag = { gesture: app.undoGesture(), generation: app.enginePort.generation() };
     }
     if (app.tool.type === "bulldoze") {
+      const picked = pick();
       if (picked && drag) drag.bulldozes = picked.kind;
       app.build.bulldozePicked(picked, drag ? sayPressRefusal(app, drag) : undefined);
     } else if (app.tool.type === "build") {
@@ -192,7 +194,7 @@ export function wireEngine(app: GameApp): void {
     }
   };
 
-  app.engine.onActionMove = (tile, floor, picked) => {
+  app.engine.onActionMove = (tile, floor, pick) => {
     // A drag whose gesture closed under it (an undo, a redo, another gesture,
     // a tower swapped in) builds nothing more, so it drops the anchors and
     // the ghosts of what its release would have built.
@@ -205,7 +207,9 @@ export function wireEngine(app: GameApp): void {
       return;
     }
     if (app.tool.type === "bulldoze") {
-      if (!dragActs() || !picked || !drag) return;
+      if (!dragActs() || !drag) return;
+      const picked = pick();
+      if (!picked) return;
       // A drag removes only the kind it first touched (#644), unless the
       // player picked Everything on the Bulldoze card.
       drag.bulldozes ??= picked.kind;
@@ -333,7 +337,8 @@ export function wireEngine(app: GameApp): void {
     if (closes) app.commitUndo();
   };
 
-  app.engine.onHover = (tile, floor, picked) => {
+  // A hover asks pick() only for the Inspect card: a build ghost reads the cell.
+  app.engine.onHover = (tile, floor, pick) => {
     app.keyboard.pointerDrew();
     if (app.tool.type === "build" || app.tool.type === "skyBridge") {
       updateBuildPreview(app, tile, floor);
@@ -343,7 +348,7 @@ export function wireEngine(app: GameApp): void {
       // The floating card is a desktop affordance only: on a phone-width
       // viewport we show ONE panel (the editor, with diagnostics folded in),
       // so a hybrid mouse+touch device never raises the card there either.
-      if (app.tool.type === "inspect" && !app.mobileMq.matches) app.inspector.inspectPicked(picked);
+      if (app.tool.type === "inspect" && !app.mobileMq.matches) app.inspector.inspectPicked(pick());
     }
   };
 
@@ -352,7 +357,7 @@ export function wireEngine(app: GameApp): void {
   // mouse hover does; lifting dismisses it, while a quick tap still opens the
   // editor. The card anchors to its facility on every tier (panelAnchoring pins
   // the inspector card on mobile too), so the peek tracks the room like a hover.
-  app.engine.onLongPress = (_tile, _floor, picked) => {
+  app.engine.onLongPress = (_tile, _floor, pick) => {
     // A peek is a glance, never a placement: drop any pending touch build/paint
     // gesture so the release commits nothing, and DISCARD any pending undo
     // capture. Nothing legitimate can be pending here: on touch, only build
@@ -381,13 +386,13 @@ export function wireEngine(app: GameApp): void {
     // latch through the seam selectPicked uses, so a hybrid device's dismissed
     // hover card cannot eat the peek (#696). Hover picks alone never spend it.
     app.inspector.resetLatch();
-    app.inspector.inspectPicked(picked);
+    app.inspector.inspectPicked(pick());
     app.ui.setInspectorPeek(true);
   };
   app.engine.onLongPressEnd = () => app.inspector.hide();
 
   // Right-click inspects whatever's under the cursor, whatever tool is held.
-  app.engine.onSecondary = (picked) => app.selectPicked(picked);
+  app.engine.onSecondary = (pick) => app.selectPicked(pick());
   // In-world extend arrows on the selected elevator: drag an end to grow or
   // shrink the shaft floor-by-floor.
   app.engine.onExtendTo = (end, target) => app.editor.extendSelectedTo(end, target);
