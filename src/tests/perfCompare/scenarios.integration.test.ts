@@ -71,7 +71,7 @@ describe("the harnesses' scenarios", () => {
           JSON.stringify(loadFixtureSave("node_modules/@verticopolis/engine/conformance/fixtures/split-tower.vctower")),
         ),
       ).toEqual({ peak: 16, end: 0 });
-      expect(peakOverADay(buildScenarios(["small"])[0].save).peak).toBe(140);
+      expect(peakOverADay(buildScenarios(["small"])[0].save).peak).toBe(144);
     },
     120_000,
   );

@@ -84,8 +84,8 @@ residents included) and is empty again at the end, so its ticks would exercise l
 of the crowd simulation. A
 deterministic synthetic tower (fully occupied offices and condos, two
 elevators, built in `src/tests/perfCompare/scenarios.ts`) replaces it, and its
-crowd peaks at 140 people over the same day (with shoppers from outside off
-since 3.12.2). `scenarios.test.ts` pins both figures.
+crowd peaks at 144 people over the same day (shoppers from outside came
+back to Classic towers with engine 1.61.1). `scenarios.test.ts` pins both figures.
 
 Each repetition measures:
 
