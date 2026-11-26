@@ -22,7 +22,7 @@ import { isOnboarded } from "../ui/Onboarding";
 // appBoot.test.ts do.
 vi.mock("virtual:pwa-register", () => ({ registerSW: () => () => {} }));
 vi.mock("./buildActions", () => ({ BuildActions: class {} }));
-vi.mock("./inspector", () => ({ InspectorController: class {} }));
+vi.mock("./inspector", () => ({ createInspector: () => ({}) }));
 vi.mock("./editorActions", () => ({ EditorActions: class {} }));
 vi.mock("./keyboardPlay", () => ({ KeyboardPlay: class {} }));
 vi.mock("./engineWiring", () => ({ rebuildEngine: vi.fn() }));

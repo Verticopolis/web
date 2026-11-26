@@ -6,7 +6,7 @@ import { refreshEditorCard, type EditorCardApp } from "./editorCard";
 import { LAYOUT, code, mockPort, record } from "../tests/portKit/mockPort";
 import { renderToFragment } from "../ui/testing/litTestUtils";
 import { unitEditorTemplate } from "../ui/templates/editor";
-import { unitInspectorTemplate } from "../ui/templates/inspector";
+import { unitCardTemplate } from "@verticopolis/components/windows/inspectCard";
 import { groupDigits } from "@verticopolis/components/windows/format";
 
 /**
@@ -183,7 +183,7 @@ describe("the card kit's unit and shaft lines over the port", () => {
     // The kit's tower is Classic, whose card names the cause only (#549).
     const copy = "Main gripe: the rent is above the going rate.";
     const mobile = renderToFragment(unitEditorTemplate(unit, kit.catalog(), 12, true, kit.diagnostics.unit(OFFICE)));
-    const desktop = renderToFragment(unitInspectorTemplate(unit, kit.catalog(), 12, kit.diagnostics.unit(OFFICE)));
+    const desktop = renderToFragment(unitCardTemplate(unit, kit.catalog(), 12, kit.diagnostics.unit(OFFICE)));
     expect(mobile.querySelector(".ed-diagnostics")?.textContent).toContain(copy);
     expect(desktop.textContent).toContain(copy);
     expect(desktop.textContent).not.toContain("Lower it");

@@ -7,10 +7,12 @@ Verticopolis/components:
 with the stylesheet the game imports from `@verticopolis/components`. This
 page keeps the rules for the game's own TypeScript that builds those windows.
 
-- **Two ✕ builders, no third.** `UI`'s `titleBarClose()` (`src/ui/UI.ts`)
-  builds the ✕ for DOM-built windows (the modal, the inspector), and the
-  `titleBar` template in `src/ui/templates/editor.ts` builds the editor card's.
-  Never hand-write a third copy; extend one of those.
+- **Two ✕ builders here, no third.** `UI`'s `titleBarClose()` (`src/ui/UI.ts`)
+  builds the modal's ✕, and the `titleBar` template in
+  `src/ui/templates/editor.ts` builds the editor card's. The inspector card and
+  its ✕ come from the components (`windows/inspectCard`, with
+  `windows/inspectPanel` for the window and its close latch). Never hand-write
+  another copy; extend one of those.
 - **The ✕ goes through the cancel path.** A modal's ✕ does what Esc does.
   Never call `closeModal()` directly from a close affordance, or a modal that
   resolves a pending choice (the emergency dialog) deadlocks the paused game.

@@ -65,7 +65,7 @@ export function makeApp(toolOver: Record<string, unknown> = {}) {
     },
     ui: { toast: vi.fn(), setInspectorPeek: vi.fn() },
     editor: { extendSelectedTo: vi.fn(), endExtend: vi.fn(() => true) },
-    inspector: { inspectPicked: vi.fn(), hide: vi.fn(), resetLatch: vi.fn() },
+    inspector: { inspect: vi.fn(), hide: vi.fn(), resetLatch: vi.fn() },
     saveLoad: { recoverFromContextLoss: vi.fn() },
     selectPicked: vi.fn(),
     clearSelection: vi.fn(),

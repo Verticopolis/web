@@ -17,6 +17,7 @@ import * as dialogs from "./uiDialogs";
 import * as help from "./uiHelp";
 import type { GameHelpSource } from "./fromGame";
 import * as panels from "./uiPanels";
+import { InspectPanel, type ScreenRect } from "@verticopolis/components/windows/inspectPanel";
 import * as status from "./uiStatus";
 import type { HudSource } from "./uiStatus";
 import { buildPalette, showActiveTool } from "./toolsWindow";
@@ -117,6 +118,8 @@ export class UI {
     towerName: document.getElementById("tower-name") as HTMLInputElement,
     modeBadge: document.getElementById("btn-mode")!,
   };
+  /** The hover inspector card's window (components' `windows/inspectPanel`). */
+  private readonly inspectPanel = new InspectPanel(this.el.inspector);
 
   /** True while the user is pressing something inside the editor card. */
   private editorBusy = false;
@@ -124,8 +127,6 @@ export class UI {
    *  re-measured only when the content changes.
    *  @internal friend-module access (uiPanels). */
   editorSize = { w: 0, h: 0 };
-  /** @internal friend-module access (uiPanels). */
-  inspectorSize = { w: 0, h: 0 };
   /** The catalog the Tools window shows (#921). @internal (toolsWindow, uiStatus) */
   paletteCatalog: Catalog | null = null;
 
@@ -251,7 +252,7 @@ export class UI {
 
   /** The one way to build a title-bar ✕ (see docs/ui/windows-in-code.md): every
    * dismissible window's close button comes from here so they can't drift.
-   * @internal friend-module access (uiPanels inspector card). */
+   * @internal friend-module access (uiDialogs). */
   titleBarClose(className: string, onClick: () => void): HTMLButtonElement {
     const x = document.createElement("button");
     x.type = "button";
@@ -359,15 +360,15 @@ export class UI {
   }
 
   isInspectorOpen(): boolean {
-    return panels.isInspectorOpen(this);
+    return this.inspectPanel.open;
   }
 
   anchorEditor(rect: { x: number; y: number; w: number }, viewW: number, viewH: number): void {
     panels.anchorEditor(this, rect, viewW, viewH);
   }
 
-  anchorInspector(rect: { x: number; y: number; w: number }, viewW: number, viewH: number): void {
-    panels.anchorInspector(this, rect, viewW, viewH);
+  anchorInspector(rect: ScreenRect, viewW: number, viewH: number): void {
+    this.inspectPanel.pin(rect, viewW, viewH);
   }
 
   clearEditorAnchor(): void {
@@ -375,15 +376,15 @@ export class UI {
   }
 
   clearInspectorAnchor(): void {
-    panels.clearPanelAnchor(this.el.inspector);
+    this.inspectPanel.unpin();
   }
 
   showInspector(tpl: TemplateResult | null): void {
-    panels.showInspector(this, tpl);
+    this.inspectPanel.show(tpl);
   }
 
   setInspectorPeek(on: boolean): void {
-    panels.setInspectorPeek(this, on);
+    this.inspectPanel.peek(on);
   }
 
   showStats(body: TemplateResult, handlers: Record<string, () => void> = {}): void {

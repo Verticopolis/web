@@ -4,7 +4,7 @@ import { BuildActions } from "./buildActions";
 import { EditorActions } from "./editorActions";
 import { ScheduleReview } from "./scheduleReview";
 import { SaveLoad, RESUME_AFTER_RECOVERY_KEY } from "./saveLoad";
-import { InspectorController } from "./inspector";
+import { createInspector } from "./inspector";
 import { createCardKit } from "./cardKit";
 import { KeyboardPlay } from "./keyboardPlay";
 import { catalogOf, isUnlocked } from "./portAccess";
@@ -101,10 +101,10 @@ export function wireControllers(app: GameApp): void {
   });
   app.cardKit = createCardKit(app);
   app.personCard = createPersonCard(app);
-  app.inspector = new InspectorController({
+  app.inspector = createInspector({
     kit: () => app.cardKit,
     reader: () => app.reader,
-    ui: { showInspector: (html) => app.ui.showInspector(html) },
+    ui: app.ui,
     setAnchor: (anchor) => (app.inspectAnchor = anchor),
   });
   app.editor = new EditorActions({

@@ -31,7 +31,7 @@ export interface MapCardApp {
   };
   readonly tool: { readonly type: string };
   readonly mobileMq: { readonly matches: boolean };
-  readonly inspector: { resetLatch(): void; inspectPicked(p: MapPicked): void };
+  readonly inspector: { resetLatch(): void; inspect(p: MapPicked): void };
   selectPicked(p: MapPicked): void;
 }
 
@@ -62,7 +62,7 @@ export function openMapCard(
     // A tap is fresh intent, as a click on the room is: a card the player
     // closed opens again.
     app.inspector.resetLatch();
-    app.inspector.inspectPicked(picked);
+    app.inspector.inspect(picked);
   } else app.selectPicked(picked);
   trackAppAction("map_card", view);
 }

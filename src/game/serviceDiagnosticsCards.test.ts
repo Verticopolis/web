@@ -5,7 +5,7 @@ import type { ViewReader } from "@verticopolis/engine/port/viewReader";
 import { LAYOUT, code, mockPort, record } from "../tests/portKit/mockPort";
 import { renderToFragment } from "../ui/testing/litTestUtils";
 import { unitEditorTemplate } from "../ui/templates/editor";
-import { unitInspectorTemplate } from "../ui/templates/inspector";
+import { unitCardTemplate } from "@verticopolis/components/windows/inspectCard";
 import { createCardKit } from "./cardKit";
 
 /**
@@ -134,7 +134,7 @@ describe("service sections on a unit's card", () => {
     const lines = kit.diagnostics.unit(ID, true);
     const unit = kit.cards.unit(ID)!;
     const mobile = renderToFragment(unitEditorTemplate(unit, kit.catalog(), 12, true, lines));
-    const desktop = renderToFragment(unitInspectorTemplate(unit, kit.catalog(), 12, lines));
+    const desktop = renderToFragment(unitCardTemplate(unit, kit.catalog(), 12, lines));
     for (const target of [mobile.textContent, desktop.textContent]) {
       expect(target).toContain("Counts toward stars: no");
       expect(target).toContain("Left dirty for 3 days");

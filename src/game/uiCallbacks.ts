@@ -12,7 +12,7 @@ import type { PortCodes } from "@verticopolis/engine/port/portCodes";
 import type { AudioEngine } from "@verticopolis/components/audio/Audio";
 import type { SaveLoad } from "./saveLoad";
 import type { EditorActions } from "./editorActions";
-import type { InspectorController } from "./inspector";
+import type { InspectController } from "@verticopolis/components/windows/inspectPanel";
 import type { PersonCardController } from "./personCard";
 import { NO_GESTURE } from "./appHistory";
 
@@ -49,7 +49,7 @@ export interface GameAppPorts {
     "save" | "load" | "exportGame" | "importGame" | "importLegacy" | "exportLegacy" | "newGame"
   >;
   readonly editor: Pick<EditorActions, "handleEditAction" | "renameTower">;
-  readonly inspector: Pick<InspectorController, "dismiss">;
+  readonly inspector: Pick<InspectController, "dismiss">;
   /** The person card (#2092) takes its own buttons before the editor's. */
   readonly personCard: Pick<PersonCardController, "handleAction">;
   /** The lobby tool's height choice (#308), which the Lobby card picks. */

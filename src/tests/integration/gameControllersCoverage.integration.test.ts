@@ -37,7 +37,7 @@ import { BuildActions } from "../../game/buildActions";
 import { brushTiles } from "../../ui/placement";
 import { EditorActions } from "../../game/editorActions";
 import { SaveLoad } from "../../game/saveLoad";
-import { InspectorController } from "../../game/inspector";
+import { createInspector } from "../../game/inspector";
 import { KeyboardPlay } from "../../game/keyboardPlay";
 import { portDeps } from "../../game/portDeps.fixture";
 import { INVALID_COMMAND, MAX_TEXT } from "@verticopolis/engine/port/request";
@@ -1679,24 +1679,24 @@ describe.skipIf(noEngine)("SaveLoad (persistence, update flush, GPU-loss recover
   });
 });
 
-describe.skipIf(noEngine)("InspectorController (stale-pick hygiene)", () => {
+describe.skipIf(noEngine)("the inspector (stale-pick hygiene)", () => {
   it("a pick whose entity has been removed hides the card instead of rendering a ghost", () => {
     const { sim, office, lift } = fixture();
     // Only the null (hide) calls matter here, so record the raw values; the
     // card itself is a lit template since E6-S2.
     const shown: unknown[] = [];
     let anchor: { x: number; floor: number } | null = null;
-    const inspector = new InspectorController({
+    const inspector = createInspector({
       ...inspectorPortDeps(sim),
-      ui: { showInspector: (tpl) => shown.push(tpl) },
+      ui: { showInspector: (tpl) => shown.push(tpl), cb: { onInspectorClose: () => {} } },
       setAnchor: (a) => (anchor = a),
     });
     sim.tower.removeUnit(office.id);
-    inspector.inspectPicked({ type: "unit", id: office.id, kind: "office" });
+    inspector.inspect({ type: "unit", id: office.id, kind: "office" });
     expect(last(shown)).toBeNull();
     expect(anchor).toBeNull();
     sim.tower.removeTransport(lift.id);
-    inspector.inspectPicked({ type: "transport", id: lift.id, kind: "elevatorStandard" });
+    inspector.inspect({ type: "transport", id: lift.id, kind: "elevatorStandard" });
     expect(last(shown)).toBeNull();
     expect(anchor).toBeNull();
   });

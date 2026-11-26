@@ -22,7 +22,7 @@ import type { CardKit } from "./game/cardKit";
 import type { SaveLoad } from "./game/saveLoad";
 import { announceLive } from "./game/liveRegion";
 import { isSplashUp } from "./game/interactionState";
-import type { InspectorController } from "./game/inspector";
+import type { InspectController } from "@verticopolis/components/windows/inspectPanel";
 import type { PersonCardController } from "./game/personCard";
 import type { KeyboardPlay } from "./game/keyboardPlay";
 import { createUICallbacks, type GameAppPorts } from "./game/uiCallbacks";
@@ -200,7 +200,7 @@ class GameApp implements GameAppPorts {
    *  @internal */
   inspectAnchor: { x: number; left: number; floor: number } | null = null;
   /** True when the inspector card is currently being driven by the build-preview
-   *  refusal path (Modern-only hover tip), rather than the InspectorController.
+   *  refusal path (Modern-only hover tip), rather than the inspect controller.
    *  Kept so `updateBuildPreview` can clear its own tip when the preview turns
    *  valid or the tool changes, without stomping a legit inspector card.
    *  @internal */
@@ -237,7 +237,7 @@ class GameApp implements GameAppPorts {
   // build/keyboard are internal (the factory never needs them).
   editor!: EditorActions;
   saveLoad!: SaveLoad;
-  inspector!: InspectorController;
+  inspector!: InspectController;
   /** The walking person's card (#2092), in the editor window. @internal */ personCard!: PersonCardController;
   /** @internal */ keyboard!: KeyboardPlay;
 

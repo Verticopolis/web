@@ -47,10 +47,9 @@ vi.mock("./buildActions", () => ({
   },
 }));
 vi.mock("./inspector", () => ({
-  InspectorController: class {
-    constructor(deps: Record<string, unknown>) {
-      mocks.deps.inspector = deps;
-    }
+  createInspector: (deps: Record<string, unknown>) => {
+    mocks.deps.inspector = deps;
+    return {};
   },
 }));
 vi.mock("./editorActions", () => ({
@@ -181,19 +180,18 @@ describe("wireControllers", () => {
     expect(app.clearSelection).toHaveBeenCalled();
   });
 
-  it("hands InspectorController closures that reach the live app", () => {
+  it("hands the inspector closures that reach the live app", () => {
     const app = makeWiringApp();
     wireControllers(app);
     const d = mocks.deps.inspector as {
       kit: () => unknown;
       reader: () => unknown;
-      ui: { showInspector: (h: unknown) => void };
+      ui: unknown;
       setAnchor: (a: unknown) => void;
     };
     expect(d.kit()).toBe(app.cardKit);
     expect(d.reader()).toBe(app.reader);
-    d.ui.showInspector("tpl");
-    expect(app.ui.showInspector).toHaveBeenCalledWith("tpl");
+    expect(d.ui).toBe(app.ui);
     d.setAnchor({ x: 3, floor: 4 });
     expect(app.inspectAnchor).toEqual({ x: 3, floor: 4 });
   });

@@ -22,7 +22,7 @@ function app(tool = "inspect", phone = false) {
     reader: { rooms: [office], tower: { transports: [elevator] } },
     tool: { type: tool },
     mobileMq: { matches: phone },
-    inspector: { resetLatch: vi.fn(), inspectPicked: vi.fn() },
+    inspector: { resetLatch: vi.fn(), inspect: vi.fn() },
     selectPicked: vi.fn(),
   };
 }
@@ -38,7 +38,7 @@ describe("openMapCard", () => {
     const a = app();
     openMapCard(a, "eval", onFloor5(14), () => 1);
     expect(a.inspector.resetLatch).toHaveBeenCalledOnce();
-    expect(a.inspector.inspectPicked).toHaveBeenCalledWith({ type: "unit", id: 1, kind: "office" });
+    expect(a.inspector.inspect).toHaveBeenCalledWith({ type: "unit", id: 1, kind: "office" });
     expect(a.selectPicked).not.toHaveBeenCalled();
     expect(trackAppAction).toHaveBeenCalledWith("map_card", "eval");
   });
@@ -47,7 +47,7 @@ describe("openMapCard", () => {
     for (const a of [app("inspect", true), app("build")]) {
       openMapCard(a, "hotel", onFloor5(14), () => 1);
       expect(a.selectPicked).toHaveBeenCalledWith({ type: "unit", id: 1, kind: "office" });
-      expect(a.inspector.inspectPicked).not.toHaveBeenCalled();
+      expect(a.inspector.inspect).not.toHaveBeenCalled();
     }
   });
 
@@ -55,7 +55,7 @@ describe("openMapCard", () => {
     const a = app();
     openMapCard(a, "traffic", onFloor5(90), () => 1);
     expect(a.selectPicked).toHaveBeenCalledWith({ type: "transport", id: 10, kind: "elevatorStandard" });
-    expect(a.inspector.inspectPicked).not.toHaveBeenCalled();
+    expect(a.inspector.inspect).not.toHaveBeenCalled();
     expect(trackAppAction).toHaveBeenCalledWith("map_card", "traffic");
   });
 
@@ -69,7 +69,7 @@ describe("openMapCard", () => {
     fault.trapped = true;
     openMapCard(a, "eval", onFloor5(14), () => 1);
     expect(a.selectPicked).not.toHaveBeenCalled();
-    expect(a.inspector.inspectPicked).not.toHaveBeenCalled();
+    expect(a.inspector.inspect).not.toHaveBeenCalled();
     expect(trackAppAction).not.toHaveBeenCalled();
   });
 });

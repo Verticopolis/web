@@ -4,7 +4,7 @@ import type { Picked } from "@verticopolis/components/render/excalibur/TowerEngi
 import { catalogBuildKind, catalogTileCost, type Catalog } from "@verticopolis/engine/catalog/catalogTypes";
 import { catalogFacility } from "@verticopolis/components/render/catalogIndex";
 import { brushTiles, snapX, type PlaceOutcome } from "../ui/placement";
-import { buildRefusalTemplate } from "../ui/templates/inspector";
+import { refusalCardTemplate } from "@verticopolis/components/windows/inspectCard";
 import { isPaintKind } from "./gesture";
 import { FLOOR } from "@verticopolis/components/render/scale";
 import { catalogOf, isUnlocked, quoteBuild, quoteShaft, type BuildQuote } from "./portAccess";
@@ -468,12 +468,11 @@ export function updateBuildRefusal(app: GameApp, reason: string | undefined, flo
     // A zero-width anchor at the strip's midpoint: the card prefers its right,
     // flipping to its left at the viewport edge like the facility cards do.
     app.inspectAnchor = { x: anchorX, left: anchorX, floor };
-    // The template wraps the tooltip in the standard <h4 class="win-title">
-    // so UI.showInspector attaches its mobile-only ✕ close. On desktop the
-    // tooltip clears as soon as the pointer moves off an invalid cell, but
-    // on the phone tier there is no such hover trail, so a pinned card
+    // The card carries the ✕ the styles show on the phone tier only: on
+    // desktop the tooltip clears as soon as the pointer moves off an invalid
+    // cell, but on a phone there is no such hover trail, so a pinned card
     // needs an explicit dismiss affordance.
-    app.ui.showInspector(buildRefusalTemplate(reason));
+    app.ui.showInspector(refusalCardTemplate(reason, { close: () => app.ui.cb.onInspectorClose() }));
     app.buildRefusalShowing = true;
   } else {
     clearBuildRefusal(app);

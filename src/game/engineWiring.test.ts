@@ -193,7 +193,7 @@ describe("onHover", () => {
     const picked = { id: "u9" };
     app.engine.onHover!(1, 2, () => picked);
     expect(app.engine.preview).toBeNull();
-    expect(app.inspector.inspectPicked).toHaveBeenCalledWith(picked);
+    expect(app.inspector.inspect).toHaveBeenCalledWith(picked);
   });
 });
 
@@ -203,7 +203,7 @@ describe("onLongPress (touch peek)", () => {
     wireEngine(app);
     const picked = { id: "u5" };
     app.engine.onLongPress!(3, 4, () => picked);
-    expect(app.inspector.inspectPicked).toHaveBeenCalledWith(picked);
+    expect(app.inspector.inspect).toHaveBeenCalledWith(picked);
     expect(app.ui.setInspectorPeek).toHaveBeenCalledWith(true);
     expect(app.selectPicked).not.toHaveBeenCalled(); // a peek never opens the editor
   });
@@ -214,10 +214,10 @@ describe("onLongPress (touch peek)", () => {
     wireEngine(app);
     app.engine.onLongPress!(3, 4, () => ({ id: "u5" }));
     expect(app.inspector.resetLatch).toHaveBeenCalled();
-    expect(app.inspector.inspectPicked).toHaveBeenCalledWith({ id: "u5" });
-    // The latch must reset before inspectPicked rechecks it.
+    expect(app.inspector.inspect).toHaveBeenCalledWith({ id: "u5" });
+    // The latch must reset before inspect rechecks it.
     expect(app.inspector.resetLatch.mock.invocationCallOrder[0]).toBeLessThan(
-      app.inspector.inspectPicked.mock.invocationCallOrder[0],
+      app.inspector.inspect.mock.invocationCallOrder[0],
     );
   });
 
@@ -225,7 +225,7 @@ describe("onLongPress (touch peek)", () => {
     const app = makeApp({ type: "inspect" });
     wireEngine(app);
     app.engine.onLongPress!(3, 4, () => null);
-    expect(app.inspector.inspectPicked).toHaveBeenCalledWith(null);
+    expect(app.inspector.inspect).toHaveBeenCalledWith(null);
   });
 
   it("cancels a pending touch build so the release places nothing, and DISCARDS the capture", () => {

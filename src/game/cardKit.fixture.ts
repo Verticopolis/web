@@ -6,7 +6,7 @@ import { PortCodes } from "@verticopolis/engine/port/portCodes";
 import type { ViewReader } from "@verticopolis/engine/port/viewReader";
 import type { Draft } from "../tests/portKit/drafts";
 import { unitEditorTemplate, transportEditorTemplate } from "../ui/templates/editor";
-import { unitInspectorTemplate, transportInspectorTemplate } from "../ui/templates/inspector";
+import { transportCardTemplate, unitCardTemplate } from "@verticopolis/components/windows/inspectCard";
 import { createCardKit, type CardKit } from "./cardKit";
 import { catalogOf, newViewReader } from "./portAccess";
 import type { EditorActionsDeps } from "./editorActions";
@@ -53,7 +53,7 @@ export function transportEditor(sim: Draft, t: Pick<Transport, "id">, mobile = f
 
 export function unitInspector(sim: Draft, u: Pick<Unit, "id">): TemplateResult {
   const { kit, engine, reader } = kitOf(sim);
-  return unitInspectorTemplate(
+  return unitCardTemplate(
     kit.cards.unit(u.id)!,
     catalogOf({ enginePort: engine, reader }),
     clockOf(reader.header).hour,
@@ -63,7 +63,7 @@ export function unitInspector(sim: Draft, u: Pick<Unit, "id">): TemplateResult {
 
 export function transportInspector(sim: Draft, t: Pick<Transport, "id">): TemplateResult {
   const { kit, engine, reader } = kitOf(sim);
-  return transportInspectorTemplate(
+  return transportCardTemplate(
     kit.cards.shaft(t.id)!,
     catalogOf({ enginePort: engine, reader }),
     kit.diagnostics.transport(t.id),
@@ -91,7 +91,7 @@ export function editorPortDeps(
   };
 }
 
-/** The getters `InspectorController` takes. */
+/** The getters the inspector takes. */
 export function inspectorPortDeps(sim: Draft): Pick<InspectorDeps, "kit" | "reader"> {
   const { kit, reader } = kitOf(sim);
   return { kit: () => kit, reader: () => reader };

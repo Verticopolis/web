@@ -3,7 +3,7 @@ import type { UI } from "./UI";
 import { syncRungSelects } from "./templates/rungPicker";
 
 /**
- * Editor and inspector panel rendering and placement for {@link UI}, as friend
+ * Editor panel rendering and placement for {@link UI}, as friend
  * functions taking the UI instance, plus the pure placement helper
  * ({@link anchorBeside}) they build on. Extracted from `UI.ts`; the class
  * keeps thin delegations.
@@ -67,28 +67,11 @@ export function isEditorOpen(ui: UI): boolean {
   return !ui.el.editor.classList.contains("hidden");
 }
 
-export function isInspectorOpen(ui: UI): boolean {
-  return !ui.el.inspector.classList.contains("hidden");
-}
-
 /** Anchor the editor card beside a facility's on-screen rect, preferring its
  *  right side, flipping left and clamping so it always stays on screen. */
 export function anchorEditor(ui: UI, rect: { x: number; y: number; w: number }, viewW: number, viewH: number): void {
   const { left, top } = anchorBeside(rect, ui.editorSize, viewW, viewH);
   placePanel(ui.el.editor, left, top);
-}
-
-/** Anchor the inspector tooltip just off a facility's screen rect: prefer the
- *  right side, flip to the facility's left when the viewport edge would clamp
- *  the card back over the room (and the finger holding a touch peek), then
- *  clamp so it always stays on screen. */
-export function anchorInspector(ui: UI, rect: { x: number; y: number; w: number }, viewW: number, viewH: number): void {
-  const { w, h } = ui.inspectorSize;
-  const gap = 8;
-  let left = rect.x + rect.w + 12; // prefer the facility's right
-  if (left + w > viewW - gap) left = rect.x - w - 12; // no room -> flip left
-  const top = Math.max(gap, Math.min(rect.y, viewH - h - gap));
-  placePanel(ui.el.inspector, Math.max(gap, Math.min(left, viewW - w - gap)), top);
 }
 
 /** Drop one panel's inline anchor so it falls back to its CSS-docked layout.
@@ -105,50 +88,6 @@ function placePanel(el: HTMLElement, left: number, top: number): void {
   el.style.top = `${Math.round(top)}px`;
   el.style.right = "auto";
   el.style.bottom = "auto";
-}
-
-/** Mark the inspector card as a touch "peek" (long-press) so its manual ✕ close
- *  is hidden: a peek dismisses when the finger lifts, exactly like a desktop
- *  hover card dismisses on mouse-away, so the coarse-pointer close button (there
- *  for the docked, no-hover-away cards) would only confuse. */
-export function setInspectorPeek(ui: UI, on: boolean): void {
-  ui.el.inspector.classList.toggle("peek", on);
-}
-
-/** The class a room card takes while it holds a Help link (#2036). */
-export const HAS_HELP_CLASS = "has-help";
-
-export function showInspector(ui: UI, tpl: TemplateResult | null): void {
-  if (!tpl) {
-    // Hide only; the stale card stays in the container (as it always did) and
-    // the next show renders over it through lit. Drop any peek marker so a later
-    // non-peek card gets its ✕ back.
-    ui.el.inspector.classList.add("hidden");
-    ui.el.inspector.classList.remove("peek");
-    return;
-  }
-  ui.el.inspector.classList.remove("hidden");
-  // lit render, not innerHTML (E6-S2): #inspector is lit's container
-  // exclusively; hover picks re-render every move and lit patches the changed
-  // text in place.
-  render(tpl, ui.el.inspector);
-  // A card with a problem line's Help link names F1 on a desktop, where the
-  // hover card lets the pointer through (#2036, tools-stage.css). One query
-  // of the card's few nodes per render.
-  ui.el.inspector.classList.toggle(HAS_HELP_CLASS, ui.el.inspector.querySelector("a.help-topic") !== null);
-  // ✕ in the title strip (shown on mobile only, via CSS): the docked card has
-  // no hover-away to dismiss it there. On that coarse tier the non-peek card
-  // also takes pointer input (so a height-capped card can scroll by touch);
-  // the peek card and the desktop hover card stay click-through.
-  // Routed through the app so it can latch the dismissal, otherwise the very
-  // next hover pick over the same facility re-opens the card. Appended from
-  // the one shared recipe AFTER the h4's lit-managed content: a foreign node at the tail survives same-shape re-renders, and
-  // a card-shape swap replaces the h4, so re-append whenever it's missing.
-  const h4 = ui.el.inspector.querySelector("h4");
-  if (h4 && !h4.querySelector(".insp-close")) {
-    h4.appendChild(ui.titleBarClose("insp-close btn xs", () => ui.cb.onInspectorClose()));
-  }
-  ui.inspectorSize = { w: ui.el.inspector.offsetWidth, h: ui.el.inspector.offsetHeight };
 }
 
 /**
