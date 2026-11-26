@@ -117,15 +117,16 @@ export function unitEditorTemplate(
   const canRename = u.kind === "office" || u.kind === "condo";
   const rcfg = f.rent;
   const rows: TemplateResult[] = [kv("Location", floorLabel), kv("Status", u.state, "status")];
-  // Commercial venues show their LIVE customer count (that is what they
-  // contribute to the population census); "(closed)" only for a tenanted venue
-  // outside business hours, a vacant or under-construction unit already tells
-  // that story in its Status row. Everything else reads occupants against the
-  // unit's real occupancy (a Modern condo's household, the flat catalog value
-  // for the rest), never a bare `5/3` for a big family.
+  // A venue people come to in person shows its live customer count; "(closed)"
+  // only for a tenanted venue outside business hours, a vacant or
+  // under-construction unit already tells that story in its Status row. The
+  // engine sends null for a venue nobody is sent to in person (a spa, a shop),
+  // whose patronage block counts its customers instead. Everything else reads
+  // occupants against the unit's real occupancy (a Modern condo's household,
+  // the flat catalog value for the rest), never a bare `5/3` for a big family.
   if (isCommercialKind(u.kind) && f.population > 0) {
     const closed = isTenanted(u) && !catalogOpenAt(f, hour);
-    rows.push(kv("Customers", `${u.customersIn ?? 0}${closed ? " (closed)" : ""}`, "customers"));
+    if (u.customersIn !== null) rows.push(kv("Customers", `${u.customersIn}${closed ? " (closed)" : ""}`, "customers"));
   } else if (f.population) {
     rows.push(
       kv("Occupants", occupantsText(u.occupants, catalogResidents(f, u.residents), u.workersComing), "occupants"),

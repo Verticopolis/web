@@ -99,11 +99,14 @@ describe("unit inspector card branches", () => {
     expect(openFrag.textContent).not.toContain("(closed)");
   });
 
-  it("commercial edge arms: an untracked customer count reads 0, and a vacant venue is never 'closed'", () => {
-    // An untracked count → the ?? 0 fallback; at 07:00 the closed marker
-    // also applies (tenanted).
-    const frag = renderToFragment(unitInspector(unit("shop", { customersIn: null })));
-    expect(frag.textContent).toContain("Customers: 0 (closed)");
+  it("commercial edge arms: a venue with no live count has no customers line, and a vacant venue is never 'closed'", () => {
+    // The engine sends null for a venue nobody is sent to in person (a spa
+    // always read 0 before): no live line, and no Occupants line in its place.
+    for (const kind of ["shop", "spa", "nightclub"] as const) {
+      const frag = renderToFragment(unitInspector(unit(kind, { customersIn: null })));
+      expect(frag.textContent, kind).not.toContain("Customers");
+      expect(frag.textContent, kind).not.toContain("Occupants");
+    }
     // A non-tenanted venue outside business hours: the Status row tells the
     // story, so the customers line carries no "(closed)".
     const vFrag = renderToFragment(unitInspector(unit("shop", { state: "empty", customersIn: 0 })));

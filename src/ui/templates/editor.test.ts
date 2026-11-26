@@ -248,6 +248,12 @@ describe("unit editor row and action branches", () => {
     expect(closed.querySelector('[data-field="customers"]')!.textContent).toBe("7 (closed)");
   });
 
+  it("a venue with no live count (a spa) shows no customers row, and no occupants row in its place", () => {
+    const spa = renderToFragment(unitEditor(unit("spa", { customersIn: null }, "modern"), { mode: "modern" }));
+    expect(spa.querySelector('[data-field="customers"]')).toBeNull();
+    expect(spa.querySelector('[data-field="occupants"]')).toBeNull();
+  });
+
   it("modern cinema: shows its film, offers the three films at the catalog's prices, and names the film it rebooks", () => {
     const modern = { mode: "modern" as const };
     const economy = catalogFor("modern").economy;
