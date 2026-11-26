@@ -25,6 +25,18 @@ prompt already tells players it is an engine update and shows the new version.
 Entries below 1.51.1 were curated from the commit history after the fact, so they
 are documentation only: no build that a client fetches carries them.
 
+## 4.17.2
+
+- Moving the mouse over the tower with a build tool, or dragging to paint floors, does less work on each move, so big towers with many elevators and stairs stay smoother.
+- The room and shaft inspector cards look and read the same as before. They now come from the shared window kit, which also carries their close button and the rule that keeps a closed card closed.
+- Modern spas, nightclubs, sky bars, amusements, boutique bays and daycares now count the customers they served yesterday toward your population, up to each venue's size.
+- The spa, nightclub, sky bar and daycare cards show how many customers came today and how business went yesterday, like a shop's.
+- Venue cards no longer show a Customers line stuck at 0 for venues whose customers are counted from demand.
+- Classic shops, restaurants and fast food now each get their fair share of the tower's shoppers, instead of an eighth of it, and still earn the 1994 amounts.
+- The Open and Save As window, the title screen and the screen saver keep their look and focus rings however the browser loads their styles.
+- Classic shops, restaurants and fast food take customers in from the street again, through the ground lobby or a Metro platform, about as many a day as the 1994 game served. A shopper stays away when the first elevator on the way in already has a full load waiting for each of its cars, and one who waits 15 minutes walks back out. Their waits don't count toward your tenants' mood.
+- A Classic shop now shows the shoppers inside it, and its card counts them.
+
 ## 4.17.1
 
 - The main button on the opening screen (**Continue**, or **New Tower** before your first tower) is colored again so it stands out from the others: amber in Classic, violet in Skyline and yellow in High Contrast, on computers and phones.
