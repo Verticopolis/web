@@ -50,18 +50,8 @@ function suffixOf(g: LabelSource): string {
 
 /** The full version line: the app's `version` (the host passes its own,
  *  `APP_VERSION`), then the engine (`engineSuffix`). The title screen draws it while the game starts, so it does not read a
- *  deferred identity record: boot rewrites it once the record is read
- *  (`refreshSplashVersion`). */
+ *  deferred identity record: boot draws the title screen again once the record is read
+ *  (`OnboardingController.redrawSplash`). */
 export function versionLine(version: string, g: LabelSource = pageSource()): string {
   return `v${version}${suffixOf(g)}`;
-}
-
-/** Rewrite an already-rendered splash version line once the engine's identity
- *  record is read after the first frame (#1254): the title screen mounts
- *  inside `create()`, before the record is read, so its template cannot name
- *  the engine's version at render time. Dialogs render later and read the
- *  suffix themselves. `version` is the app's, as `versionLine` takes it. */
-export function refreshSplashVersion(version: string, doc: Pick<Document, "querySelector"> = document): void {
-  const el = doc.querySelector<HTMLElement>(".splash-version");
-  if (el) el.textContent = versionLine(version);
 }

@@ -46,8 +46,6 @@ import {
   settleEngineIdentity,
   type EngineBootState,
 } from "./engineHost/engineBoot";
-import { refreshSplashVersion } from "./engineHost/engineLabel";
-import { APP_VERSION } from "./appVersion";
 import { copyEngineDiagnostics } from "./engineDiagnosticsCopy";
 import { downloadEngineFailureArchive } from "./engineCrash/failureArchive";
 import { pageControlled, repairOffered } from "./engineHost/engineRepair";
@@ -75,6 +73,8 @@ interface BootApp {
   speed?: number;
   /** The tower renderer once a tower is open; the `?debug=fps` overlay reads its frame stats. */
   engine?: { engine: { stats: { prevFrame: FrameStatsLike } } };
+  /** The title screen, drawn again once the engine's identity is read (#2646). */
+  onboarding?: { redrawSplash(): void };
 }
 
 /** The renderer needs WebGL; some in-app file viewers don't provide it. */
@@ -493,7 +493,7 @@ export function bootGame(create: (tower: BootTower) => BootApp): Promise<void> {
       // title screen's version line is drawn again once it is read.
       afterFirstFrame(() => {
         settleEngineIdentity();
-        refreshSplashVersion(APP_VERSION);
+        app.onboarding?.redrawSplash();
       });
     } catch (err) {
       // A non-Error throw (a string, say) has no `.message`, so derive the text
