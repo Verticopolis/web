@@ -186,12 +186,16 @@ describe("wireControllers", () => {
     const d = mocks.deps.inspector as {
       kit: () => unknown;
       reader: () => unknown;
-      ui: unknown;
+      ui: () => unknown;
       setAnchor: (a: unknown) => void;
     };
     expect(d.kit()).toBe(app.cardKit);
     expect(d.reader()).toBe(app.reader);
-    expect(d.ui).toBe(app.ui);
+    expect(d.ui()).toBe(app.ui);
+    // The app builds its UI after wiring, so the inspector must read it per call.
+    const later = { showInspector: vi.fn() } as unknown as typeof app.ui;
+    app.ui = later;
+    expect(d.ui()).toBe(later);
     d.setAnchor({ x: 3, floor: 4 });
     expect(app.inspectAnchor).toEqual({ x: 3, floor: 4 });
   });

@@ -40,24 +40,25 @@ function setup() {
     transport: vi.fn(() => ["shaft facts"]),
   };
   const kit = { cards, diagnostics, catalog: () => CATALOG } as unknown as CardKit;
+  const ui = { showInspector: vi.fn(), cb: { onInspectorClose: vi.fn() } };
   const deps = {
     kit: () => kit,
     reader: () => ({ header: {} as never }),
-    ui: { showInspector: vi.fn(), cb: { onInspectorClose: vi.fn() } },
+    ui: () => ui,
     setAnchor: vi.fn(),
   } satisfies InspectorDeps;
-  return { cards, diagnostics, deps };
+  return { cards, diagnostics, deps, ui };
 }
 
 describe("the inspect card the game hands over", () => {
   it("draws a unit's card at the hour, with its problem lines and the ✕, pinned over its top floor", () => {
-    const { deps, diagnostics } = setup();
+    const { deps, diagnostics, ui } = setup();
     const card = inspectCard(deps, { type: "unit", id: condo.id }, true);
     const floors = catalogFacility(CATALOG, "condo").floors;
     expect(card?.anchor).toEqual({ x: condo.x + condo.width, left: condo.x, floor: condo.floor + floors - 1 });
     expect(card?.body).toMatchObject({ unit: condo.id, hour: 14, lines: ["unit facts"] });
     (card?.body as unknown as { opts: { close(): void } }).opts.close();
-    expect(deps.ui.cb.onInspectorClose).toHaveBeenCalledOnce();
+    expect(ui.cb.onInspectorClose).toHaveBeenCalledOnce();
     inspectCard(deps, { type: "unit", id: condo.id }, false);
     expect(diagnostics.unit.mock.calls).toEqual([
       [condo.id, true],
@@ -66,12 +67,12 @@ describe("the inspect card the game hands over", () => {
   });
 
   it("draws a shaft's card pinned at its top", () => {
-    const { deps, diagnostics } = setup();
+    const { deps, diagnostics, ui } = setup();
     const card = inspectCard(deps, { type: "transport", id: lift.id }, true);
     expect(card?.anchor).toEqual({ x: lift.x + lift.width, left: lift.x, floor: lift.top });
     expect(card?.body).toMatchObject({ shaft: lift.id, lines: ["shaft facts"] });
     (card?.body as unknown as { opts: { close(): void } }).opts.close();
-    expect(deps.ui.cb.onInspectorClose).toHaveBeenCalledOnce();
+    expect(ui.cb.onInspectorClose).toHaveBeenCalledOnce();
     expect(diagnostics.transport).toHaveBeenCalledExactlyOnceWith(lift.id);
   });
 
@@ -82,15 +83,15 @@ describe("the inspect card the game hands over", () => {
   });
 
   it("drives the components' controller with these cards, asking the port again on every pick", () => {
-    const { deps, cards } = setup();
+    const { deps, cards, ui } = setup();
     const inspector = createInspector(deps);
     inspector.inspect({ type: "unit", id: condo.id, kind: "condo" });
-    expect(deps.ui.showInspector.mock.lastCall?.[0]).toMatchObject({ unit: condo.id });
+    expect(ui.showInspector.mock.lastCall?.[0]).toMatchObject({ unit: condo.id });
     expect(deps.setAnchor.mock.lastCall?.[0]).toMatchObject({ left: condo.x });
     inspector.followStep(() => true);
     expect(cards.unit).toHaveBeenCalledTimes(2);
     inspector.inspect({ type: "unit", id: 99, kind: "office" });
-    expect(deps.ui.showInspector).toHaveBeenLastCalledWith(null);
+    expect(ui.showInspector).toHaveBeenLastCalledWith(null);
     expect(deps.setAnchor).toHaveBeenLastCalledWith(null);
   });
 });

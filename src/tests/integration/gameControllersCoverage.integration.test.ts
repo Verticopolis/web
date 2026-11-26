@@ -1688,7 +1688,7 @@ describe.skipIf(noEngine)("the inspector (stale-pick hygiene)", () => {
     let anchor: { x: number; floor: number } | null = null;
     const inspector = createInspector({
       ...inspectorPortDeps(sim),
-      ui: { showInspector: (tpl) => shown.push(tpl), cb: { onInspectorClose: () => {} } },
+      ui: () => ({ showInspector: (tpl) => shown.push(tpl), cb: { onInspectorClose: () => {} } }),
       setAnchor: (a) => (anchor = a),
     });
     sim.tower.removeUnit(office.id);

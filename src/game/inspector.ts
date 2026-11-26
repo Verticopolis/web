@@ -28,8 +28,9 @@ export interface InspectorDeps {
   /** The view, for the clock. */
   reader(): Pick<ViewReader, "header">;
   /** Shows a card body in `#inspector` (or hides it), and takes the card's
-   *  ✕ (`cb.onInspectorClose`, which dismisses it and latches it closed). */
-  ui: Pick<UI, "showInspector"> & { readonly cb: Pick<UI["cb"], "onInspectorClose"> };
+   *  ✕ (`cb.onInspectorClose`, which dismisses it and latches it closed).
+   *  Read per call: the app builds its UI after it wires the inspector. */
+  ui(): Pick<UI, "showInspector"> & { readonly cb: Pick<UI["cb"], "onInspectorClose"> };
   /** World cell the card describes (GameApp anchors the panel to it each frame). */
   setAnchor(anchor: InspectAnchor | null): void;
 }
@@ -38,7 +39,7 @@ export interface InspectorDeps {
  *  facility under the card, which the problem lines read in full. */
 export function inspectCard(deps: InspectorDeps, target: InspectTarget, fresh: boolean): InspectShown | null {
   const kit = deps.kit();
-  const opts = { close: () => deps.ui.cb.onInspectorClose() };
+  const opts = { close: () => deps.ui().cb.onInspectorClose() };
   if (target.type === "unit") {
     const u = kit.cards.unit(target.id);
     if (!u) return null;
@@ -66,7 +67,7 @@ export function inspectCard(deps: InspectorDeps, target: InspectTarget, fresh: b
 export function createInspector(deps: InspectorDeps): InspectController {
   return new InspectController({
     card: (target, fresh) => inspectCard(deps, target, fresh),
-    show: (body: TemplateResult | null) => deps.ui.showInspector(body),
+    show: (body: TemplateResult | null) => deps.ui().showInspector(body),
     setAnchor: (anchor) => deps.setAnchor(anchor),
   });
 }

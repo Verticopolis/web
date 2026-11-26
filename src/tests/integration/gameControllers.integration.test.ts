@@ -498,7 +498,7 @@ describe.skipIf(noEngine)("the inspector (✕-dismissal latch)", () => {
       ...inspectorPortDeps(sim),
       // The card is a lit template since E6-S2; record its rendered text so
       // the latch assertions keep reading plain content.
-      ui: { showInspector: (tpl) => shown.push(tpl && renderedText(tpl)), cb: { onInspectorClose: () => {} } },
+      ui: () => ({ showInspector: (tpl) => shown.push(tpl && renderedText(tpl)), cb: { onInspectorClose: () => {} } }),
       setAnchor: (a) => (anchor = a),
     });
     officePick = { type: "unit", id: office.id, kind: "office" };
@@ -702,7 +702,7 @@ describe.skipIf(noEngine)("the inspector (data-rich cards: parking, recycling, n
     const shown: (string | null)[] = [];
     const inspector = createInspector({
       ...inspectorPortDeps(sim),
-      ui: { showInspector: (tpl) => shown.push(tpl && renderedText(tpl)), cb: { onInspectorClose: () => {} } },
+      ui: () => ({ showInspector: (tpl) => shown.push(tpl && renderedText(tpl)), cb: { onInspectorClose: () => {} } }),
       setAnchor: () => {},
     });
     return { inspector, shown };

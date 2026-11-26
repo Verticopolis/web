@@ -104,7 +104,7 @@ export function wireControllers(app: GameApp): void {
   app.inspector = createInspector({
     kit: () => app.cardKit,
     reader: () => app.reader,
-    ui: app.ui,
+    ui: () => app.ui,
     setAnchor: (anchor) => (app.inspectAnchor = anchor),
   });
   app.editor = new EditorActions({
