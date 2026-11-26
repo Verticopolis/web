@@ -25,6 +25,13 @@ prompt already tells players it is an engine update and shows the new version.
 Entries below 1.51.1 were curated from the commit history after the fact, so they
 are documentation only: no build that a client fetches carries them.
 
+## 4.17.2
+
+- Modern spas, nightclubs, sky bars, amusements, boutique bays and daycares now count the customers they served yesterday toward your population, up to each venue's size. Their cards show today's customers and yesterday's business, like a shop's, instead of a Customers line stuck at 0.
+- Classic shops, restaurants and fast food take customers in from the street again, through the ground lobby or a Metro platform, about as many a day as the 1994 game served, and each gets its fair share of the tower's shoppers and still earns the 1994 amounts. A shop shows the shoppers inside it, and its card counts them.
+- A Classic shopper stays away when the first elevator on the way in already has a full load waiting for each of its cars, and one who waits 15 minutes walks back out. Their waits don't count toward your tenants' mood.
+- Moving the mouse over the tower with a build tool, or dragging to paint floors, does less work on each move, so big towers with many elevators and stairs stay smoother.
+
 ## 4.17.1
 
 - The main button on the opening screen (**Continue**, or **New Tower** before your first tower) is colored again so it stands out from the others: amber in Classic, violet in Skyline and yellow in High Contrast, on computers and phones.
