@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({ review: {} as Record<string, unknown> }));
 
 vi.mock("./cardKit", () => ({ createCardKit: vi.fn(() => ({ kit: "kit" })) }));
 vi.mock("./buildActions", () => ({ BuildActions: class {} }));
-vi.mock("./inspector", () => ({ InspectorController: class {} }));
+vi.mock("./inspector", () => ({ createInspector: () => ({}) }));
 vi.mock("./keyboardPlay", () => ({ KeyboardPlay: class {} }));
 vi.mock("./saveLoad", async (orig) => ({ ...(await orig<typeof import("./saveLoad")>()), SaveLoad: class {} }));
 vi.mock("./editorActions", () => ({

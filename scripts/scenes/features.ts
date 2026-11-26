@@ -100,7 +100,7 @@ export const FEATURE_SCENES: Scene[] = [
             const rec = g.sim.tower.units.find((u) => u.kind === "recycling");
             if (rec) {
               g.engine.setCamera(rec.x + rec.width, rec.floor, 2.0);
-              g.inspector.inspectPicked({ type: "unit", id: rec.id, kind: "recycling" });
+              g.inspector.inspect({ type: "unit", id: rec.id, kind: "recycling" });
             }
           });
         },

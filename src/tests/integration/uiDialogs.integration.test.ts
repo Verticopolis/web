@@ -5,6 +5,7 @@ import { HudTower, pump, rebaseLog } from "../../ui/hud.fixture";
 import { towerCatalog, useTowerCatalogSource } from "../../engineHost/towerCatalog";
 import { catalogFor } from "../catalogFixture";
 import { render, html, type TemplateResult } from "lit-html";
+import { refusalCardTemplate } from "@verticopolis/components/windows/inspectCard";
 import type { ModalView } from "@verticopolis/components/windows/uiModal";
 import type { UI } from "../../ui/UI";
 import { openImport } from "../../ui/uiImport";
@@ -77,7 +78,7 @@ vi.mock("../../ui/uiStatus", async (importOriginal) => {
  *    false (confirm/emergency templates render no close button on purpose).
  *  - titleBarClose: every DOM-built ✕ comes from the one shared recipe —
  *    a real <button> with classes "btn xs", aria-label "Close", ✕ glyph — so
- *    the modal ✕ and the inspector ✕ can't drift apart again.
+ *    the modal ✕ can't drift (the inspector ✕ comes with the components' card).
  *  - openModal: the window grammar (.modal-box.win box, top-level h2 becomes
  *    the .win-title bar, nested h2s are never skinned), the ✕ is appended
  *    AFTER showModal so it's the title bar's last child (keyboard focus lands
@@ -211,11 +212,10 @@ describe("titleBarClose — the one shared ✕ recipe", () => {
     expect(x.textContent).toBe("✕");
   });
 
-  it("the inspector ✕ uses the same recipe (.insp-close.btn.xs) and routes to onInspectorClose", () => {
+  it("the inspector ✕ comes with the components' card and routes to onInspectorClose", () => {
     const { ui, cb } = makeUI();
-    ui.showInspector(html`<h4>Office 12F</h4><div>occupied</div>`);
+    ui.showInspector(refusalCardTemplate("Not enough money", { close: () => ui.cb.onInspectorClose() }));
     const x = document.querySelector<HTMLButtonElement>("#inspector h4 > button")!;
-    expect(x).not.toBeNull();
     expect([...x.classList].sort()).toEqual(["btn", "insp-close", "xs"]);
     expect(x.getAttribute("aria-label")).toBe("Close");
     expect(x.textContent).toBe("✕");
@@ -235,38 +235,6 @@ describe("titleBarClose — the one shared ✕ recipe", () => {
     // Hiding (finger lift) drops the marker so a later non-peek card keeps its ✕.
     ui.showInspector(null);
     expect(insp.classList.contains("peek")).toBe(false);
-  });
-
-  it("the inspector ✕ survives a same-card lit re-render, is never duplicated, and STAYS LIVE", () => {
-    // Hover picks re-render the card every move; the ✕ is a foreign node
-    // appended after the h4's lit-managed content,
-    // so it must survive a same-shape re-render, and a re-show must not
-    // append a second one. The legacy innerHTML path minted a fresh button
-    // on every show; the retained button changes that lifecycle, so pin that
-    // it still FIRES after a re-render and after a hide/re-show round trip,
-    // not merely that it is the same element.
-    const { ui, cb } = makeUI();
-    // The h4 carries a BINDING like the production card's title (its child
-    // part extends to the h4's end, where the appended ✕ sits), so this pins
-    // the exact lit behavior the retained ✕ rests on, not a weaker static h4.
-    const card = (title: string, status: string) => html`<h4>${title}</h4><div>${status}</div>`;
-    ui.showInspector(card("Office 12F", "occupied"));
-    const x = document.querySelector<HTMLButtonElement>("#inspector h4 > button")!;
-    ui.showInspector(card("Office 14F", "vacating"));
-    expect(document.querySelector("#inspector h4")!.textContent).toContain("Office 14F");
-    expect(document.querySelector("#inspector div")!.textContent).toBe("vacating");
-    const xs = document.querySelectorAll("#inspector h4 > button");
-    expect(xs.length).toBe(1);
-    expect(xs[0]).toBe(x); // same element: a mid-tap ✕ press can't be swallowed
-    x.click();
-    expect(cb.onInspectorClose).toHaveBeenCalledTimes(1);
-
-    ui.showInspector(null); // ✕ tap hides; content (and button) stay parked
-    ui.showInspector(card("Office 12F", "occupied")); // re-show over the retained DOM
-    const again = document.querySelectorAll<HTMLButtonElement>("#inspector h4 > button");
-    expect(again.length).toBe(1);
-    again[0].click(); // the retained ✕ must still dismiss on the re-shown card
-    expect(cb.onInspectorClose).toHaveBeenCalledTimes(2);
   });
 });
 

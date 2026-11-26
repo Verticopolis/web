@@ -21,7 +21,8 @@ import { announceForPlacement, snapX, type PlaceOutcome } from "../../ui/placeme
 import { BuildActions } from "../../game/buildActions";
 import { EditorActions } from "../../game/editorActions";
 import { SaveLoad } from "../../game/saveLoad";
-import { InspectorController } from "../../game/inspector";
+import { createInspector } from "../../game/inspector";
+import type { InspectController } from "@verticopolis/components/windows/inspectPanel";
 import { KeyboardPlay } from "../../game/keyboardPlay";
 import { html, render, type TemplateResult } from "lit-html";
 import { portDeps } from "../../game/portDeps.fixture";
@@ -479,13 +480,13 @@ describe.skipIf(noEngine)("SaveLoad (tower-swap contracts)", () => {
   });
 });
 
-describe.skipIf(noEngine)("InspectorController (✕-dismissal latch)", () => {
+describe.skipIf(noEngine)("the inspector (✕-dismissal latch)", () => {
   let sim: Draft;
   let office: Unit;
   let lift: Transport;
   let shown: (string | null)[];
   let anchor: { x: number; floor: number } | null;
-  let inspector: InspectorController;
+  let inspector: InspectController;
   let officePick: Picked;
   let liftPick: Picked;
 
@@ -493,11 +494,11 @@ describe.skipIf(noEngine)("InspectorController (✕-dismissal latch)", () => {
     ({ sim, office, lift } = fixture());
     shown = [];
     anchor = null;
-    inspector = new InspectorController({
+    inspector = createInspector({
       ...inspectorPortDeps(sim),
       // The card is a lit template since E6-S2; record its rendered text so
       // the latch assertions keep reading plain content.
-      ui: { showInspector: (tpl) => shown.push(tpl && renderedText(tpl)) },
+      ui: () => ({ showInspector: (tpl) => shown.push(tpl && renderedText(tpl)), cb: { onInspectorClose: () => {} } }),
       setAnchor: (a) => (anchor = a),
     });
     officePick = { type: "unit", id: office.id, kind: "office" };
@@ -505,55 +506,55 @@ describe.skipIf(noEngine)("InspectorController (✕-dismissal latch)", () => {
   });
 
   it("resetLatch spends the dismissal: the peek path's fresh-intent seam re-raises the card (#696)", () => {
-    inspector.inspectPicked(officePick);
+    inspector.inspect(officePick);
     inspector.dismiss();
     const calls = shown.length;
     // A hover pick alone stays closed (the latch is doing its hover-jitter job)...
-    inspector.inspectPicked(officePick);
+    inspector.inspect(officePick);
     expect(shown.length).toBe(calls);
     // ...but spending the latch first (what onLongPress and selectPicked both
     // do: an explicit hold or tap is fresh intent) re-raises the card. The
     // count check keeps this non-vacuous: last(shown) already held the office
     // card from the opening pick, so only a NEW show may pass the test.
     inspector.resetLatch();
-    inspector.inspectPicked(officePick);
+    inspector.inspect(officePick);
     expect(shown.length).toBe(calls + 1);
     expect(last(shown)).toContain(fac("office").name);
   });
 
   it("dismiss latches the target: same-facility hover picks stay closed, null picks don't spend it", () => {
-    inspector.inspectPicked(officePick);
+    inspector.inspect(officePick);
     expect(last(shown)).toContain(fac("office").name);
     expect(anchor).toEqual({ x: office.x + fac("office").width, left: office.x, floor: office.floor });
     inspector.dismiss();
     expect(last(shown)).toBeNull();
     const calls = shown.length;
-    inspector.inspectPicked(officePick); // latched — no re-open, no call at all
+    inspector.inspect(officePick); // latched — no re-open, no call at all
     expect(shown.length).toBe(calls);
-    inspector.inspectPicked(null); // pointer jitter across a gap: hides again…
+    inspector.inspect(null); // pointer jitter across a gap: hides again…
     expect(last(shown)).toBeNull();
-    inspector.inspectPicked(officePick); // …but the latch survived it
+    inspector.inspect(officePick); // …but the latch survived it
     expect(last(shown)).toBeNull();
   });
 
   it("picking a DIFFERENT facility spends the latch", () => {
-    inspector.inspectPicked(officePick);
+    inspector.inspect(officePick);
     inspector.dismiss();
-    inspector.inspectPicked(liftPick); // different facility opens…
+    inspector.inspect(liftPick); // different facility opens…
     expect(last(shown)).toContain(fac("elevatorStandard").name);
-    inspector.inspectPicked(officePick); // …and re-arms the dismissed one
+    inspector.inspect(officePick); // …and re-arms the dismissed one
     expect(last(shown)).toContain(fac("office").name);
   });
 
   it("clear() and resetLatch() drop the latch (tower swap / explicit tap)", () => {
-    inspector.inspectPicked(officePick);
+    inspector.inspect(officePick);
     inspector.dismiss();
     inspector.clear(); // adoptSim path: recycled ids must not stay muted
-    inspector.inspectPicked(officePick);
+    inspector.inspect(officePick);
     expect(last(shown)).toContain(fac("office").name);
     inspector.dismiss();
     inspector.resetLatch(); // selectPicked path: a tap is fresh intent
-    inspector.inspectPicked(officePick);
+    inspector.inspect(officePick);
     expect(last(shown)).toContain(fac("office").name);
   });
 });
@@ -691,7 +692,7 @@ describe.skipIf(noEngine)("KeyboardPlay (commit announcements)", () => {
   });
 });
 
-describe.skipIf(noEngine)("InspectorController (data-rich cards: parking, recycling, notice)", () => {
+describe.skipIf(noEngine)("the inspector (data-rich cards: parking, recycling, notice)", () => {
   function place(sim: Draft, kind: FacilityKind, floor: number, x: number): Unit {
     const r = sim.tower.place(kind, floor, x);
     expect(r.ok, `place ${kind} @${floor},${x}`).toBe(true);
@@ -699,9 +700,9 @@ describe.skipIf(noEngine)("InspectorController (data-rich cards: parking, recycl
   }
   function makeInspector(sim: Draft) {
     const shown: (string | null)[] = [];
-    const inspector = new InspectorController({
+    const inspector = createInspector({
       ...inspectorPortDeps(sim),
-      ui: { showInspector: (tpl) => shown.push(tpl && renderedText(tpl)) },
+      ui: () => ({ showInspector: (tpl) => shown.push(tpl && renderedText(tpl)), cb: { onInspectorClose: () => {} } }),
       setAnchor: () => {},
     });
     return { inspector, shown };
@@ -717,13 +718,13 @@ describe.skipIf(noEngine)("InspectorController (data-rich cards: parking, recycl
     [ramp, good, dead].forEach((u) => (u.state = "empty")); // operational (not construction)
 
     const { inspector, shown } = makeInspector(sim);
-    inspector.inspectPicked({ type: "unit", id: ramp.id, kind: "parkingRamp" });
+    inspector.inspect({ type: "unit", id: ramp.id, kind: "parkingRamp" });
     expect(last(shown)).toContain("Parking demand:");
 
-    inspector.inspectPicked({ type: "unit", id: good.id, kind: "parking" });
+    inspector.inspect({ type: "unit", id: good.id, kind: "parking" });
     expect(last(shown)).toContain("Ramp access: connected");
 
-    inspector.inspectPicked({ type: "unit", id: dead.id, kind: "parking" });
+    inspector.inspect({ type: "unit", id: dead.id, kind: "parking" });
     expect(last(shown)).toContain("Ramp access: none");
     expect(last(shown)).toContain("dead");
   });
@@ -736,7 +737,7 @@ describe.skipIf(noEngine)("InspectorController (data-rich cards: parking, recycl
     rec.state = "empty"; // operational
 
     const { inspector, shown } = makeInspector(sim);
-    inspector.inspectPicked({ type: "unit", id: rec.id, kind: "recycling" });
+    inspector.inspect({ type: "unit", id: rec.id, kind: "recycling" });
     expect(last(shown)).toContain("Fill:");
     expect(last(shown)).toMatch(/demand met|Over capacity/);
   });
@@ -749,7 +750,7 @@ describe.skipIf(noEngine)("InspectorController (data-rich cards: parking, recycl
     office.satisfaction = 0.3;
 
     const { inspector, shown } = makeInspector(sim);
-    inspector.inspectPicked({ type: "unit", id: office.id, kind: "office" });
+    inspector.inspect({ type: "unit", id: office.id, kind: "office" });
     const card = last(shown)!;
     expect(card).toContain("Giving notice");
     expect(card).toContain("rent set too high");

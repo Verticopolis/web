@@ -234,7 +234,7 @@ describe("createUICallbacks delegates every callback to its port", () => {
     cb.onInspectorClose();
     expect(ports.inspector.dismiss).toHaveBeenCalledTimes(1);
     // The ✕ may be closing the build-refusal card, whose ownership latch is
-    // GameApp state the InspectorController never touches: a leaked latch
+    // GameApp state the inspect controller never touches: a leaked latch
     // would offset the next inspect card's anchor one floor down.
     expect(ports.clearBuildRefusal).toHaveBeenCalledTimes(1);
   });

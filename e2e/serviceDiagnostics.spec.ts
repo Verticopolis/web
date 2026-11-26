@@ -124,7 +124,7 @@ test.describe("Rust service diagnostics in the real browser", () => {
     expect(readout.util).toBeGreaterThan(0.85);
     await page.evaluate(
       ({ id, kind }) => {
-        window.game.inspector.inspectPicked({ type: "transport", id, kind });
+        window.game.inspector.inspect({ type: "transport", id, kind });
       },
       { id: fixture.id, kind: fixture.kind },
     );
@@ -155,7 +155,7 @@ test.describe("Rust service diagnostics in the real browser", () => {
 
     await page.evaluate(
       ({ id, kind }) => {
-        window.game.inspector.inspectPicked({ type: "unit", id, kind });
+        window.game.inspector.inspect({ type: "unit", id, kind });
       },
       { id: f.hotel.id, kind: f.hotel.kind },
     );
@@ -164,7 +164,7 @@ test.describe("Rust service diagnostics in the real browser", () => {
 
     await page.evaluate(
       ({ id, kind }) => {
-        window.game.inspector.inspectPicked({ type: "unit", id, kind });
+        window.game.inspector.inspect({ type: "unit", id, kind });
       },
       { id: f.connectedParking.id, kind: f.connectedParking.kind },
     );
@@ -173,7 +173,7 @@ test.describe("Rust service diagnostics in the real browser", () => {
 
     await page.evaluate(
       ({ id, kind }) => {
-        window.game.inspector.inspectPicked({ type: "unit", id, kind });
+        window.game.inspector.inspect({ type: "unit", id, kind });
       },
       { id: f.disconnectedParking.id, kind: f.disconnectedParking.kind },
     );
@@ -186,7 +186,7 @@ test.describe("Rust service diagnostics in the real browser", () => {
     await loadFixture(page, f.save);
     await page.evaluate(
       ({ id, kind }) => {
-        window.game.inspector.inspectPicked({ type: "unit", id, kind });
+        window.game.inspector.inspect({ type: "unit", id, kind });
       },
       { id: f.shop.id, kind: f.shop.kind },
     );
@@ -212,7 +212,7 @@ test.describe("Rust service diagnostics in the real browser", () => {
     await loadFixture(page, f.save);
     await page.evaluate(
       ({ id, kind }) => {
-        window.game.inspector.inspectPicked({ type: "unit", id, kind });
+        window.game.inspector.inspect({ type: "unit", id, kind });
       },
       { id: f.shop.id, kind: f.shop.kind },
     );

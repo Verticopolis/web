@@ -73,7 +73,7 @@ async function open(page: Page, room: { id: number; kind: FacilityKind }, phone:
     ({ id, kind, phone }) => {
       const g = window.game;
       if (phone) g.selectPicked({ type: "unit", id, kind });
-      else g.inspector.inspectPicked({ type: "unit", id, kind });
+      else g.inspector.inspect({ type: "unit", id, kind });
     },
     { id: room.id, kind: room.kind, phone },
   );

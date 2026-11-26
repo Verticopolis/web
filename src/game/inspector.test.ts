@@ -2,22 +2,28 @@ import { describe, expect, it, vi } from "vitest";
 import { catalogFacility } from "@verticopolis/components/render/catalogIndex";
 import { catalogFor } from "../tests/catalogFixture";
 import type { CardKit } from "./cardKit";
-import { InspectorController, type InspectorDeps } from "./inspector";
+import { createInspector, inspectCard, type InspectorDeps } from "./inspector";
 
 vi.mock("../engineHost/headerClock", () => ({ clockOf: () => ({ hour: 14 }) }));
-vi.mock("../ui/templates/inspector", () => ({
-  unitInspectorTemplate: vi.fn((u: { id: number }, _c: unknown, hour: number, diag: unknown) => ({
+vi.mock("@verticopolis/components/windows/inspectCard", () => ({
+  unitCardTemplate: vi.fn((u: { id: number }, _c: unknown, hour: number, lines: unknown, opts: unknown) => ({
     unit: u.id,
     hour,
-    diag,
+    lines,
+    opts,
   })),
-  transportInspectorTemplate: vi.fn((t: { id: number }, _c: unknown, diag: unknown) => ({ shaft: t.id, diag })),
+  transportCardTemplate: vi.fn((t: { id: number }, _c: unknown, lines: unknown, opts: unknown) => ({
+    shaft: t.id,
+    lines,
+    opts,
+  })),
 }));
 
 /**
- * The hover inspector over a mock card kit: which card it asks for, where it
- * anchors the panel, what it shows, and the dismissal latch. The cards' text
- * is the templates' (`ui/templates/inspector.test.ts`).
+ * The game's side of the hover inspector over a mock card kit: which card it
+ * asks the port for, where it pins the panel, and the problem lines and ✕ it
+ * hands the components' card. The card's text and the ✕ latch are the
+ * components' (`windows/inspectCard`, `windows/inspectPanel`).
  */
 
 const CATALOG = catalogFor("classic");
@@ -33,133 +39,59 @@ function setup() {
     unit: vi.fn(() => ["unit facts"]),
     transport: vi.fn(() => ["shaft facts"]),
   };
-  const kit = {
-    cards,
-    diagnostics,
-    catalog: () => CATALOG,
-  } as unknown as CardKit;
+  const kit = { cards, diagnostics, catalog: () => CATALOG } as unknown as CardKit;
+  const ui = { showInspector: vi.fn(), cb: { onInspectorClose: vi.fn() } };
   const deps = {
     kit: () => kit,
     reader: () => ({ header: {} as never }),
-    ui: { showInspector: vi.fn() },
+    ui: () => ui,
     setAnchor: vi.fn(),
   } satisfies InspectorDeps;
-  return { cards, diagnostics, deps, inspector: new InspectorController(deps) };
+  return { cards, diagnostics, deps, ui };
 }
 
-const onCondo = { type: "unit" as const, id: condo.id, kind: "condo" as const };
-const onLift = {
-  type: "transport" as const,
-  id: lift.id,
-  kind: "elevatorStandard" as const,
-};
-
-describe("InspectorController", () => {
-  it("shows a unit's card anchored over its top floor, asking for fresh diagnostics once per facility", () => {
-    const { inspector, deps, diagnostics } = setup();
-    inspector.inspectPicked(onCondo);
+describe("the inspect card the game hands over", () => {
+  it("draws a unit's card at the hour, with its problem lines and the ✕, pinned over its top floor", () => {
+    const { deps, diagnostics, ui } = setup();
+    const card = inspectCard(deps, { type: "unit", id: condo.id }, true);
     const floors = catalogFacility(CATALOG, "condo").floors;
-    expect(deps.setAnchor).toHaveBeenCalledExactlyOnceWith({
-      x: condo.x + condo.width,
-      left: condo.x,
-      floor: condo.floor + floors - 1,
-    });
-    expect(deps.ui.showInspector).toHaveBeenCalledExactlyOnceWith({
-      unit: condo.id,
-      hour: 14,
-      diag: ["unit facts"],
-    });
-    inspector.inspectPicked(onCondo);
+    expect(card?.anchor).toEqual({ x: condo.x + condo.width, left: condo.x, floor: condo.floor + floors - 1 });
+    expect(card?.body).toMatchObject({ unit: condo.id, hour: 14, lines: ["unit facts"] });
+    (card?.body as unknown as { opts: { close(): void } }).opts.close();
+    expect(ui.cb.onInspectorClose).toHaveBeenCalledOnce();
+    inspectCard(deps, { type: "unit", id: condo.id }, false);
     expect(diagnostics.unit.mock.calls).toEqual([
       [condo.id, true],
       [condo.id, false],
     ]);
   });
 
-  it("shows a shaft's card anchored at its top", () => {
-    const { inspector, deps, diagnostics } = setup();
-    inspector.inspectPicked(onLift);
-    expect(deps.setAnchor).toHaveBeenCalledExactlyOnceWith({
-      x: lift.x + lift.width,
-      left: lift.x,
-      floor: lift.top,
-    });
+  it("draws a shaft's card pinned at its top", () => {
+    const { deps, diagnostics, ui } = setup();
+    const card = inspectCard(deps, { type: "transport", id: lift.id }, true);
+    expect(card?.anchor).toEqual({ x: lift.x + lift.width, left: lift.x, floor: lift.top });
+    expect(card?.body).toMatchObject({ shaft: lift.id, lines: ["shaft facts"] });
+    (card?.body as unknown as { opts: { close(): void } }).opts.close();
+    expect(ui.cb.onInspectorClose).toHaveBeenCalledOnce();
     expect(diagnostics.transport).toHaveBeenCalledExactlyOnceWith(lift.id);
-    expect(deps.ui.showInspector).toHaveBeenCalledExactlyOnceWith({
-      shaft: lift.id,
-      diag: ["shaft facts"],
-    });
   });
 
-  it("hides on no pick, a floor tile, or a facility that is gone", () => {
-    const { inspector, deps } = setup();
-    inspector.inspectPicked(null);
-    inspector.inspectPicked({ type: "unit", id: 0, kind: "floor" });
-    inspector.inspectPicked({ type: "unit", id: 99, kind: "office" });
-    inspector.inspectPicked({ type: "transport", id: 99, kind: "stairs" });
-    expect(deps.ui.showInspector.mock.calls).toEqual([[null], [null], [null], [null]]);
-    expect(deps.setAnchor.mock.calls).toEqual([[null], [null], [null], [null]]);
+  it("has no card for a facility that is gone", () => {
+    const { deps } = setup();
+    expect(inspectCard(deps, { type: "unit", id: 99 }, true)).toBeNull();
+    expect(inspectCard(deps, { type: "transport", id: 99 }, true)).toBeNull();
   });
 
-  it("a dismissed card stays closed while hover picks land on it, through jitter", () => {
-    const { inspector, deps } = setup();
-    inspector.inspectPicked(onCondo);
-    inspector.dismiss();
-    inspector.inspectPicked(null);
-    inspector.inspectPicked(onCondo);
-    expect(deps.ui.showInspector.mock.calls.filter(([c]) => c !== null)).toHaveLength(1);
-  });
-
-  it("a different facility, a tap or a reset re-arms the card", () => {
-    const { inspector, deps } = setup();
-    const shown = () => deps.ui.showInspector.mock.calls.filter(([c]) => c !== null).length;
-    inspector.inspectPicked(onCondo);
-    inspector.dismiss();
-    inspector.inspectPicked(onLift);
-    inspector.inspectPicked(onCondo);
-    expect(shown(), "picking another facility spends the latch").toBe(3);
-    inspector.dismiss();
-    inspector.resetLatch();
-    inspector.inspectPicked(onCondo);
-    expect(shown(), "a tap is fresh intent").toBe(4);
-    inspector.dismiss();
-    inspector.clear();
-    inspector.inspectPicked(onCondo);
-    expect(shown(), "a tower swap clears the latch").toBe(5);
-  });
-
-  it("reads the card again after an undo or redo step that left its facility (#1802)", () => {
-    const { inspector, deps, cards } = setup();
-    inspector.inspectPicked(onCondo);
-    cards.unit.mockClear();
+  it("drives the components' controller with these cards, asking the port again on every pick", () => {
+    const { deps, cards, ui } = setup();
+    const inspector = createInspector(deps);
+    inspector.inspect({ type: "unit", id: condo.id, kind: "condo" });
+    expect(ui.showInspector.mock.lastCall?.[0]).toMatchObject({ unit: condo.id });
+    expect(deps.setAnchor.mock.lastCall?.[0]).toMatchObject({ left: condo.x });
     inspector.followStep(() => true);
-    expect(cards.unit, "the card asks the port again").toHaveBeenCalledWith(condo.id);
-    expect(deps.ui.showInspector.mock.lastCall?.[0]).toEqual({ unit: condo.id, hour: 14, diag: ["unit facts"] });
-  });
-
-  it("hides the card when the step took its facility away, and does nothing with no card up", () => {
-    const { inspector, deps, cards } = setup();
-    inspector.followStep(() => false);
-    expect(deps.ui.showInspector).not.toHaveBeenCalled();
-    inspector.inspectPicked(onLift);
-    inspector.followStep((t) => t.type !== "transport");
-    expect(deps.ui.showInspector.mock.lastCall).toEqual([null]);
-    expect(deps.setAnchor.mock.lastCall).toEqual([null]);
-    cards.shaft.mockClear();
-    inspector.followStep(() => true);
-    expect(cards.shaft, "a hidden card stays hidden").not.toHaveBeenCalled();
-  });
-
-  it("keeps the ✕-latch through a step for a facility that stands, and drops it for one gone", () => {
-    const { inspector, deps } = setup();
-    const shown = () => deps.ui.showInspector.mock.calls.filter(([c]) => c !== null).length;
-    inspector.inspectPicked(onCondo);
-    inspector.dismiss();
-    inspector.followStep(() => true);
-    inspector.inspectPicked(onCondo);
-    expect(shown(), "still dismissed").toBe(1);
-    inspector.followStep(() => false);
-    inspector.inspectPicked(onCondo);
-    expect(shown(), "a facility the step took and a redo put back opens again").toBe(2);
+    expect(cards.unit).toHaveBeenCalledTimes(2);
+    inspector.inspect({ type: "unit", id: 99, kind: "office" });
+    expect(ui.showInspector).toHaveBeenLastCalledWith(null);
+    expect(deps.setAnchor).toHaveBeenLastCalledWith(null);
   });
 });

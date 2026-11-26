@@ -348,7 +348,7 @@ export function wireEngine(app: GameApp): void {
       // The floating card is a desktop affordance only: on a phone-width
       // viewport we show ONE panel (the editor, with diagnostics folded in),
       // so a hybrid mouse+touch device never raises the card there either.
-      if (app.tool.type === "inspect" && !app.mobileMq.matches) app.inspector.inspectPicked(pick());
+      if (app.tool.type === "inspect" && !app.mobileMq.matches) app.inspector.inspect(pick());
     }
   };
 
@@ -379,14 +379,14 @@ export function wireEngine(app: GameApp): void {
     clearBuildRefusal(app);
     // Reuse the hover inspector card (unit or transport). armLongPress only fires
     // over a real facility; a null/floor/lobby pick reaching here anyway just
-    // hides the card (inspectPicked's own guard, pinned by the wiring test).
+    // hides the card (inspect's own guard, pinned by the wiring test).
     // Mark it a peek so the card is exactly the desktop hover tooltip (no manual
     // ✕: lifting the finger dismisses it, like mouse-away on desktop).
     // A deliberate hold is fresh intent, same as a tap: spend the ✕-dismissal
     // latch through the seam selectPicked uses, so a hybrid device's dismissed
     // hover card cannot eat the peek (#696). Hover picks alone never spend it.
     app.inspector.resetLatch();
-    app.inspector.inspectPicked(pick());
+    app.inspector.inspect(pick());
     app.ui.setInspectorPeek(true);
   };
   app.engine.onLongPressEnd = () => app.inspector.hide();
