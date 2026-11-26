@@ -1,14 +1,70 @@
 import type { UI } from "../ui/UI";
-import { unitEditorTemplate, transportEditorTemplate } from "../ui/templates/editor";
+import { unitEditorTemplate } from "../ui/templates/editor";
+import { shaftEditorTemplate, type ShaftEditAction } from "@verticopolis/components/windows/shaftEditor";
+import { catalogFacility } from "@verticopolis/components/render/catalogIndex";
 import { clockOf } from "../engineHost/headerClock";
+import { isBasementFloor } from "../ui/floorLabel";
 import type { ViewReader } from "@verticopolis/engine/port/viewReader";
+import type { TransportDetail } from "@verticopolis/engine/port/panels";
+import type { Catalog } from "@verticopolis/engine/catalog/catalogTypes";
+import type { TemplateResult } from "lit-html";
 import type { CardKit } from "./cardKit";
+
+/** Every button the shaft's card can carry: the web game offers them all. */
+const SHAFT_OFFERS: ReadonlySet<ShaftEditAction> = new Set<ShaftEditAction>([
+  "removecar",
+  "addcar",
+  "schedule",
+  "extendDown",
+  "extendUp",
+  "sell",
+]);
+
+/** A shaft keeps at least one car, so – Car is off at one. */
+const AT_FEWEST_CARS: ReadonlySet<ShaftEditAction> = new Set<ShaftEditAction>(["removecar"]);
+
+/** The elevator's stops line. An express stops at the lobbies and at every
+ *  basement floor it passes (1994 parity), so it reads a fixed policy,
+ *  counting any of those turned off (a basement stop the player turned off,
+ *  or a lobby a legacy save skipped) so the line never overstates. Other
+ *  elevators count the floors they skip. */
+export function shaftStopsText(t: Pick<TransportDetail, "kind" | "stops">): string {
+  if (t.kind === "elevatorExpress") {
+    const policy = t.stops.some((row) => isBasementFloor(row.floor))
+      ? "lobbies and basements"
+      : "lobbies and sky lobbies";
+    const skipped = t.stops.filter((row) => !row.served && (row.lobby || isBasementFloor(row.floor))).length;
+    return skipped ? `${policy} (${skipped} skipped)` : policy;
+  }
+  const skipped = t.stops.filter((row) => !row.served).length;
+  return skipped ? `skips ${skipped} floor${skipped === 1 ? "" : "s"}` : "all floors";
+}
+
+/** The shaft's editor card as the web game draws it: every button, the
+ *  catalog's resale value, the stops line, and the problem lines it is given
+ *  (the mobile card folds them in). */
+export function webShaftEditorTemplate(
+  t: TransportDetail,
+  catalog: Catalog,
+  ui: Pick<UI, "hideEditor" | "editAction">,
+  lines: readonly TemplateResult[],
+): TemplateResult {
+  return shaftEditorTemplate(t, catalog, {
+    offers: SHAFT_OFFERS,
+    disabled: t.cars <= 1 ? AT_FEWEST_CARS : undefined,
+    stops: shaftStopsText(t),
+    act: (action) => ui.editAction(action),
+    close: () => ui.hideEditor(),
+    resale: catalogFacility(catalog, t.kind).resaleRefund,
+    lines,
+  });
+}
 
 /** What {@link refreshEditorCard} reads off the app. */
 export interface EditorCardApp {
   readonly selected: { type: "unit" | "transport"; id: number } | null;
   readonly engine: { selectedId: number | null };
-  readonly ui: Pick<UI, "renderEditor">;
+  readonly ui: Pick<UI, "renderEditor" | "hideEditor" | "editAction">;
   readonly mobileMq: { readonly matches: boolean };
   readonly cardKit: CardKit;
   readonly reader: Pick<ViewReader, "header">;
@@ -41,12 +97,20 @@ export function refreshEditorCard(app: EditorCardApp, freshDiagnostics = true): 
     const diag = mobile ? kit.diagnostics.unit(u.id, freshDiagnostics) : [];
     const header = app.reader.header;
     app.ui.renderEditor(
-      unitEditorTemplate(u, kit.catalog(), clockOf(header).hour, mobile, diag, header.modernCalendar),
+      unitEditorTemplate(u, kit.catalog(), clockOf(header).hour, {
+        act: (action) => app.ui.editAction(action),
+        close: () => app.ui.hideEditor(),
+        mobile,
+        diag,
+        calendar: header.modernCalendar,
+      }),
     );
   } else {
     const t = kit.cards.shaft(sel.id);
     if (!t) return app.clearSelection();
     app.engine.selectedId = t.id; // outlines the shaft + shows extend arrows
-    app.ui.renderEditor(transportEditorTemplate(t, kit.catalog(), mobile ? kit.diagnostics.transport(t.id) : []));
+    app.ui.renderEditor(
+      webShaftEditorTemplate(t, kit.catalog(), app.ui, mobile ? kit.diagnostics.transport(t.id) : []),
+    );
   }
 }

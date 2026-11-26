@@ -838,7 +838,7 @@ test.describe("overview map on a phone", () => {
       g.selectPicked({ type: "unit", id: office.id, kind: office.kind });
     });
     await expect(page.locator("#editor")).toBeVisible();
-    const editorClose = page.locator("#editor .ed-close");
+    const editorClose = page.locator('#editor .win-title [aria-label="Close"]');
     const closeBox = (await editorClose.boundingBox())!;
     expect(overlaps(closeBox, (await page.locator("#onboard").boundingBox())!)).toBe(true);
     const closeOnTop = await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest("#editor"), {

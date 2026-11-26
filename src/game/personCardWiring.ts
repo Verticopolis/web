@@ -25,6 +25,8 @@ export function createPersonCard(app: GameApp): PersonCardController {
     ui: {
       renderEditor: (tpl) => app.ui.renderEditor(tpl),
       isEditorOpen: () => app.ui.isEditorOpen(),
+      hideEditor: () => app.ui.hideEditor(),
+      editAction: (action) => app.ui.editAction(action),
     },
     focus: (id) => (id === null ? clearPersonFocus(app.engine) : focusPerson(app.engine, id)),
     ringed: (id) => focusedPerson(app.engine)?.id === id,

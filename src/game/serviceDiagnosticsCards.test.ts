@@ -133,7 +133,9 @@ describe("service sections on a unit's card", () => {
     const { kit, copy } = kitFor("hotelSingle", DIRTY_HOTEL);
     const lines = kit.diagnostics.unit(ID, true);
     const unit = kit.cards.unit(ID)!;
-    const mobile = renderToFragment(unitEditorTemplate(unit, kit.catalog(), 12, true, lines));
+    const mobile = renderToFragment(
+      unitEditorTemplate(unit, kit.catalog(), 12, { act: () => {}, close: () => {}, mobile: true, diag: lines }),
+    );
     const desktop = renderToFragment(unitCardTemplate(unit, kit.catalog(), 12, lines));
     for (const target of [mobile.textContent, desktop.textContent]) {
       expect(target).toContain("Counts toward stars: no");

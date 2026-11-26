@@ -6,7 +6,8 @@ import type { TransportDetail, UnitDetail } from "@verticopolis/engine/port/pane
 import type { GameMode } from "@verticopolis/engine/model/types";
 import { catalogFor } from "../tests/catalogFixture";
 import { transportDetail, unitDetail } from "../tests/fixtures/detailCards";
-import { transportEditorTemplate, unitEditorTemplate } from "./templates/editor";
+import { webShaftEditorTemplate } from "../game/editorCard";
+import { unitEditorTemplate } from "./templates/editor";
 import { syncRungSelects } from "./templates/rungPicker";
 import { drawElement } from "./testing/litTestUtils";
 
@@ -16,8 +17,9 @@ import { drawElement } from "./testing/litTestUtils";
  * recreate a button mid-click; lit's binding diff now carries that guarantee,
  * so these tests pin it against the REAL templates: re-rendering with changed
  * values patches only the affected text/attributes, while every button and the
- * rename input keep their element identity. The UI-level wiring (delegation,
- * editorBusy, hide/close) is pinned by the renderEditor integration block.
+ * rename input keep their element identity. The UI-level wiring (the
+ * buttons' bindings, editorBusy, hide/close) is pinned by the renderEditor
+ * integration block.
  */
 
 /** The cards a refresh redraws: a MODERN occupied office (rename + the
@@ -29,11 +31,11 @@ const office = (over: Partial<UnitDetail> = {}, mode: GameMode = "modern") =>
 const lift = (cars: number) => transportDetail("elevatorStandard", 2, { id: 5, cars });
 
 function unitEditor(u: UnitDetail, mode: GameMode = "modern"): TemplateResult {
-  return unitEditorTemplate(u, catalogFor(mode), 7, false, []);
+  return unitEditorTemplate(u, catalogFor(mode), 7, { act: () => {}, close: () => {} });
 }
 
 function transportEditor(t: TransportDetail): TemplateResult {
-  return transportEditorTemplate(t, catalogFor("classic"), []);
+  return webShaftEditorTemplate(t, catalogFor("classic"), { editAction: () => {}, hideEditor: () => {} }, []);
 }
 
 describe("editor card lit diffing — updates in place, element identity survives", () => {
@@ -159,13 +161,13 @@ describe("editor card lit diffing — updates in place, element identity survive
   it("a car button crossing its disabled bound flips the attribute on the SAME element", () => {
     const card = drawElement<HTMLDivElement>(html`<div></div>`);
     render(transportEditor(lift(1)), card);
-    const remove = card.querySelector<HTMLButtonElement>('[data-edit="removecar"]')!;
+    const remove = card.querySelector<HTMLButtonElement>('[data-act="removecar"]')!;
     // The legacy protocol REBUILT the whole card at this bound (it was part of
     // the shape key); lit just patches the attribute, so even this refresh can
     // no longer swallow an in-flight click.
     expect(remove.disabled).toBe(true);
     render(transportEditor(lift(2)), card);
-    expect(card.querySelector('[data-edit="removecar"]')).toBe(remove);
+    expect(card.querySelector('[data-act="removecar"]')).toBe(remove);
     expect(remove.disabled).toBe(false);
   });
 });

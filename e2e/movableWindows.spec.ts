@@ -143,7 +143,7 @@ test.describe("movable windows", () => {
     expect(after.y).toBeCloseTo(moved.y, 0);
 
     // Closed and reopened, the card anchors beside its room again.
-    await page.locator("#editor .ed-close").click();
+    await page.locator('#editor .win-title [aria-label="Close"]').click();
     await expect(editor).toHaveClass(/hidden/);
     await page.evaluate(() => window.game.engine.setCamera(window.game.grid.width / 2, 6, 1));
     await page.evaluate(() => {
@@ -219,7 +219,7 @@ test.describe("movable windows on a phone", () => {
     expect(moved.x).toBeCloseTo(docked.x + 60, 0);
     expect(moved.y).toBeCloseTo(docked.y - 100, 0);
 
-    await page.locator("#editor .ed-close").tap();
+    await page.locator('#editor .win-title [aria-label="Close"]').tap();
     await expect(editor).toHaveClass(/hidden/);
     await open();
     await nextFrames(page);

@@ -5,7 +5,8 @@ import { clockOf } from "../engineHost/headerClock";
 import { PortCodes } from "@verticopolis/engine/port/portCodes";
 import type { ViewReader } from "@verticopolis/engine/port/viewReader";
 import type { Draft } from "../tests/portKit/drafts";
-import { unitEditorTemplate, transportEditorTemplate } from "../ui/templates/editor";
+import { unitEditorTemplate } from "../ui/templates/editor";
+import { webShaftEditorTemplate } from "./editorCard";
 import { transportCardTemplate, unitCardTemplate } from "@verticopolis/components/windows/inspectCard";
 import { createCardKit, type CardKit } from "./cardKit";
 import { catalogOf, newViewReader } from "./portAccess";
@@ -30,23 +31,31 @@ export function kitOf(sim: Draft): { kit: CardKit; engine: EnginePort; reader: V
   return { kit: createCardKit({ enginePort: engine, reader }), engine, reader };
 }
 
+/** The card's buttons do nothing here: these tests drive the controllers'
+ *  edit actions directly. */
+const NO_UI = { act: () => {}, close: () => {} };
+
 export function unitEditor(sim: Draft, u: Pick<Unit, "id">, mobile = false): TemplateResult {
   const { kit, engine, reader } = kitOf(sim);
   return unitEditorTemplate(
     kit.cards.unit(u.id)!,
     catalogOf({ enginePort: engine, reader }),
     clockOf(reader.header).hour,
-    mobile,
-    mobile ? kit.diagnostics.unit(u.id) : [],
-    reader.header.modernCalendar,
+    {
+      ...NO_UI,
+      mobile,
+      diag: mobile ? kit.diagnostics.unit(u.id) : [],
+      calendar: reader.header.modernCalendar,
+    },
   );
 }
 
 export function transportEditor(sim: Draft, t: Pick<Transport, "id">, mobile = false): TemplateResult {
   const { kit, engine, reader } = kitOf(sim);
-  return transportEditorTemplate(
+  return webShaftEditorTemplate(
     kit.cards.shaft(t.id)!,
     catalogOf({ enginePort: engine, reader }),
+    { editAction: () => {}, hideEditor: () => {} },
     mobile ? kit.diagnostics.transport(t.id) : [],
   );
 }

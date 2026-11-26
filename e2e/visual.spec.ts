@@ -135,7 +135,7 @@ test.describe("dialog chrome", () => {
       g.engine.selectedId = shaft.id;
       g.refreshEditor();
     });
-    await page.click('#editor [data-edit="schedule"]');
+    await page.click('#editor [data-act="schedule"]');
     await page.waitForSelector("#modal .es-body");
     // Park mid-scroll with real content in BOTH bands, so the baseline holds
     // evidence about each cover rather than just the one below.

@@ -910,10 +910,10 @@ describe.skipIf(noEngine)("EditorActions (dialogs, extend billing, per-kind butt
     const ex = shaftOf(sim, r.transportId!)!;
     for (const t of [ex, lift]) {
       const card = renderedCard(transportEditor(sim, t));
-      expect(card.querySelector('[data-edit="stops"]')).toBeNull();
-      expect(card.querySelector('[data-edit="express"]')).toBeNull();
-      expect(card.querySelector('[data-edit="allstops"]')).toBeNull();
-      expect(card.querySelector('[data-edit="schedule"]')).not.toBeNull();
+      expect(card.querySelector('[data-act="stops"]')).toBeNull();
+      expect(card.querySelector('[data-act="express"]')).toBeNull();
+      expect(card.querySelector('[data-act="allstops"]')).toBeNull();
+      expect(card.querySelector('[data-act="schedule"]')).not.toBeNull();
     }
     // The express card's fixed policy caption survives on its Stops row.
     expect(renderedCard(transportEditor(sim, ex)).textContent).toContain("lobbies and sky lobbies");

@@ -561,26 +561,29 @@ describe("aria-labelledby across the real dialogs: every modal names itself for 
   });
 });
 
-describe("renderEditor — lit diff patches in place; delegated actions dispatch", () => {
+describe("renderEditor: lit diff patches in place; the card's bindings run its actions", () => {
   const editorEl = (): HTMLElement => document.getElementById("editor")!;
 
   /** An occupied office's card, so it carries the rename input, the rent
    *  adjuster, and live stat cells. Modern by default, so the card carries the
    *  '+ rent' stepper this identity regression pins (the Classic card renders
    *  the rung picker instead; see editor.test.ts). */
-  const officeCard = (over: Partial<UnitDetail> = {}, mode: GameMode = "modern"): TemplateResult =>
-    unitEditorTemplate(unitDetail(mode, "office", over), catalogFor(mode), 9);
+  const officeCard = (ui: UI, over: Partial<UnitDetail> = {}, mode: GameMode = "modern"): TemplateResult =>
+    unitEditorTemplate(unitDetail(mode, "office", over), catalogFor(mode), 9, {
+      act: (action) => ui.editAction(action),
+      close: () => ui.hideEditor(),
+    });
 
   it("a refresh patches changed cells in place; buttons and the rename input keep identity", () => {
     const { ui } = makeUI();
-    ui.renderEditor(officeCard({ satisfaction: 0.5 }));
+    ui.renderEditor(officeCard(ui, { satisfaction: 0.5 }));
     expect(ui.isEditorOpen()).toBe(true);
     const btn = editorEl().querySelector<HTMLElement>('[data-edit="rentUp"]')!;
     const name = editorEl().querySelector<HTMLInputElement>("#ed-name")!;
     const evalCell = editorEl().querySelector('[data-field="eval"]')!;
     expect(evalCell.textContent).toContain("50%");
 
-    ui.renderEditor(officeCard({ satisfaction: 0.78 }));
+    ui.renderEditor(officeCard(ui, { satisfaction: 0.78 }));
     expect(evalCell.textContent).toContain("78%");
     expect(editorEl().querySelector('[data-edit="rentUp"]')).toBe(btn); // no swallowed click
     expect(editorEl().querySelector("#ed-name")).toBe(name);
@@ -588,14 +591,14 @@ describe("renderEditor — lit diff patches in place; delegated actions dispatch
 
   it("a refresh landing between pointerdown and pointerup does not recreate the pressed button (the '+ rent' bug)", () => {
     const { ui, cb } = makeUI();
-    ui.renderEditor(officeCard());
+    ui.renderEditor(officeCard(ui));
     const btn = editorEl().querySelector<HTMLElement>('[data-edit="rentUp"]')!;
 
     // Press... the main loop's refresh gate (editorBusy) arms,
     btn.dispatchEvent(new Event("pointerdown", { bubbles: true }));
     expect(ui.isEditorBusy()).toBe(true);
     // ...but even a refresh that slips through mid-click keeps the element:
-    ui.renderEditor(officeCard({ satisfaction: 0.9 }));
+    ui.renderEditor(officeCard(ui, { satisfaction: 0.9 }));
     expect(editorEl().querySelector('[data-edit="rentUp"]')).toBe(btn);
     // ...release, and the click that began before the refresh still lands.
     document.dispatchEvent(new Event("pointerup", { bubbles: true }));
@@ -604,46 +607,46 @@ describe("renderEditor — lit diff patches in place; delegated actions dispatch
     expect(cb.onEditAction).toHaveBeenCalledExactlyOnceWith("rentUp", editorEl());
   });
 
-  it("[data-edit] clicks dispatch through the delegated listener after any re-render", () => {
+  it("[data-edit] clicks reach the game's edit action after any re-render", () => {
     const { ui, cb } = makeUI();
-    ui.renderEditor(officeCard());
-    ui.renderEditor(officeCard({ state: "gutted" })); // shape change: rows restructure
+    ui.renderEditor(officeCard(ui));
+    ui.renderEditor(officeCard(ui, { state: "gutted" })); // shape change: rows restructure
     editorEl().querySelector<HTMLElement>('[data-edit="sell"]')!.click();
     expect(cb.onEditAction).toHaveBeenCalledExactlyOnceWith("sell", editorEl());
   });
 
-  it("the Classic rung picker's change event dispatches through the delegated listener, and renderEditor syncs its selection", () => {
+  it("the Classic rung picker's change event reaches the game's edit action, and renderEditor syncs its selection", () => {
     const { ui, cb } = makeUI();
     // Classic: the card renders the rung picker.
-    ui.renderEditor(officeCard({}, "classic"));
+    ui.renderEditor(officeCard(ui, {}, "classic"));
     const select = editorEl().querySelector<HTMLSelectElement>("#ed-rung")!;
     expect(select.value).toBe("2"); // renderEditor synced the Average selection post-render
     select.value = "3";
     select.dispatchEvent(new Event("change", { bubbles: true }));
     expect(cb.onEditAction).toHaveBeenCalledExactlyOnceWith("rung", editorEl());
     // An engine-side change re-syncs the picker on the next pump render.
-    ui.renderEditor(officeCard({ rent: 2_000 }, "classic"));
+    ui.renderEditor(officeCard(ui, { rent: 2_000 }, "classic"));
     expect(editorEl().querySelector<HTMLSelectElement>("#ed-rung")!.value).toBe("0");
   });
 
   it("hideEditor clears the card through lit and a later render reopens it", () => {
     const { ui } = makeUI();
-    ui.renderEditor(officeCard());
+    ui.renderEditor(officeCard(ui));
     ui.hideEditor();
     expect(ui.isEditorOpen()).toBe(false);
     expect(editorEl().textContent?.trim()).toBe("");
     expect(editorEl().querySelector("[data-edit]")).toBeNull();
 
-    ui.renderEditor(officeCard());
+    ui.renderEditor(officeCard(ui));
     expect(ui.isEditorOpen()).toBe(true);
     expect(editorEl().querySelector('[data-edit="sell"]')).not.toBeNull();
   });
 
-  it("the editor card's title-bar ✕ hides it via the delegated listener", () => {
+  it("the editor card's title-bar ✕ hides it", () => {
     const { ui } = makeUI();
-    ui.renderEditor(officeCard());
+    ui.renderEditor(officeCard(ui));
     expect(ui.isEditorOpen()).toBe(true);
-    editorEl().querySelector<HTMLElement>(".ed-close")!.click();
+    editorEl().querySelector<HTMLElement>('.win-title [aria-label="Close"]')!.click();
     expect(ui.isEditorOpen()).toBe(false);
   });
 });
