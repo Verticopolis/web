@@ -107,7 +107,7 @@ test("a click with Inspect opens a walking person's card, and Follow keeps the c
   await expect(editor.getByRole("button", { name: "Follow", exact: true })).toBeVisible();
 
   // The ✕ lets them go: the card closes and the follow ends with it.
-  await editor.locator(".ed-close").click();
+  await editor.locator('.win-title [aria-label="Close"]').click();
   await expect(editor).toHaveClass(/hidden/);
   await expect.poll(() => page.evaluate(() => window.game.personCard.openId)).toBeNull();
 });

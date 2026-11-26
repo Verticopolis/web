@@ -137,7 +137,7 @@ test.describe("on a phone", () => {
       g.selected = { type: "transport", id: shaft.id };
       g.engine.selectedId = shaft.id;
       g.refreshEditor();
-      (document.querySelector('#editor [data-edit="schedule"]') as HTMLElement).click();
+      (document.querySelector('#editor [data-act="schedule"]') as HTMLElement).click();
     });
     await expect(page.locator("#modal .es-grid")).toBeVisible();
     const s = await scrollers(page, "es-grid");

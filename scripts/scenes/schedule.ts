@@ -48,7 +48,7 @@ async function openScheduleDialog(page: import("playwright").Page, kind: string,
       // is the whole point, so it relies on the editor, the dialog and the
       // guard all mounting synchronously (lit renders do). If one ever
       // defers, this throws on every run and names the step.
-      const open = document.querySelector('#editor [data-edit="schedule"]') as HTMLElement | null;
+      const open = document.querySelector('#editor [data-act="schedule"]') as HTMLElement | null;
       if (!open) throw new Error("the editor rendered no Schedule button");
       // A dialog an earlier shot left open (keepDialogs) still holds a box, so
       // the mount check below must see a NEW one, or a dead button would pass.
@@ -91,8 +91,8 @@ async function openScheduleDialog(page: import("playwright").Page, kind: string,
     { k: kind, stage: stageUnsaved },
   );
   if (stageUnsaved) return;
-  await page.waitForSelector('#editor [data-edit="schedule"]', { timeout: 4000 });
-  await page.evaluate(() => (document.querySelector('#editor [data-edit="schedule"]') as HTMLElement | null)?.click());
+  await page.waitForSelector('#editor [data-act="schedule"]', { timeout: 4000 });
+  await page.evaluate(() => (document.querySelector('#editor [data-act="schedule"]') as HTMLElement | null)?.click());
   await page.waitForSelector("#modal .es-body", { timeout: 4000 });
 }
 

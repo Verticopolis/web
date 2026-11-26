@@ -32,29 +32,6 @@ export function renderEditor(ui: UI, tpl: TemplateResult): void {
   ui.editorSize = { w: ui.el.editor.offsetWidth, h: ui.el.editor.offsetHeight };
 }
 
-/** Wire the editor card's single delegated click listener (called once, from
- *  the UI constructor). Delegation on the container survives every lit
- *  re-render, so actions never need rewiring: any `[data-edit]` element
- *  dispatches its action, and the title bar's ✕ closes the card. */
-export function wireEditorActions(ui: UI): void {
-  ui.el.editor.addEventListener("click", (e) => {
-    const target = e.target as Element;
-    // Both closest() walks are containment-guarded: closest can escape above
-    // the card, and a match outside it must not act.
-    const x = target.closest(".ed-close");
-    if (x && ui.el.editor.contains(x)) return hideEditor(ui);
-    const b = target.closest<HTMLElement>("[data-edit]");
-    if (b && ui.el.editor.contains(b)) ui.cb.onEditAction(b.dataset.edit!, ui.el.editor);
-  });
-  // Selects (the Classic rung picker) commit on `change`, not click; the same
-  // delegated pattern so lit re-renders never need rewiring. The handler reads
-  // the select's live value out of the card, exactly like the rename input.
-  ui.el.editor.addEventListener("change", (e) => {
-    const s = (e.target as Element).closest<HTMLSelectElement>("select[data-edit-select]");
-    if (s && ui.el.editor.contains(s)) ui.cb.onEditAction(s.dataset.editSelect!, ui.el.editor);
-  });
-}
-
 export function hideEditor(ui: UI): void {
   ui.el.editor.classList.add("hidden");
   // Clear THROUGH lit, never innerHTML: lit tracks its rendered parts against

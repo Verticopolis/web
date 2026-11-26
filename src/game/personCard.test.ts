@@ -38,7 +38,12 @@ function deps(answers: Array<PersonDetail | undefined>) {
     catalog: () => catalogFor("modern"),
     shaftKind: vi.fn(() => "elevatorExpress" as const),
     mood: vi.fn(() => "content" as const),
-    ui: { renderEditor: vi.fn<(tpl: TemplateResult) => void>(), isEditorOpen: () => open },
+    ui: {
+      renderEditor: vi.fn<(tpl: TemplateResult) => void>(),
+      isEditorOpen: () => open,
+      hideEditor: vi.fn(),
+      editAction: vi.fn(),
+    },
     focus: vi.fn(),
     ringed: vi.fn(() => true),
     place: vi.fn(),
@@ -138,5 +143,16 @@ describe("PersonCardController", () => {
     expect(c.handleAction(PERSON_FOLLOW_ACTION)).toBe(true);
     expect(d.setFollow).toHaveBeenLastCalledWith(false);
     expect(shown(d)).toContain("Follow");
+  });
+
+  it("sends the card's Follow to the game's edit actions and its ✕ to hide the window", () => {
+    const d = deps([person()]);
+    new PersonCardController(d).open(5);
+    const f = renderToFragment(d.ui.renderEditor.mock.lastCall![0]);
+    f.querySelector<HTMLButtonElement>(`[data-edit="${PERSON_FOLLOW_ACTION}"]`)!.click();
+    expect(d.ui.editAction).toHaveBeenCalledWith(PERSON_FOLLOW_ACTION);
+    expect(d.ui.hideEditor).not.toHaveBeenCalled();
+    f.querySelector<HTMLButtonElement>('.win-title [aria-label="Close"]')!.click();
+    expect(d.ui.hideEditor).toHaveBeenCalledOnce();
   });
 });

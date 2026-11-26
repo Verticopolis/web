@@ -25,6 +25,9 @@ export interface PersonCardDeps {
   ui: {
     renderEditor(tpl: TemplateResult): void;
     isEditorOpen(): boolean;
+    hideEditor(): void;
+    /** Run a card button's action through the game's edit actions. */
+    editAction(action: string): void;
   };
   /** Ring the person in the view (and drop the ring with null). */
   focus(id: number | null): void;
@@ -113,6 +116,8 @@ export class PersonCardController {
         shaftKind,
         mood: this.deps.mood(p.wait, p.staff),
         following: !this.gone && this.deps.following(),
+        act: (action) => this.deps.ui.editAction(action),
+        close: () => this.deps.ui.hideEditor(),
       }),
     );
   }

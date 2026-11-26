@@ -1,6 +1,6 @@
 import { html, nothing, type TemplateResult } from "lit-html";
 import { iconTemplate } from "@verticopolis/components/windows/icons";
-import { keyed } from "lit-html/directives/keyed.js";
+import { editorActionRow, editorCardTemplate, editorFact } from "@verticopolis/components/windows/editorCard";
 import { isOperational, isTenanted } from "@verticopolis/engine/model/unitState";
 import { isCommercialKind, isHotelKind } from "@verticopolis/components/presentation/viewKinds";
 import {
@@ -16,41 +16,29 @@ import {
   type CatalogRentCadence,
 } from "@verticopolis/engine/catalog/catalogTypes";
 import { catalogFacility, catalogOpenAt } from "@verticopolis/components/render/catalogIndex";
-import type { ScreenDetail, TransportDetail, UnitDetail } from "@verticopolis/engine/port/panels";
+import type { ScreenDetail, UnitDetail } from "@verticopolis/engine/port/panels";
 import { catalogCalendar, priceOptionsFor, rentPerCollection } from "../catalogPricing";
 import type { CalendarKind } from "@verticopolis/engine/model/engineTypes";
 import { hasAccessDiagnostic, occupantsText } from "../../game/cardLines";
 import { rungPickerTemplate, type RungChoice } from "./rungPicker";
-import { isBasementFloor } from "../floorLabel";
-import { floorTag, groupDigits } from "@verticopolis/components/windows/format";
+import { groupDigits } from "@verticopolis/components/windows/format";
 
 /**
- * The editor card bodies (E6-S1), pure functions of (card, catalog, mobile).
- * Authored to match `unitEditorHtml` / `transportEditorHtml` structurally
- * (proven by transitional guards, retired with the string builders) but rendered every
+ * The unit editor card, a pure function of (card, catalog, hour, options),
+ * drawn on the components' editor card frame (`windows/editorCard`); a
+ * shaft's card is the components' `windows/shaftEditor`. It is rendered every
  * pump: lit's binding diff patches only the values that changed, so the
- * buttons and the rename input keep their element identity across refreshes.
- * That diff is what replaces the old `key`/`patchVolatile` protocol, a refresh
- * can never recreate a button mid-click (the "+ rent sometimes does nothing"
- * bug). The `data-field` attributes stay on the value cells: tests and tooling
- * read them, and they document which cells carry live values.
+ * buttons and the rename input keep their element identity across refreshes,
+ * and a refresh can never recreate a button mid-click. Each button and select
+ * is a lit binding that hands its action to `opts.act`. The `data-edit` and
+ * `data-field` attributes stay as markers that tests and tooling read.
  *
  * The mobile diagnostics block folds in the card's diagnostic lines (the
  * engine's facts worded by `game/portUnitDiagnostics.ts`, shared with the
- * desktop inspector card). The caller builds those lit `TemplateResult` lines
- * (on mobile only) and hands them over as `diagnostics`, so the block
- * interpolates them directly; the wrapper renders only when there is at least
- * one line (an empty array leaves no `.ed-diagnostics` box, matching the old
- * empty `:empty { display:none }` div).
+ * desktop inspector card). The caller builds those lines on mobile only and
+ * hands them over as `diag`; the block renders only when there is at least
+ * one line.
  */
-
-/** The editor card's title bar, one template so the two editors can't drift. */
-const titleBar = (name: string): TemplateResult =>
-  html`<h4 class="win-title">${name}<button type="button" class="ed-close btn xs" aria-label="Close">✕</button></h4>`;
-
-/** One key/value stat row. `field` marks the cells that carry live values. */
-const kv = (label: string | TemplateResult, value: unknown, field?: string): TemplateResult =>
-  html`<span class="k">${label}</span><span class="v" data-field=${field ?? nothing}>${value}</span>`;
 
 /** A theater's screens, the first from its own fields: none off a cinema,
  *  and a second only where it runs two (#1950). */
@@ -59,26 +47,6 @@ function cinemaScreens(u: UnitDetail): ScreenDetail[] {
   const first: ScreenDetail = { filmPolicy: u.filmPolicy, filmDays: u.filmDays ?? 0, filmTier: u.filmTier ?? "new" };
   return u.screen2 ? [first, u.screen2] : [first];
 }
-
-/** One action row of the editor card. */
-const edRow = (inner: TemplateResult): TemplateResult => html`<div class="ed-row">${inner}</div>`;
-
-/** The shared editor-card frame: title bar + stat grid + an optional full-width
- *  block (the mobile diagnostics fold-in) + action rows. `key` is the selected
- *  entity's identity ("unit:7" / "transport:3"): `keyed` clears and rebuilds
- *  the card when the SELECTION changes, exactly the legacy id-keyed rebuild.
- *  Without it, lit would reuse the rename input across entities, and a dirty
- *  (mid-edit) input's live value survives attribute updates, so half-typed
- *  text from unit A would show, and commit, on unit B. Within one entity the
- *  key is constant and lit's diff patches values in place as usual. */
-const editorShell = (
-  key: string,
-  name: string,
-  rows: TemplateResult[],
-  actions: TemplateResult[],
-  diagnostics: unknown = nothing,
-): TemplateResult =>
-  html`${keyed(key, html`${titleBar(name)}<div class="ed-stats kv">${rows}</div>${diagnostics}${actions}`)}`;
 
 /** Modern's real-world calendar pays lease rent each month, not each quarter (#2255). */
 function leaseLandsMonthly(calendar: CatalogCalendar): boolean {
@@ -102,21 +70,38 @@ function rentLine(cadence: CatalogRentCadence, price: number, calendar: CatalogC
   return `$${groupDigits(paid)} (the $${groupDigits(price)} rate scaled to a ${period})`;
 }
 
-/** The unit editor card. `calendar` is the calendar the tower chose (the
- *  view header's `modernCalendar`); left out, the mode's default calendar. */
+/** What the unit editor card takes besides the unit, the catalog and the hour. */
+export interface UnitEditorOptions {
+  /** Runs a button's action (its `data-edit`), or the rung picker's
+   *  (`rung`) when its choice changes. */
+  act(action: string): void;
+  /** The title bar's ✕. */
+  close(): void;
+  /** A phone's card, which folds in the problem lines (`diag`). */
+  readonly mobile?: boolean;
+  readonly diag?: readonly TemplateResult[];
+  /** The calendar the tower chose (the view header's `modernCalendar`); left
+   *  out, the mode's default calendar. */
+  readonly calendar?: CalendarKind;
+}
+
+/** The unit editor card. */
 export function unitEditorTemplate(
   u: UnitDetail,
   catalog: Catalog,
   hour: number,
-  mobile = false,
-  diag: TemplateResult[] = [],
-  calendar?: CalendarKind,
+  opts: UnitEditorOptions,
 ): TemplateResult {
+  const mobile = opts.mobile ?? false;
+  const diag = opts.diag ?? [];
+  const calendar = opts.calendar;
+  /** A button's or the rung picker's handler: hands its action to the game. */
+  const act = (action: string) => () => opts.act(action);
   const f = catalogFacility(catalog, u.kind);
   const floorLabel = u.floor >= 1 ? `Floor ${u.floor}` : `Basement ${1 - u.floor}`;
   const canRename = u.kind === "office" || u.kind === "condo";
   const rcfg = f.rent;
-  const rows: TemplateResult[] = [kv("Location", floorLabel), kv("Status", u.state, "status")];
+  const rows: TemplateResult[] = [editorFact("Location", floorLabel), editorFact("Status", u.state, "status")];
   // A venue people come to in person shows its live customer count; "(closed)"
   // only for a tenanted venue outside business hours, a vacant or
   // under-construction unit already tells that story in its Status row. The
@@ -126,10 +111,15 @@ export function unitEditorTemplate(
   // the flat catalog value for the rest), never a bare `5/3` for a big family.
   if (isCommercialKind(u.kind) && f.population > 0) {
     const closed = isTenanted(u) && !catalogOpenAt(f, hour);
-    if (u.customersIn !== null) rows.push(kv("Customers", `${u.customersIn}${closed ? " (closed)" : ""}`, "customers"));
+    if (u.customersIn !== null)
+      rows.push(editorFact("Customers", `${u.customersIn}${closed ? " (closed)" : ""}`, "customers"));
   } else if (f.population) {
     rows.push(
-      kv("Occupants", occupantsText(u.occupants, catalogResidents(f, u.residents), u.workersComing), "occupants"),
+      editorFact(
+        "Occupants",
+        occupantsText(u.occupants, catalogResidents(f, u.residents), u.workersComing),
+        "occupants",
+      ),
     );
   }
   // On mobile the folded-in diagnostics carry the richer access reachability
@@ -150,7 +140,7 @@ export function unitEditorTemplate(
     if (!served) text = "No";
     else if (cutOff) text = "No route";
     rows.push(
-      kv(
+      editorFact(
         "Elevator access",
         html`<span style="color:${served && !cutOff ? "var(--good)" : "var(--bad)"}">${text}</span>`,
         "served",
@@ -158,7 +148,9 @@ export function unitEditorTemplate(
     );
   }
   const evalPct = Math.round(u.satisfaction * 100);
-  rows.push(kv("Eval", html`<span class="evalbar"><span style="width:${evalPct}%"></span></span> ${evalPct}%`, "eval"));
+  rows.push(
+    editorFact("Eval", html`<span class="evalbar"><span style="width:${evalPct}%"></span></span> ${evalPct}%`, "eval"),
+  );
   if (rcfg) {
     let label = "Quarterly rent";
     if (u.kind === "condo") label = "Sale price";
@@ -174,7 +166,7 @@ export function unitEditorTemplate(
     if (!u.noRate && u.kind === "condo") rent = `$${groupDigits(catalogHouseholdPrice(catalog, u.price, u.residents))}`;
     else if (!u.noRate && isHotelKind(u.kind)) rent = `$${groupDigits(u.price)}/night`;
     else if (!u.noRate) rent = rentLine(rcfg.cadence, u.price, catalogCalendar(catalog, calendar));
-    rows.push(kv(label, rent, "rent"));
+    rows.push(editorFact(label, rent, "rent"));
   }
   // A theater shows a film on each screen, and the player pays to show
   // another; the catalog lists the mode's films and their prices (#1932,
@@ -188,25 +180,32 @@ export function unitEditorTemplate(
       screens.forEach((screen, i) => {
         const days = screen.filmDays === 1 ? "1 day" : `${screen.filmDays} days`;
         rows.push(
-          kv(`Screen ${i + 1}`, `${filmLabel(screen.filmTier)}, ${days}`, i === 0 ? "showing" : `showing${i + 1}`),
+          editorFact(
+            `Screen ${i + 1}`,
+            `${filmLabel(screen.filmTier)}, ${days}`,
+            i === 0 ? "showing" : `showing${i + 1}`,
+          ),
         );
       });
     } else {
-      rows.push(kv("Now showing", filmLabel(u.filmTier), "showing"));
-      rows.push(kv("Days showing", u.filmDays ?? 0, "filmDays"));
+      rows.push(editorFact("Now showing", filmLabel(u.filmTier), "showing"));
+      rows.push(editorFact("Days showing", u.filmDays ?? 0, "filmDays"));
     }
   }
   if (u.state === "gutted") {
-    rows.push(kv("Scrap value", "$0"));
+    rows.push(editorFact("Scrap value", "$0"));
     // The pixel warning icon, not the bare glyph: this panel is not a
     // message rail, so no emoji mapper runs on it, and a bare U+26A0 shows as
     // a missing-glyph box on a system without symbol fonts (#794). The icon is
     // hidden from screen readers, so a hidden word keeps the spoken cue.
     rows.push(
-      kv(html`${iconTemplate("warning")}<span class="visually-hidden">Warning</span>`, "Gutted: bulldoze and rebuild."),
+      editorFact(
+        html`${iconTemplate("warning")}<span class="visually-hidden">Warning</span>`,
+        "Gutted: bulldoze and rebuild.",
+      ),
     );
   } else {
-    rows.push(kv("Resale value", `$${groupDigits(f.resaleRefund)}`));
+    rows.push(editorFact("Resale value", `$${groupDigits(f.resaleRefund)}`));
   }
 
   const actions: TemplateResult[] = [];
@@ -215,8 +214,8 @@ export function unitEditorTemplate(
     // re-render while the player is typing never clobbers the live text or
     // caret; the label only changes when a rename commits.
     actions.push(
-      edRow(
-        html`<input class="field" data-edit="noop" id="ed-name" value=${u.label} /><button class="btn" data-edit="rename">Rename</button>`,
+      editorActionRow(
+        html`<input class="field" id="ed-name" value=${u.label} /><button class="btn" data-edit="rename" @click=${act("rename")}>Rename</button>`,
       ),
     );
   }
@@ -233,32 +232,40 @@ export function unitEditorTemplate(
     if (u.kind === "condo") ariaLabel = "Sale price level";
     else if (isHotelKind(u.kind)) ariaLabel = "Room rate level";
     actions.push(
-      edRow(
+      editorActionRow(
         rungPickerTemplate({
           id: "ed-rung",
           rungs: priceShape.rungs,
           current,
           ariaLabel,
           disabled: locked,
-          dataEditSelect: "rung",
+          onChange: act("rung"),
         }),
       ),
     );
     // Batch-price every unit of this kind at once (no per-room grind); a sold
     // condo keeps only its locked picker.
     if (!locked) {
-      actions.push(edRow(html`<button class="btn" data-edit="batchKind">Set all ${f.name.toLowerCase()}s…</button>`));
+      actions.push(
+        editorActionRow(
+          html`<button class="btn" data-edit="batchKind" @click=${act("batchKind")}>Set all ${f.name.toLowerCase()}s…</button>`,
+        ),
+      );
     }
   } else if (rcfg && !(u.kind === "condo" && u.everOccupied)) {
     // Price adjuster: offices/hotels any time, condos only while still unsold.
     const what = u.kind === "condo" ? "price" : "rent";
     actions.push(
-      edRow(
-        html`<button class="btn" data-edit="rentDown">– ${what}</button><button class="btn" data-edit="rentUp">+ ${what}</button>`,
+      editorActionRow(
+        html`<button class="btn" data-edit="rentDown" @click=${act("rentDown")}>– ${what}</button><button class="btn" data-edit="rentUp" @click=${act("rentUp")}>+ ${what}</button>`,
       ),
     );
     // Batch-price every unit of this kind at once (no per-room grind).
-    actions.push(edRow(html`<button class="btn" data-edit="batchKind">Set all ${f.name.toLowerCase()}s…</button>`));
+    actions.push(
+      editorActionRow(
+        html`<button class="btn" data-edit="batchKind" @click=${act("batchKind")}>Set all ${f.name.toLowerCase()}s…</button>`,
+      ),
+    );
   }
   // Each screen's films to book, then the film it books again once its film
   // is spent, where the mode rebooks (#1950). Only an open theater shows a
@@ -268,22 +275,30 @@ export function unitEditorTemplate(
     if (isOperational(u)) {
       const book = films.map(
         (film) =>
-          html`<button class="btn" data-edit=${filmEditAction(film.key, i)}>${film.label} ($${groupDigits(film.price)})</button>`,
+          html`<button class="btn" data-edit=${filmEditAction(film.key, i)} @click=${act(filmEditAction(film.key, i))}>${film.label} ($${groupDigits(film.price)})</button>`,
       );
       if (named) actions.push(html`<div class="ed-screen">Book a film on screen ${i + 1}</div>`);
-      actions.push(edRow(html`${book}`));
+      actions.push(editorActionRow(html`${book}`));
     }
     const rebook = catalogFilmRebook(catalog, screen.filmPolicy);
     if (rebook) {
       const label = rebook.film === null ? "Off" : filmLabel(rebook.film);
       const what = named ? `Screen ${i + 1} auto-rebook` : "Auto-rebook";
-      actions.push(edRow(html`<button class="btn" data-edit=${filmPolicyEditAction(i)}>${what}: ${label} ▸</button>`));
+      actions.push(
+        editorActionRow(
+          html`<button class="btn" data-edit=${filmPolicyEditAction(i)} @click=${act(filmPolicyEditAction(i))}>${what}: ${label} ▸</button>`,
+        ),
+      );
     }
   });
   // The theater's ticket price (#1950), where the mode has one.
   const ticket = u.kind === "cinema" ? catalogTicketPrice(catalog, u.ticketPrice) : null;
   if (ticket) {
-    actions.push(edRow(html`<button class="btn" data-edit="ticketPrice">Ticket price: ${ticket.label} ▸</button>`));
+    actions.push(
+      editorActionRow(
+        html`<button class="btn" data-edit="ticketPrice" @click=${act("ticketPrice")}>Ticket price: ${ticket.label} ▸</button>`,
+      ),
+    );
   }
   // Canon retail reroll: only offer on shop / fastFood / restaurant. Legacy
   // retail units without a subtype still get the button so a player can opt
@@ -291,9 +306,15 @@ export function unitEditorTemplate(
   // handler (rerollSubtype returns undefined), but the button belongs off
   // their card to avoid a visible no-op affordance.
   if (u.kind === "shop" || u.kind === "fastFood" || u.kind === "restaurant") {
-    actions.push(edRow(html`<button class="btn" data-edit="changeVariety">Change variety ▸</button>`));
+    actions.push(
+      editorActionRow(
+        html`<button class="btn" data-edit="changeVariety" @click=${act("changeVariety")}>Change variety ▸</button>`,
+      ),
+    );
   }
-  actions.push(edRow(html`<button class="btn danger" data-edit="sell">Sell / Bulldoze</button>`));
+  actions.push(
+    editorActionRow(html`<button class="btn danger" data-edit="sell" @click=${act("sell")}>Sell / Bulldoze</button>`),
+  );
 
   // On mobile, fold the inspector card's diagnostics in as a live block between
   // the stats and the controls (one panel, no separate card). Desktop leaves
@@ -303,71 +324,12 @@ export function unitEditorTemplate(
   // desktop leaves the block to the hover card.
   const diagnostics = diag.length ? html`<div class="ed-diagnostics" data-field="diagnostics">${diag}</div>` : nothing;
   // Canon retail variant titles the editor card too, matching the inspector.
-  return editorShell(`unit:${u.id}`, u.subtype ?? f.name, rows, actions, diagnostics);
-}
-
-export function transportEditorTemplate(
-  t: TransportDetail,
-  catalog: Catalog,
-  tdiag: TemplateResult[] = [],
-): TemplateResult {
-  const f = catalogFacility(catalog, t.kind);
-  // The catalog lists a car limit for elevators and no other kind.
-  const maxCars = f.maxCars;
-  const isEl = maxCars !== null;
-  const rows: TemplateResult[] = [
-    kv("Serves floors", `${floorTag(t.bottom)} – ${floorTag(t.top)}`, "serves"),
-    kv("Height", `${t.top - t.bottom + 1} floors`, "height"),
-  ];
-  if (isEl) {
-    rows.push(kv("Cars", `${t.cars} / ${maxCars} max`, "cars"));
-    rows.push(kv("Capacity", `${t.capacity} riders/trip`, "capacity"));
-    // An express stops at the lobbies and at every basement floor it passes
-    // (1994 parity), so it reads a fixed policy line rather than a free
-    // per-floor skip count. A basement stop the player turned off, or a
-    // lobby a legacy save skipped, is counted so the line never overstates.
-    // Standard/service keep their configurable stop readout.
-    let stops: string;
-    if (t.kind === "elevatorExpress") {
-      const policy = t.stops.some((row) => isBasementFloor(row.floor))
-        ? "lobbies and basements"
-        : "lobbies and sky lobbies";
-      const skipped = t.stops.filter((row) => !row.served && (row.lobby || isBasementFloor(row.floor))).length;
-      stops = skipped ? `${policy} (${skipped} skipped)` : policy;
-    } else {
-      const skipped = t.stops.filter((row) => !row.served).length;
-      stops = skipped ? `skips ${skipped} floor${skipped === 1 ? "" : "s"}` : "all floors";
-    }
-    rows.push(kv("Stops", stops, "stops"));
-  }
-  rows.push(kv("Resale value", `$${groupDigits(f.resaleRefund)}`));
-
-  const actions: TemplateResult[] = [];
-  if (isEl) {
-    actions.push(
-      edRow(
-        html`<button class="btn" data-edit="removecar" ?disabled=${t.cars <= 1}>– Car</button><button class="btn" data-edit="addcar" ?disabled=${t.cars >= maxCars}>+ Car</button>`,
-      ),
-    );
-    // Per-shaft configuration (elevator-scheduling #305, floors fold-in #464):
-    // ONE surface for stops, staging, and scheduling. The old Configure stops…
-    // dialog and the Express (lobbies) / All stops card rows retired into the
-    // Schedule dialog's floors grid, matching the 1994 one-window layout.
-    // Available on every elevator kind (standard, service, express).
-    actions.push(edRow(html`<button class="btn" data-edit="schedule">Schedule…</button>`));
-    // Extend arrows are an elevator affordance: stairs/escalators are a
-    // fixed two-floor flight by rule and never reach this branch.
-    actions.push(
-      edRow(
-        html`<button class="btn" data-edit="extendDown">▼ Extend down</button><button class="btn" data-edit="extendUp">▲ Extend up</button>`,
-      ),
-    );
-  }
-  actions.push(edRow(html`<button class="btn danger" data-edit="sell">Sell / Bulldoze</button>`));
-
-  // Desktop leaves the diagnostics to the hover card; its caller passes none.
-  const diagnostics = tdiag.length
-    ? html`<div class="ed-diagnostics" data-field="diagnostics">${tdiag}</div>`
-    : nothing;
-  return editorShell(`transport:${t.id}`, f.name, rows, actions, diagnostics);
+  return editorCardTemplate({
+    key: `unit:${u.id}`,
+    title: u.subtype ?? f.name,
+    facts: rows,
+    block: diagnostics,
+    actions,
+    close: () => opts.close(),
+  });
 }

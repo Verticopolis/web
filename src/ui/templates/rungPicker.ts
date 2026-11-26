@@ -33,11 +33,8 @@ export function rungPickerTemplate(opts: {
   current: RungChoice;
   ariaLabel: string;
   disabled?: boolean;
-  /** Editor-card path: the delegated [data-edit-select] change listener routes
-   *  this value through handleEditAction (no inline handler needed). */
-  dataEditSelect?: string;
-  /** Dialog path: an inline @change handler (the batch controller re-renders
-   *  from its own state). */
+  /** Runs when the player picks a rung: the editor card hands it to the game's
+   *  edit action, the batch dialog re-renders from its own state. */
   onChange?: (e: Event) => void;
 }): TemplateResult {
   const { rungs, current } = opts;
@@ -57,7 +54,6 @@ export function rungPickerTemplate(opts: {
       class="field"
       aria-label=${opts.ariaLabel}
       data-current=${String(current)}
-      data-edit-select=${opts.dataEditSelect ?? nothing}
       ?disabled=${opts.disabled ?? false}
       @change=${opts.onChange ?? nothing}
     >

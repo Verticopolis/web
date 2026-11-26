@@ -135,10 +135,6 @@ export class UI {
     buildPalette(this);
     this.wireControls();
     this.selectTool({ type: "inspect" });
-    // The editor card's [data-edit] actions and its ✕ dispatch through ONE
-    // delegated listener on the container, so lit re-renders never need
-    // rewiring (E6-S1).
-    panels.wireEditorActions(this);
     // One app_action the first time the player scrolls back through the Bulletin.
     wireBulletinReadBack(this.el.log);
     // While the pointer is pressed inside the editor card, suppress the periodic
@@ -353,6 +349,11 @@ export class UI {
 
   hideEditor(): void {
     panels.hideEditor(this);
+  }
+
+  /** Run an editor card button's action (its card's lit binding calls this). */
+  editAction(action: string): void {
+    this.cb.onEditAction(action, this.el.editor);
   }
 
   isEditorOpen(): boolean {

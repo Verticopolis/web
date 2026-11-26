@@ -1,5 +1,5 @@
 import { html, type TemplateResult } from "lit-html";
-import { keyed } from "lit-html/directives/keyed.js";
+import { editorCardTemplate, editorFact } from "@verticopolis/components/windows/editorCard";
 import { type Catalog } from "@verticopolis/engine/catalog/catalogTypes";
 import { catalogFacility } from "@verticopolis/components/render/catalogIndex";
 import { isHotelKind } from "@verticopolis/components/presentation/viewKinds";
@@ -30,6 +30,10 @@ export interface PersonCardInput {
   shaftKind: FacilityKind | null;
   mood: PersonMood;
   following: boolean;
+  /** Runs a button's action ({@link PERSON_FOLLOW_ACTION}). */
+  act(action: string): void;
+  /** The title bar's ✕. */
+  close(): void;
 }
 
 /** The edit actions the card's buttons send. */
@@ -200,32 +204,30 @@ export function goneWords(p: PersonDetail, catalog: Catalog): { now: string; not
   return left;
 }
 
-const kv = (label: string, value: string, field: string): TemplateResult =>
-  html`<span class="k">${label}</span><span class="v" data-field=${field}>${value}</span>`;
-
 export function personCardTemplate(input: PersonCardInput): TemplateResult {
   const { person: p, catalog, gone } = input;
   const shaftName = input.shaftKind ? catalogFacility(catalog, input.shaftKind).name : null;
   const end = gone ? goneWords(p, catalog) : null;
   const rows = [
-    kv("Why", personWhy(p), "why"),
-    kv(p.staff ? "Works from" : "From", placeWords(p.from, catalog), "from"),
-    kv(p.staff ? "Heading to" : "To", placeWords(p.to, catalog), "to"),
-    kv("Now", end ? end.now : personNow(p, shaftName), "now"),
-    kv("Waited", `${Math.round(p.tripWaitMinutes)} min this trip`, "waited"),
-    kv("Mood", MOOD_WORDS[input.mood], "mood"),
+    editorFact("Why", personWhy(p), "why"),
+    editorFact(p.staff ? "Works from" : "From", placeWords(p.from, catalog), "from"),
+    editorFact(p.staff ? "Heading to" : "To", placeWords(p.to, catalog), "to"),
+    editorFact("Now", end ? end.now : personNow(p, shaftName), "now"),
+    editorFact("Waited", `${Math.round(p.tripWaitMinutes)} min this trip`, "waited"),
+    editorFact("Mood", MOOD_WORDS[input.mood], "mood"),
   ];
   const follow = end
     ? html`<div class="ed-row"><span class="ed-note" data-field="gone">${end.note}</span></div>`
     : html`<div class="ed-row">
-        <button type="button" class="btn" data-edit=${PERSON_FOLLOW_ACTION}>
+        <button type="button" class="btn" data-edit=${PERSON_FOLLOW_ACTION} @click=${() => input.act(PERSON_FOLLOW_ACTION)}>
           ${input.following ? "Stop following" : "Follow"}
         </button>
       </div>`;
-  return html`${keyed(
-    `person:${p.id}`,
-    html`<h4 class="win-title">${personRole(p)}<button type="button" class="ed-close btn xs" aria-label="Close">✕</button></h4>
-      <div class="ed-stats kv">${rows}</div>
-      ${follow}`,
-  )}`;
+  return editorCardTemplate({
+    key: `person:${p.id}`,
+    title: personRole(p),
+    facts: rows,
+    actions: [follow],
+    close: () => input.close(),
+  });
 }

@@ -182,7 +182,14 @@ describe("the card kit's unit and shaft lines over the port", () => {
     const unit = kit.cards.unit(OFFICE)!;
     // The kit's tower is Classic, whose card names the cause only (#549).
     const copy = "Main gripe: the rent is above the going rate.";
-    const mobile = renderToFragment(unitEditorTemplate(unit, kit.catalog(), 12, true, kit.diagnostics.unit(OFFICE)));
+    const mobile = renderToFragment(
+      unitEditorTemplate(unit, kit.catalog(), 12, {
+        act: () => {},
+        close: () => {},
+        mobile: true,
+        diag: kit.diagnostics.unit(OFFICE),
+      }),
+    );
     const desktop = renderToFragment(unitCardTemplate(unit, kit.catalog(), 12, kit.diagnostics.unit(OFFICE)));
     expect(mobile.querySelector(".ed-diagnostics")?.textContent).toContain(copy);
     expect(desktop.textContent).toContain(copy);

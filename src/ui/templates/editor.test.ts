@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { html, type TemplateResult } from "lit-html";
 import { catalogFacility } from "@verticopolis/components/render/catalogIndex";
 import { transportLoadLines } from "../../game/cardLines";
@@ -9,11 +9,13 @@ import { catalogFor } from "../../tests/catalogFixture";
 import { stopRows, transportDetail, unitDetail } from "../../tests/fixtures/detailCards";
 import { groupDigits } from "@verticopolis/components/windows/format";
 import { renderToFragment } from "../testing/litTestUtils";
-import { transportEditorTemplate, unitEditorTemplate } from "./editor";
+import { webShaftEditorTemplate } from "../../game/editorCard";
+import { unitEditorTemplate } from "./editor";
 
 /**
  * The editor card bodies (E6-S1). Package: the title bar's ✕ a11y contract,
- * the `data-edit`/`data-field` markers main.ts and the action dispatch read,
+ * the `data-edit`/`data-act`/`data-field` markers, the buttons' bindings to
+ * the game's edit actions,
  * the rename input's value binding, the disabled bounds on the car buttons,
  * hostile-label escaping, and every row/action branch: office (rename +
  * adjuster), sold and unsold condos, hotel room rate, a closed venue's
@@ -40,23 +42,35 @@ const ACCESS_LINES: TemplateResult[] = [html`<div>Access: reachable from the lob
 
 function unitEditor(
   u: UnitDetail,
-  opts: { mode?: GameMode; mobile?: boolean; hour?: number; lines?: TemplateResult[]; calendar?: CalendarKind } = {},
+  opts: {
+    mode?: GameMode;
+    mobile?: boolean;
+    hour?: number;
+    lines?: TemplateResult[];
+    calendar?: CalendarKind;
+    act?: (action: string) => void;
+    close?: () => void;
+  } = {},
 ): TemplateResult {
   const mobile = opts.mobile ?? false;
-  return unitEditorTemplate(
-    u,
-    catalogFor(opts.mode ?? "classic"),
-    opts.hour ?? MORNING,
+  return unitEditorTemplate(u, catalogFor(opts.mode ?? "classic"), opts.hour ?? MORNING, {
+    act: opts.act ?? (() => {}),
+    close: opts.close ?? (() => {}),
     mobile,
-    mobile ? (opts.lines ?? ACCESS_LINES) : [],
-    opts.calendar,
-  );
+    diag: mobile ? (opts.lines ?? ACCESS_LINES) : [],
+    calendar: opts.calendar,
+  });
 }
 
-function transportEditor(t: TransportDetail, mobile = false): TemplateResult {
-  return transportEditorTemplate(
+function transportEditor(
+  t: TransportDetail,
+  mobile = false,
+  ui = { editAction: (_action: string) => {}, hideEditor: () => {} },
+): TemplateResult {
+  return webShaftEditorTemplate(
     t,
     catalogFor("classic"),
+    ui,
     mobile ? transportLoadLines(t.utilization ?? undefined, t.nearCapacity, false) : [],
   );
 }
@@ -66,14 +80,28 @@ const maxCars = (kind: FacilityKind) => catalogFacility(catalogFor("classic"), k
 describe("unit editor template structure", () => {
   it("title bar ✕ keeps the shared recipe and its aria-label; cells carry data-field markers", () => {
     const frag = renderToFragment(unitEditor(unit("office")));
-    const x = frag.querySelector<HTMLButtonElement>("h4.win-title > button.ed-close")!;
+    const x = frag.querySelector<HTMLButtonElement>('h4.win-title > button[aria-label="Close"]')!;
     expect(x).not.toBeNull();
-    expect(x.getAttribute("aria-label")).toBe("Close");
-    expect([...x.classList].sort()).toEqual(["btn", "ed-close", "xs"]);
+    expect([...x.classList].sort()).toEqual(["btn", "xs"]);
     for (const field of ["status", "occupants", "served", "eval", "rent"]) {
       expect(frag.querySelector(`[data-field="${field}"]`), field).not.toBeNull();
     }
     expect(frag.querySelector('button.danger[data-edit="sell"]')).not.toBeNull();
+  });
+
+  it("hands each button's action to the game and its ✕ to close", () => {
+    const act = vi.fn();
+    const close = vi.fn();
+    const frag = renderToFragment(unitEditor(unit("office"), { act, close }));
+    frag.querySelector<HTMLButtonElement>('[data-edit="sell"]')!.click();
+    frag.querySelector<HTMLButtonElement>('[data-edit="rename"]')!.click();
+    // The Classic card's rung picker commits on change.
+    frag.querySelector<HTMLSelectElement>("#ed-rung")!.dispatchEvent(new Event("change"));
+    expect(act.mock.calls).toEqual([["sell"], ["rename"], ["rung"]]);
+    expect(close).not.toHaveBeenCalled();
+    frag.querySelector<HTMLButtonElement>('.win-title [aria-label="Close"]')!.click();
+    expect(close).toHaveBeenCalledOnce();
+    expect(act).toHaveBeenCalledTimes(3);
   });
 
   it("binds the unit label as the rename input's value", () => {
@@ -92,25 +120,38 @@ describe("unit editor template structure", () => {
 describe("transport editor template structure", () => {
   it("car buttons disable at the pool bounds", () => {
     let frag = renderToFragment(transportEditor(transportDetail("elevatorStandard", 2, { cars: 1 })));
-    expect(frag.querySelector<HTMLButtonElement>('[data-edit="removecar"]')!.disabled).toBe(true);
-    expect(frag.querySelector<HTMLButtonElement>('[data-edit="addcar"]')!.disabled).toBe(false);
+    expect(frag.querySelector<HTMLButtonElement>('[data-act="removecar"]')!.disabled).toBe(true);
+    expect(frag.querySelector<HTMLButtonElement>('[data-act="addcar"]')!.disabled).toBe(false);
     // addcar disables at the catalog's car limit
     frag = renderToFragment(
       transportEditor(transportDetail("elevatorStandard", 2, { cars: maxCars("elevatorStandard") })),
     );
-    expect(frag.querySelector<HTMLButtonElement>('[data-edit="removecar"]')!.disabled).toBe(false);
-    expect(frag.querySelector<HTMLButtonElement>('[data-edit="addcar"]')!.disabled).toBe(true);
+    expect(frag.querySelector<HTMLButtonElement>('[data-act="removecar"]')!.disabled).toBe(false);
+    expect(frag.querySelector<HTMLButtonElement>('[data-act="addcar"]')!.disabled).toBe(true);
+  });
+
+  it("hands the shaft's buttons to the game's edit actions, its ✕ to hide, and shows the resale value", () => {
+    const ui = { editAction: vi.fn(), hideEditor: vi.fn() };
+    const frag = renderToFragment(transportEditor(transportDetail("elevatorStandard", 2, { cars: 2 }), false, ui));
+    const acts = [...frag.querySelectorAll<HTMLButtonElement>("button[data-act]")].map((b) => b.dataset.act);
+    expect(acts).toEqual(["removecar", "addcar", "schedule", "extendDown", "extendUp", "sell"]);
+    for (const a of acts) frag.querySelector<HTMLButtonElement>(`[data-act="${a}"]`)!.click();
+    expect(ui.editAction.mock.calls.map((c) => c[0])).toEqual(acts);
+    frag.querySelector<HTMLButtonElement>('.win-title [aria-label="Close"]')!.click();
+    expect(ui.hideEditor).toHaveBeenCalledOnce();
+    const resale = catalogFacility(catalogFor("classic"), "elevatorStandard").resaleRefund;
+    expect(frag.textContent).toContain(`$${groupDigits(resale)}`);
   });
 
   it("an express offers no stop-config actions; stairs get neither cars nor extend arrows", () => {
     const eFrag = renderToFragment(transportEditor(transportDetail("elevatorExpress")));
-    expect(eFrag.querySelector('[data-edit="stops"]')).toBeNull();
-    expect(eFrag.querySelector('[data-edit="express"]')).toBeNull();
-    expect(eFrag.querySelector('[data-edit="extendUp"]')).not.toBeNull();
+    expect(eFrag.querySelector('[data-act="stops"]')).toBeNull();
+    expect(eFrag.querySelector('[data-act="express"]')).toBeNull();
+    expect(eFrag.querySelector('[data-act="extendUp"]')).not.toBeNull();
     const sFrag = renderToFragment(transportEditor(transportDetail("stairs")));
     expect(sFrag.querySelector('[data-field="cars"]')).toBeNull();
-    expect(sFrag.querySelector('[data-edit="extendUp"]')).toBeNull();
-    expect(sFrag.querySelector('[data-edit="sell"]')).not.toBeNull();
+    expect(sFrag.querySelector('[data-act="extendUp"]')).toBeNull();
+    expect(sFrag.querySelector('[data-act="sell"]')).not.toBeNull();
   });
 });
 
@@ -415,12 +456,12 @@ describe("transport editor row and action branches", () => {
     const sFrag = renderToFragment(transportEditor(transportDetail("elevatorService")));
     expect(sFrag.querySelector('[data-field="cars"]')).not.toBeNull();
     // Stops config folded into the Schedule dialog (#464): no card button remains.
-    expect(sFrag.querySelector('[data-edit="stops"]')).toBeNull();
-    expect(sFrag.querySelector('[data-edit="schedule"]')).not.toBeNull();
+    expect(sFrag.querySelector('[data-act="stops"]')).toBeNull();
+    expect(sFrag.querySelector('[data-act="schedule"]')).not.toBeNull();
     const eFrag = renderToFragment(transportEditor(transportDetail("escalator")));
     expect(eFrag.querySelector('[data-field="cars"]')).toBeNull();
-    expect(eFrag.querySelector('[data-edit="extendUp"]')).toBeNull();
-    expect(eFrag.querySelector('[data-edit="sell"]')).not.toBeNull();
+    expect(eFrag.querySelector('[data-act="extendUp"]')).toBeNull();
+    expect(eFrag.querySelector('[data-act="sell"]')).not.toBeNull();
   });
 });
 
@@ -430,7 +471,6 @@ describe("the Classic rung picker row (ux-pricing-split-editor §1)", () => {
     const picker = frag.querySelector<HTMLSelectElement>("#ed-rung")!;
     expect(picker).not.toBeNull();
     expect(picker.classList.contains("field")).toBe(true);
-    expect(picker.dataset.editSelect).toBe("rung"); // routes through the delegated change listener
     const options = [...picker.querySelectorAll("option")];
     expect(options.map((o) => o.textContent)).toEqual([
       "Very Low  $2,000",

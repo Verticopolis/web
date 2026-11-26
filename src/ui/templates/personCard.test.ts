@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { PersonDetail } from "@verticopolis/engine/port/personCards";
 import { catalogFacility } from "@verticopolis/components/render/catalogIndex";
 import { catalogFor } from "../../tests/catalogFixture";
@@ -46,6 +46,8 @@ function card(over: Partial<PersonCardInput> = {}): DocumentFragment {
       shaftKind: "elevatorStandard",
       mood: "impatient",
       following: false,
+      act: () => {},
+      close: () => {},
       ...over,
     }),
   );
@@ -72,6 +74,17 @@ describe("the person card", () => {
     expect(on?.textContent?.trim()).toBe("Stop following");
     // The label says what a press does; no pressed state on top of it.
     expect(on?.hasAttribute("aria-pressed")).toBe(false);
+  });
+
+  it("calls act with the follow action and close from its ✕", () => {
+    const act = vi.fn();
+    const close = vi.fn();
+    const f = card({ act, close });
+    f.querySelector<HTMLButtonElement>(`[data-edit="${PERSON_FOLLOW_ACTION}"]`)!.click();
+    expect(act).toHaveBeenCalledWith(PERSON_FOLLOW_ACTION);
+    expect(close).not.toHaveBeenCalled();
+    f.querySelector<HTMLButtonElement>('.win-title [aria-label="Close"]')!.click();
+    expect(close).toHaveBeenCalledOnce();
   });
 
   it("says when they left the tower and offers no follow", () => {
