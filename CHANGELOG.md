@@ -25,6 +25,11 @@ prompt already tells players it is an engine update and shows the new version.
 Entries below 1.51.1 were curated from the commit history after the fact, so they
 are documentation only: no build that a client fetches carries them.
 
+## 4.17.3
+
+- The elevator, stairs and escalator editor card looks and works the same as before. It now comes from the shared window kit, and its buttons and close button are wired straight to their actions.
+- The mute button on the title screen works every time. Before, it could stop working (with an error) once the version line had named the engine.
+
 ## 4.17.2
 
 - Modern spas, nightclubs, sky bars, amusements, boutique bays and daycares now count the customers they served yesterday toward your population, up to each venue's size. Their cards show today's customers and yesterday's business, like a shop's, instead of a Customers line stuck at 0.
