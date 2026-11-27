@@ -26,7 +26,7 @@ import {
   withUpdateKind,
   type UpdateInfo,
 } from "./pwaUpdateInfo";
-import { PREVIEW_DEPLOY } from "./deployTarget";
+import { DESKTOP_BUILD, PREVIEW_DEPLOY } from "./deployTarget";
 import { WORKBOX_CACHE_PREFIX } from "./workboxCaches";
 
 /**
@@ -205,8 +205,10 @@ export function registerPWA(handlers: PwaHandlers): void {
 
   // A preview deployment runs without a worker, so a branch link always
   // serves the latest push (src/build/previewDeploy.ts). No registration also
-  // means no update poll: a reload is how a preview picks up a new push.
-  if (PREVIEW_DEPLOY) {
+  // means no update poll: a reload is how a preview picks up a new push. The
+  // desktop build has none either: its app serves the files from disk and
+  // updates by shipping a new app (src/build/desktopBuild.ts).
+  if (PREVIEW_DEPLOY || DESKTOP_BUILD) {
     void removeServiceWorkers();
     return;
   }

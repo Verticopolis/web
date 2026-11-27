@@ -1,4 +1,5 @@
 import { analyticsAdapter } from "./analyticsAdapter";
+import { DESKTOP_BUILD } from "./deployTarget";
 
 /**
  * Shared page-view + Core Web Vitals inject for every deployed page: the game
@@ -49,6 +50,8 @@ import { analyticsAdapter } from "./analyticsAdapter";
  */
 export function telemetryHostAllowed(): boolean {
   if (typeof window === "undefined") return false;
+  // The desktop build sends nothing, wherever its pages are served from.
+  if (DESKTOP_BUILD) return false;
   // Strip a trailing dot so the canonical absolute FQDN (`verticopolis.com.`) is
   // matched like the usual form. Mirror this in `originAllowed`.
   const host = window.location.hostname.replace(/\.$/, "");

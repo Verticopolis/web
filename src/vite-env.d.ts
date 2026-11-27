@@ -22,6 +22,10 @@ declare const __TOOLING_ENGINE__: boolean;
  *  The page then registers no service worker (see src/build/previewDeploy.ts
  *  and src/deployTarget.ts). */
 declare const __PREVIEW_DEPLOY__: boolean;
+/** True only in the desktop build (`VC_DESKTOP=1`), for a packaged desktop
+ *  app: no service worker, Install, Sponsor or analytics (see
+ *  src/build/desktopBuild.ts and src/deployTarget.ts). */
+declare const __DESKTOP_BUILD__: boolean;
 /** The engine package this shell was built with: its package id and the
  *  digests of the glue and the binary, from src/public/engine/BUILD.json
  *  (see src/wasmhost/enginePackageRecord.ts). Null when the build carries no

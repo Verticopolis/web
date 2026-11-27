@@ -150,6 +150,28 @@ export const sidebar = [
 ];
 
 /**
+ * The sidebar for one build: {@link sidebar} as it is, or for the desktop
+ * build (VC_DESKTOP=1, src/build/desktopBuild.ts) without the Sponsor entry,
+ * since that build shows no Sponsor link anywhere.
+ * @param {boolean} desktop
+ * @returns {SidebarEntry[]}
+ */
+export function sidebarFor(desktop) {
+  if (!desktop) return sidebar;
+  /** @param {SidebarEntry[]} entries @returns {SidebarEntry[]} */
+  const without = (entries) => {
+    /** @type {SidebarEntry[]} */
+    const kept = [];
+    for (const entry of entries) {
+      if ("link" in entry && entry.link === SPONSOR_URL) continue;
+      kept.push("items" in entry ? { ...entry, items: without(entry.items) } : entry);
+    }
+    return kept;
+  };
+  return without(sidebar);
+}
+
+/**
  * Where each section of the old one-page /help went (its `/help#id` anchor,
  * as the game and old links name it). "going-further" and "about" stay on the
  * front page, which links to everything they covered.
@@ -232,6 +254,50 @@ export function isSponsorLink(href) {
   } catch {
     return false;
   }
+}
+
+/**
+ * The part of the Markdown processor's (satteri's) hast visitor context the
+ * link plugin uses, written here so the game's typecheck needs no help-site
+ * package.
+ * @typedef {{
+ *   parent(node: object): { type: string; tagName?: string };
+ *   removeNode(node: object): void;
+ *   setProperty(node: object, key: string, value: unknown): void;
+ * }} LinkVisitContext
+ */
+
+/**
+ * The Markdown processor's plugin for every page's links. The help pages write
+ * /help/... for a manual page and / for the game, as the game's own Help
+ * window reads them; this points each link at this build's address for it
+ * ({@link siteHref}), a no-op in a /help build. In the desktop build
+ * (VC_DESKTOP=1, src/build/desktopBuild.ts), which shows no Sponsor link
+ * anywhere, it also drops the paragraph that offers one.
+ * @param {boolean} desktop
+ */
+export function siteLinks(desktop) {
+  return {
+    name: "verticopolis-site-links",
+    element: {
+      filter: ["a"],
+      /**
+       * @param {{ properties?: Record<string, unknown> }} node an `a` element
+       * @param {LinkVisitContext} ctx the processor's visitor context
+       */
+      visit(node, ctx) {
+        const href = node.properties?.href;
+        if (typeof href !== "string") return;
+        if (desktop && isSponsorLink(href)) {
+          const holder = ctx.parent(node);
+          ctx.removeNode(holder.type === "element" && holder.tagName === "p" ? holder : node);
+          return;
+        }
+        const to = siteHref(href);
+        if (to !== href) ctx.setProperty(node, "href", to);
+      },
+    },
+  };
 }
 
 /** `MouseEvent.button` for the middle (wheel) button, the one that opens a

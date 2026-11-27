@@ -16,6 +16,7 @@
 
 import { MenuBar } from "@verticopolis/components/windows/menuBar";
 import type { MenuBarModel, MenuItemModel } from "@verticopolis/components/windows/menuBar";
+import { DESKTOP_BUILD } from "../deployTarget";
 
 /** The looks Starlight's theme switch offers. */
 export type HelpTheme = "light" | "dark" | "auto";
@@ -118,8 +119,13 @@ export function helpMenuModel(deps: HelpMenuDeps, theme: HelpTheme): MenuBarMode
         items: [
           item("whats_new", "What's New", { href: deps.links.whatsNew }),
           item("report", "Report a Problem…", { href: deps.links.report, ...NEW_TAB }),
-          { kind: "separator" },
-          item("sponsor", "Sponsor Verticopolis", { href: deps.links.sponsor, ...NEW_TAB }),
+          // The desktop build shows no Sponsor link (src/build/desktopBuild.ts).
+          ...(DESKTOP_BUILD
+            ? []
+            : [
+                { kind: "separator" } as const,
+                item("sponsor", "Sponsor Verticopolis", { href: deps.links.sponsor, ...NEW_TAB }),
+              ]),
         ],
       },
     ],

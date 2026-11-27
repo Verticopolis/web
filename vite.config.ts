@@ -25,6 +25,7 @@ import {
 } from "./src/build/toolingPublicDir";
 import { helpMarkdown } from "./src/build/helpMarkdown";
 import { isPreviewDeploy } from "./src/build/previewDeploy";
+import { isDesktopBuild } from "./src/build/desktopBuild";
 
 const pkgVersion = JSON.parse(readFileSync(resolve(__dirname, "package.json"), "utf8")).version as string;
 
@@ -166,6 +167,8 @@ function toolingEngineServe(dir: string | undefined): Plugin {
 }
 
 const TOOLING_BUILD = toolingBuild();
+/** Whether this is the desktop build (VC_DESKTOP=1, src/build/desktopBuild.ts). */
+const DESKTOP_BUILD = isDesktopBuild(process.env);
 
 /**
  * Module swaps that keep engine-specific code out of a bundle that cannot use
@@ -236,6 +239,9 @@ function emitVersionJson(fingerprint: BuildFingerprint): Plugin {
           releases: changelogReleases(),
           shell: fingerprint.shell,
           engine: fingerprint.engine,
+          // Marks the desktop build, so the desktop app's packaging can
+          // refuse a web build (src/build/desktopBuild.ts).
+          ...(DESKTOP_BUILD ? { desktop: true } : {}),
         }),
       });
     },
@@ -413,6 +419,10 @@ export default defineConfig(({ command }) => ({
     // link always serves the latest push; production keeps it. See
     // src/build/previewDeploy.ts for the worker a preview ships instead.
     __PREVIEW_DEPLOY__: JSON.stringify(isPreviewDeploy(process.env)),
+    // The desktop build (VC_DESKTOP=1), for a packaged desktop app: no
+    // service worker, Install, Sponsor or analytics. See
+    // src/build/desktopBuild.ts; a Vercel build refuses it.
+    __DESKTOP_BUILD__: JSON.stringify(DESKTOP_BUILD),
     // The engine package this shell was built with (#985 criterion 5): the
     // package id and the glue and binary digests from
     // src/public/engine/BUILD.json. The page hashes what it fetches against

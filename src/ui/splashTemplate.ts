@@ -7,6 +7,7 @@ import {
 import { versionLine } from "../engineHost/engineLabel";
 import { platformLabel } from "../analyticsEnrichment";
 import { trackAppAction } from "../analytics";
+import { DESKTOP_BUILD } from "../deployTarget";
 
 /**
  * The game's side of the "Metropolis Dusk" title screen, which the components
@@ -34,8 +35,10 @@ export const TWA_SESSION_KEY = "vc-twa-session";
  *  app (the TWA, marked by its `?src=twa` launch URL and remembered for the
  *  tab). Google Play expects a tip inside a store app to go through Play's
  *  own billing, and the July monetization brief keeps any Play tip behind its
- *  own approval, so the store app shows no link to an outside payment page. */
+ *  own approval, so the store app shows no link to an outside payment page.
+ *  The desktop build, sold through stores too, shows none either. */
 export function sponsorOffered(storage: () => Storage = () => sessionStorage): boolean {
+  if (DESKTOP_BUILD) return false;
   let remembered = false;
   try {
     const s = storage();

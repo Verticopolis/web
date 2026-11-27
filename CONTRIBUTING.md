@@ -138,7 +138,11 @@ Verticopolis has **two test tiers**:
     game with a message. `npm run build` refuses a build without the engine
     package (its precache check, `scripts/verify-precache.ts`), and
     `VC_ALLOW_NO_ENGINE=1 npm run build` is a deliberate build without it (it
-    cannot run the game; it exists for tooling that never boots one). Its
+    cannot run the game; it exists for tooling that never boots one).
+    `npm run build:desktop` is the desktop build, for a packaged desktop app:
+    the game and its manual with no service worker, Install, Sponsor or
+    analytics (see ARCHITECTURE.md, "The installable app"; run
+    `npm ci --prefix help-site` once first). Its
     postbuild check (`scripts/verify-engine-bundle.ts`) reads the emitted
     sourcemaps and fails a build that ships test code, a production build
     that ships the harnesses' tower (#921), and a build that does not

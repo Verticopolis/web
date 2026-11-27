@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:desktop": "cross-env VC_DESKTOP=1 npm run build && cross-env VC_DESKTOP=1 npm run build --prefix help-site",
     "engine:install": "node scripts/engine-install.ts",
     "postbuild": "npm run verify:dist",
     "preview": "vite preview --port 4173",

@@ -7,6 +7,8 @@
 // reads "Back to Game" in a tab the game opened, and "Play Verticopolis"
 // elsewhere.
 import { GITHUB_ISSUES, SPONSOR_URL, siteHref } from "../../site.mjs";
+import { DESKTOP_BUILD } from "../../../src/deployTarget";
+// The desktop build shows no Sponsor link, so its pages carry no address for one.
 ---
 
 <div
@@ -14,7 +16,7 @@ import { GITHUB_ISSUES, SPONSOR_URL, siteHref } from "../../site.mjs";
   data-game={siteHref("/")}
   data-whats-new={siteHref("/help/changelog/")}
   data-report={GITHUB_ISSUES}
-  data-sponsor={SPONSOR_URL}
+  data-sponsor={DESKTOP_BUILD ? undefined : SPONSOR_URL}
 >
 </div>
 

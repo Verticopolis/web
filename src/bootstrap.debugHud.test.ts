@@ -26,6 +26,7 @@ vi.mock("./deployTarget", () => ({
   get PREVIEW_DEPLOY() {
     return deploy.preview;
   },
+  DESKTOP_BUILD: false,
 }));
 
 /** Make hasWebGL() see a real GL context (happy-dom canvas returns null). */

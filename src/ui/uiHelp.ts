@@ -23,6 +23,7 @@ import type { HelpTopicSurface } from "./templates/helpTopicLink";
 import { hostHelpBar } from "./helpBarHost";
 import { topBarView } from "./topBar";
 import { deskManual } from "./desk/deskHelpWindow";
+import { DESKTOP_BUILD } from "../deployTarget";
 
 /**
  * The in-game Help: About this game (the game panel's "About…") and the
@@ -176,8 +177,10 @@ export const MANUAL_NOT_SAVED = `The manual needs the internet the first time. O
 
 /** Whether a manual page cannot load now: the device is offline and the
  *  manual's worker has not saved it here (src/manual/manualOffline.ts). A
- *  saved manual opens offline in its tab like any other time. */
+ *  saved manual opens offline in its tab like any other time. The desktop
+ *  build carries the manual on disk, so it is always in reach there. */
 function manualOutOfReach(): boolean {
+  if (DESKTOP_BUILD) return false;
   return !navigator.onLine && !manualSavedFor(document.cookie, manualHost(HELP_ORIGIN, location.host));
 }
 

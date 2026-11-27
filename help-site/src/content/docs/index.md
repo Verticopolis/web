@@ -66,6 +66,8 @@ Something not right? [Report a problem](https://github.com/Verticopolis/web/issu
 
 ## Supporting Verticopolis
 
-Verticopolis is free to play, and it stays that way. Every room, both ways to play and every tower you build are yours, with nothing locked away. If you have enjoyed your tower and would like to help keep the lights on, you can [sponsor Verticopolis on GitHub](https://github.com/sponsors/maniator). Telling a friend about the game, or reporting a problem when you find one, helps just as much.
+Verticopolis is free to play, and it stays that way. Every room, both ways to play and every tower you build are yours, with nothing locked away.
+
+If you have enjoyed your tower and would like to help keep the lights on, you can [sponsor Verticopolis on GitHub](https://github.com/sponsors/maniator). Telling a friend about the game, or reporting a problem when you find one, helps just as much.
 
 Verticopolis™ is the project's trademark. The game's code is free to use under the MIT license and its art under CC BY 4.0, but neither license covers the name, so a copy of the game needs a name of its own.

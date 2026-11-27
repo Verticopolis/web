@@ -23,6 +23,7 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import { satteri } from "@astrojs/markdown-satteri";
 import { GITHUB } from "./site.mjs";
+import { isDesktopBuild } from "../src/build/desktopBuild.ts";
 import {
   HELP_BASE,
   OLD_ANCHORS,
@@ -30,9 +31,12 @@ import {
   oldAnchorRedirects,
   schemeBootScript,
   sharedHead,
-  sidebar,
-  siteHref,
+  sidebarFor,
+  siteLinks,
 } from "./site.mjs";
+
+/** Whether this is the desktop build (VC_DESKTOP=1, src/build/desktopBuild.ts). */
+const desktop = isDesktopBuild(process.env);
 
 const site = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(site, "..");
@@ -50,30 +54,16 @@ try {
   // Outside a checkout the build still works; the SHA reads "unknown".
 }
 
-/** The help pages write /help/... for a manual page and / for the game, as
- *  the game's own Help window reads them; this points every link in a page at
- *  this build's address for it ({@link siteHref}). A no-op in a /help build. */
-const siteLinks = {
-  name: "verticopolis-site-links",
-  /** @type {import("satteri").HastFilteredVisitor<import("hast").Element>} */
-  element: {
-    filter: ["a"],
-    visit(node, ctx) {
-      const href = node.properties?.href;
-      if (typeof href !== "string") return;
-      const to = siteHref(href);
-      if (to !== href) ctx.setProperty(node, "href", to);
-    },
-  },
-};
-
 export default defineConfig({
   site: SITE_ORIGIN,
   base: HELP_BASE,
   outDir: join(repo, "dist", "help"),
   trailingSlash: "ignore",
+  // Astro keeps rendered pages in its cache and does not re-render them when
+  // only the desktop switch changes, so the desktop build keeps its own.
+  ...(desktop ? { cacheDir: "./node_modules/.astro-desktop" } : {}),
   // Starlight adds its own plugins (asides, heading links) to this processor.
-  markdown: { processor: satteri({ hastPlugins: [siteLinks] }) },
+  markdown: { processor: satteri({ hastPlugins: [siteLinks(desktop)] }) },
   vite: {
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
@@ -81,6 +71,10 @@ export default defineConfig({
       // The help site is never a tooling build (no window.game handle).
       __TOOLING_BUILD__: "false",
       __HELP_ORIGIN__: JSON.stringify(process.env.VC_HELP_ORIGIN ?? ""),
+      // The desktop build (VC_DESKTOP=1, src/build/desktopBuild.ts): the
+      // manual then offers no Sponsor item, saves no offline worker and sends
+      // no analytics, like the game it ships with.
+      __DESKTOP_BUILD__: JSON.stringify(desktop),
     },
     server: { fs: { allow: [repo] } },
   },
@@ -124,7 +118,7 @@ export default defineConfig({
           content: oldAnchorRedirects(OLD_ANCHORS),
         },
       ],
-      sidebar,
+      sidebar: sidebarFor(desktop),
     }),
   ],
 });

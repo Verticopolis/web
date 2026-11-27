@@ -15,7 +15,7 @@ import {
 
 // A preview deployment plays the show whatever the build's version, so the
 // boot tests below can reach the playing path on this 3.x checkout.
-vi.mock("../deployTarget", () => ({ PREVIEW_DEPLOY: true }));
+vi.mock("../deployTarget", () => ({ PREVIEW_DEPLOY: true, DESKTOP_BUILD: false }));
 const analytics = vi.hoisted(() => ({ trackAppAction: vi.fn() }));
 vi.mock("../analytics", () => analytics);
 // The show itself is the components' (and tested there); these tests check

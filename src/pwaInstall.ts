@@ -8,6 +8,8 @@
  * must run as early as the boot flow allows (before the game constructs).
  */
 
+import { DESKTOP_BUILD } from "./deployTarget";
+
 /** The `beforeinstallprompt` event, not in every TS lib.dom. */
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -59,9 +61,12 @@ export function initPwaInstall(opts: { onChange?: () => void; onInstalled?: () =
 }
 
 /** True when this session is already running as an installed app: the
- *  standalone display mode, the iOS `navigator.standalone` flag, or an install
- *  that completed this session. Such a session is offered nothing. */
+ *  desktop build, the standalone display mode, the iOS `navigator.standalone`
+ *  flag, or an install that completed this session. Such a session is offered
+ *  nothing. */
 export function isStandalone(): boolean {
+  // The desktop build is already an installed app.
+  if (DESKTOP_BUILD) return true;
   if (typeof window === "undefined") return false;
   const displayStandalone = window.matchMedia?.("(display-mode: standalone)").matches ?? false;
   const iosStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
