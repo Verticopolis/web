@@ -28,9 +28,14 @@ vi.mock("./trafficHud", () => ({ updateTraffic: vi.fn() }));
 vi.mock("./panelAnchoring", () => ({ positionPanels: vi.fn() }));
 vi.mock("./updateFlow", () => ({ maybeSurfaceUpdatePrompt: vi.fn() }));
 vi.mock("./starUpFlow", () => ({ noteStarUp: vi.fn(), maybeShowStarUp: vi.fn() }));
+const view3d = vi.hoisted(() => ({
+  window: null as null | { floorLo: number; floorHi: number; xLo: number; xHi: number },
+}));
+vi.mock("../ui/tower3dWindow", () => ({ tower3dPeopleWindow: () => view3d.window }));
 
 afterEach(() => {
   document.body.replaceChildren();
+  view3d.window = null;
 });
 
 describe("SPEEDS", () => {
@@ -87,6 +92,21 @@ describe("runFrame freeze path", () => {
     expect(raw.enginePort.setPeopleWindow.mock.invocationCallOrder[0]).toBeLessThan(
       raw.reader.update.mock.invocationCallOrder[0],
     );
+  });
+
+  it("widens the people window to cover what the Tower in 3D window shows while it is open", () => {
+    view3d.window = { floorLo: 20, floorHi: 60, xLo: 0, xHi: 375 };
+    const { app, raw } = makeApp({ shownChoice: true });
+    runFrame(app, 1000);
+    expect(raw.enginePort.setPeopleWindow).toHaveBeenCalledExactlyOnceWith(9, 60, -2, 375);
+  });
+
+  it("sends the 3D window's people alone while the zoom cull hides the side view's crowd", () => {
+    view3d.window = { floorLo: 20, floorHi: 60, xLo: 0, xHi: 375 };
+    const { app, raw } = makeApp({ accMinutes: 0 });
+    raw.engine.cam.zoom = CROWD_CULL_ZOOM / 2;
+    runFrame(app, 16);
+    expect(raw.enginePort.setPeopleWindow).toHaveBeenCalledExactlyOnceWith(20, 60, 0, 375);
   });
 
   it("stops time for good once a wasm-only build has stopped on its engine, whatever the speed", () => {

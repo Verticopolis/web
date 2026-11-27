@@ -7,6 +7,7 @@ const view = vi.hoisted(() => ({
   resetView: vi.fn(),
   resize: vi.fn(),
   dispose: vi.fn(),
+  peopleWindow: vi.fn(() => ({ floorLo: 2, floorHi: 30, xLo: 0, xHi: 375 })),
   capture: vi.fn(async () => new Blob(["png"]) as Blob | null),
   stats: vi.fn(() => ({
     tier: "high",
@@ -46,7 +47,7 @@ vi.mock("../game/interactionState", () => ({
 }));
 vi.mock("./tower3dMeasure", () => ({ measureRun: measure.run }));
 
-import { closeTower3d, openTower3d } from "./tower3dWindow";
+import { closeTower3d, openTower3d, tower3dPeopleWindow } from "./tower3dWindow";
 
 interface MountOptions {
   sim: () => unknown;
@@ -110,6 +111,15 @@ describe("Tower in 3D window", () => {
     expect(host()!.textContent).not.toContain("Loading 3D");
     observed!();
     expect(view.resize).toHaveBeenCalled();
+  });
+
+  it("asks for people across the floors it shows while open, and none once closed", async () => {
+    expect(tower3dPeopleWindow()).toBeNull();
+    await opened();
+    expect(mountOptions()).toEqual(expect.objectContaining({ variant: "art" }));
+    expect(tower3dPeopleWindow()).toEqual({ floorLo: 2, floorHi: 30, xLo: 0, xHi: 375 });
+    closeTower3d();
+    expect(tower3dPeopleWindow()).toBeNull();
   });
 
   it("fills the screen without a mover on a phone, and a second open keeps the one window", async () => {

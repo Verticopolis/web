@@ -42,7 +42,20 @@ interface State {
   measuring: boolean;
 }
 
-let open: { close: () => void } | null = null;
+let open: { close: () => void; people: () => PeopleWindow | null } | null = null;
+
+/** The floors and tiles the simulation sends people for. */
+export interface PeopleWindow {
+  readonly floorLo: number;
+  readonly floorHi: number;
+  readonly xLo: number;
+  readonly xHi: number;
+}
+
+/** The people the open 3D view wants, or null when it isn't open. */
+export function tower3dPeopleWindow(): PeopleWindow | null {
+  return open?.people() ?? null;
+}
 
 /** Opens the window, or brings it forward when it is open. */
 export function openTower3d(app: GameApp): void {
@@ -58,7 +71,7 @@ export function openTower3d(app: GameApp): void {
   const state: State = {
     status: "Loading 3D…",
     time: "follow",
-    variant: "lit",
+    variant: "art",
     stats: null,
     report: null,
     measuring: false,
@@ -80,7 +93,7 @@ export function openTower3d(app: GameApp): void {
     host.remove();
     open = null;
   };
-  open = { close };
+  open = { close, people: () => view?.peopleWindow() ?? null };
 
   const unavailable = (why: Unavailable): void => {
     view?.dispose();
@@ -158,6 +171,7 @@ export function openTower3d(app: GameApp): void {
                 view?.setVariant(state.variant);
               }}
             >
+              <option value="art" ?selected=${state.variant === "art"}>D: Game art</option>
               <option value="lit" ?selected=${state.variant === "lit"}>A: Lit model</option>
               <option value="pastel" ?selected=${state.variant === "pastel"}>B: Flat pastel</option>
               <option value="night" ?selected=${state.variant === "night"}>C: Night first</option>
@@ -224,6 +238,7 @@ ${statsLine(s)}</pre
         },
         catalog: towerCatalog(sim),
         rules: renderRules,
+        variant: state.variant,
         onUnavailable: unavailable,
       });
       if (!view) return;
