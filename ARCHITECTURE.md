@@ -318,13 +318,16 @@ reloads onto the new assets) or later (the new version applies on the next
 cold start). The icons in `src/public/` come from an in-code SVG, like every
 other sprite; `npm run icons` regenerates them.
 
-`VC_DESKTOP=1 npm run build` makes the desktop build, for a packaged desktop
-app that serves the built files from its own disk and updates by shipping a
-new app. The page then registers no service worker and polls for no update,
-offers no Install (it already counts as installed), shows no Sponsor link and
-sends no analytics; the game and its saves are unchanged. A Vercel build
-refuses the flag (`src/build/desktopBuild.ts`), and the page reads it through
-`src/deployTarget.ts`.
+`npm run build:desktop` makes the desktop build, for a packaged desktop app
+that serves the built files from its own disk and updates by shipping a new
+app. It runs the game's build and then the manual's, both with `VC_DESKTOP=1`,
+so `dist/` holds the game and its manual under `dist/help/` (the game's Help
+links and the desk Help window point there). The game then registers no
+service worker and polls for no update, offers no Install (it already counts
+as installed), shows no Sponsor link and sends no analytics; the manual offers
+no Sponsor item, saves no offline worker and sends no analytics either. The
+game and its saves are unchanged. A Vercel build refuses the flag
+(`src/build/desktopBuild.ts`), and both read it through `src/deployTarget.ts`.
 
 ## The engine build
 

@@ -23,6 +23,7 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import { satteri } from "@astrojs/markdown-satteri";
 import { GITHUB } from "./site.mjs";
+import { isDesktopBuild } from "../src/build/desktopBuild.ts";
 import {
   HELP_BASE,
   OLD_ANCHORS,
@@ -81,6 +82,10 @@ export default defineConfig({
       // The help site is never a tooling build (no window.game handle).
       __TOOLING_BUILD__: "false",
       __HELP_ORIGIN__: JSON.stringify(process.env.VC_HELP_ORIGIN ?? ""),
+      // The desktop build (VC_DESKTOP=1, src/build/desktopBuild.ts): the
+      // manual then offers no Sponsor item, saves no offline worker and sends
+      // no analytics, like the game it ships with.
+      __DESKTOP_BUILD__: JSON.stringify(isDesktopBuild(process.env)),
     },
     server: { fs: { allow: [repo] } },
   },

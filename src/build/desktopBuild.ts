@@ -2,11 +2,14 @@
  * The desktop build: the game packaged inside a desktop app, which serves the
  * built files from its own disk and updates by shipping a new app.
  *
- * `VC_DESKTOP=1 npm run build` makes one. The page then registers no service
+ * `npm run build:desktop` makes one: the game's build and then the manual's
+ * (help-site/), both with `VC_DESKTOP=1`. The page then registers no service
  * worker and polls for no update (src/pwa.ts), offers no Install anywhere
  * (src/pwaInstall.ts `isStandalone`), shows no Sponsor link
  * (src/ui/splashTemplate.ts `sponsorOffered`), and sends no analytics
- * (src/telemetry.ts `telemetryHostAllowed`). Everything else, the game and
+ * (src/telemetry.ts `telemetryHostAllowed`); the manual offers no Sponsor
+ * item (src/ui/helpSiteMenu.ts) and saves no offline worker
+ * (src/manual/manualOffline.ts). Everything else, the game and
  * its saves included, is the same build players get on the web. The page reads
  * the flag through src/deployTarget.ts, and the build's `version.json` carries
  * `"desktop": true` so the app's packaging can refuse a web build.

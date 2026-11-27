@@ -17,6 +17,7 @@
  */
 
 import { HELP_ADDRESS } from "../helpAddress";
+import { DESKTOP_BUILD } from "../deployTarget";
 
 /** The cookie that says the manual is saved on this device. */
 export const MANUAL_COOKIE = "vc_manual";
@@ -71,10 +72,11 @@ export interface SaveManualDeps {
  * the game worker's scope, so a ready registration with another scope says
  * nothing about the manual and marks nothing. Refreshes the cookie's life on
  * every page. Never throws: a refused worker or blocked cookies leave the
- * manual online only, as before.
+ * manual online only, as before. The desktop build registers no worker: its
+ * app serves the manual from disk (src/build/desktopBuild.ts).
  */
 export async function saveManualOffline(base: string, deps: SaveManualDeps): Promise<void> {
-  if (!deps.workers) return;
+  if (DESKTOP_BUILD || !deps.workers) return;
   try {
     const manual = await deps.workers.register(`${base}/sw.js`, { scope: `${base}/` });
     if ((await deps.workers.ready).scope !== manual.scope) return;
