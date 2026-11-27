@@ -257,6 +257,17 @@ export function isSponsorLink(href) {
 }
 
 /**
+ * The part of the Markdown processor's (satteri's) hast visitor context the
+ * link plugin uses, written here so the game's typecheck needs no help-site
+ * package.
+ * @typedef {{
+ *   parent(node: object): { type: string; tagName?: string };
+ *   removeNode(node: object): void;
+ *   setProperty(node: object, key: string, value: unknown): void;
+ * }} LinkVisitContext
+ */
+
+/**
  * The Markdown processor's plugin for every page's links. The help pages write
  * /help/... for a manual page and / for the game, as the game's own Help
  * window reads them; this points each link at this build's address for it
@@ -268,9 +279,12 @@ export function isSponsorLink(href) {
 export function siteLinks(desktop) {
   return {
     name: "verticopolis-site-links",
-    /** @type {import("satteri").HastFilteredVisitor<import("hast").Element>} */
     element: {
       filter: ["a"],
+      /**
+       * @param {{ properties?: Record<string, unknown> }} node an `a` element
+       * @param {LinkVisitContext} ctx the processor's visitor context
+       */
       visit(node, ctx) {
         const href = node.properties?.href;
         if (typeof href !== "string") return;
