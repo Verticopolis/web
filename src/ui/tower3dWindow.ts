@@ -16,6 +16,7 @@ import { html, nothing, render } from "lit-html";
 import type { GameApp } from "../main";
 import { towerCatalog } from "@verticopolis/components/render/towerSource";
 import { MovableWindow } from "@verticopolis/components/windows/movableWindow";
+import { iconTemplate } from "@verticopolis/components/windows/icons";
 import type {
   LookVariant,
   TimeChoice,
@@ -27,6 +28,15 @@ import { renderRules, toRenderSim } from "../engineRender";
 import { engineTrapped } from "../game/engineFault";
 import { isEngineStopped, isSplashUp } from "../game/interactionState";
 import { measureRun, type MeasureReport } from "./tower3dMeasure";
+import { topBarView } from "./topBar";
+
+/** The speed buttons the game bar shows, so the 3D window can run the game too. */
+const SPEED_BUTTONS = [
+  { icon: "pause", label: "Pause" },
+  { icon: "speed1", label: "Play (slow speed)" },
+  { icon: "speed2", label: "Medium speed" },
+  { icon: "speed3", label: "Fast speed" },
+] as const;
 
 /** The menu item that opens the window. */
 export const TOWER_3D_ITEM_ID = "mb-tower-3d";
@@ -81,9 +91,12 @@ export function openTower3d(app: GameApp): void {
   let statsTimer = 0;
   let resize: ResizeObserver | null = null;
   let stopMeasure: (() => void) | null = null;
+  // On a phone the window covers the game, so the side view stops drawing under it.
+  const resumeSideView = phone ? holdSideView(app) : () => {};
 
   const close = (): void => {
     stopMeasure?.();
+    resumeSideView();
     window.clearInterval(statsTimer);
     resize?.disconnect();
     view?.dispose();
@@ -148,6 +161,7 @@ export function openTower3d(app: GameApp): void {
           <span id="tower3d-title">Tower in 3D</span
           ><button type="button" class="btn xs" aria-label="Close Tower in 3D" @click=${close}>✕</button>
         </div>
+        ${gameBar(app, draw)}
         <div class="tower3d-bar" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px">
           <label
             >Time
@@ -263,6 +277,54 @@ ${statsLine(s)}</pre
 /** Closes the window if it is open (a tower closing, say). */
 export function closeTower3d(): void {
   open?.close();
+}
+
+/**
+ * Skips the side view's draw step (Excalibur's own `_draw`, a private method:
+ * fine for this draft prototype) so the device runs one renderer at a time.
+ * The game keeps stepping. Returns the undo.
+ */
+function holdSideView(app: GameApp): () => void {
+  const ex = app.engine.engine as unknown as { _draw?: (ms: number) => void };
+  if (typeof ex._draw !== "function") return () => {};
+  ex._draw = () => {};
+  return () => {
+    delete ex._draw;
+  };
+}
+
+/** The game's speed buttons and meters, read from the game bar each time the window draws. */
+function gameBar(app: GameApp, redraw: () => void): ReturnType<typeof html> {
+  const bar = topBarView();
+  const speed = app.ui.cb.getSpeed();
+  return html`<div
+    class="tower3d-game"
+    style="display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;padding:4px;border-bottom:1px solid #808080"
+  >
+    <span role="group" aria-label="Game speed" style="display:flex;gap:2px">
+      ${SPEED_BUTTONS.map(
+        (b, level) =>
+          html`<button
+            type="button"
+            class="btn xs ${speed === level ? "active" : ""}"
+            aria-label=${b.label}
+            aria-pressed=${speed === level ? "true" : "false"}
+            title=${b.label}
+            style=${speed === level ? "border-style:inset;background:#a8a8a8" : ""}
+            @click=${() => {
+              app.ui.cb.onSpeed(level);
+              redraw();
+            }}
+          >
+            ${iconTemplate(b.icon, { size: 14 })}
+          </button>`,
+      )}
+    </span>
+    <span>${bar.date}</span>
+    <span>${bar.time}</span>
+    <span style=${bar.fundsNegative ? "color:#c00" : ""}>${bar.funds}</span>
+    <span>Pop ${bar.population}</span>
+  </div>`;
 }
 
 function statsLine(s: Tower3dStats): string {

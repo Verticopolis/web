@@ -56,11 +56,18 @@ interface MountOptions {
   onUnavailable: (why: string) => void;
 }
 
+/** The game's speed controls and its side view's Excalibur engine, as the window sees them. */
+const game = vi.hoisted(() => ({ speed: 1, onSpeed: vi.fn(), ex: {} as { _draw?: () => void } }));
+
 function fakeApp(phone = false): GameApp {
   return {
     mobileMq: { matches: phone },
     renderSim: "reader",
-    ui: { el: { towerName: { value: " Harmony " } } },
+    ui: {
+      el: { towerName: { value: " Harmony " } },
+      cb: { getSpeed: () => game.speed, onSpeed: game.onSpeed },
+    },
+    engine: { engine: game.ex },
   } as unknown as GameApp;
 }
 
@@ -128,6 +135,35 @@ describe("Tower in 3D window", () => {
     openTower3d(fakeApp(true));
     expect(document.querySelectorAll("#tower3d-host")).toHaveLength(1);
     expect(three.mount).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops the side view drawing under the window on a phone, and draws it again once closed", async () => {
+    const draw = vi.fn();
+    game.ex = Object.create({ _draw: draw }) as { _draw?: () => void };
+    await opened(true);
+    game.ex._draw!();
+    expect(draw).not.toHaveBeenCalled();
+    closeTower3d();
+    game.ex._draw!();
+    expect(draw).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves the side view drawing on a computer, where it shows around the window", async () => {
+    const draw = vi.fn();
+    game.ex = Object.create({ _draw: draw }) as { _draw?: () => void };
+    await opened();
+    game.ex._draw!();
+    expect(draw).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs the game's speeds from its own bar and shows the game's date, time, funds and population", async () => {
+    await opened();
+    const pressed = host()!.querySelector<HTMLButtonElement>('[aria-label="Play (slow speed)"]')!;
+    expect(pressed.getAttribute("aria-pressed")).toBe("true");
+    host()!.querySelector<HTMLButtonElement>('[aria-label="Fast speed"]')!.click();
+    expect(game.onSpeed).toHaveBeenCalledWith(3);
+    const bar = host()!.querySelector(".tower3d-game")!.textContent!;
+    for (const shown of ["1st WD/1Q/1st Year", "Mon 07:00", "$2,000,000", "Pop 0"]) expect(bar).toContain(shown);
   });
 
   it("passes the time, look and reset controls to the view", async () => {
