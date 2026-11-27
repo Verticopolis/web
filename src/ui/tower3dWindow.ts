@@ -189,6 +189,7 @@ export function openTower3d(app: GameApp): void {
               <option value="lit" ?selected=${state.variant === "lit"}>A: Lit model</option>
               <option value="pastel" ?selected=${state.variant === "pastel"}>B: Flat pastel</option>
               <option value="night" ?selected=${state.variant === "night"}>C: Night first</option>
+              <option value="voxel" ?selected=${state.variant === "voxel"}>E: Voxel art</option>
             </select></label
           >
           <button type="button" class="btn" @click=${() => view?.resetView()}>Reset view</button>
