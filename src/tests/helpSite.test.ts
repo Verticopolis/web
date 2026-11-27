@@ -18,6 +18,7 @@ import {
   pageJsonLd,
   sharedHead,
   sidebar,
+  sidebarFor,
   type SidebarEntry,
 } from "../../help-site/site.mjs";
 import { catalogFor } from "./catalogFixture";
@@ -116,6 +117,14 @@ describe("the side menu", () => {
     expect(sponsor).toMatchObject({ link: SPONSOR_URL, attrs: { target: "_blank", rel: "noopener noreferrer" } });
     // The front page's Supporting Verticopolis section points at the same page.
     expect(readFileSync(resolve(pagesDir, "index.md"), "utf8")).toContain(`](${SPONSOR_URL})`);
+  });
+
+  it("leaves the Sponsor entry out of the desktop build's sidebar and keeps the rest", () => {
+    const isSponsor = (e: SidebarEntry) => "link" in e && e.link === SPONSOR_URL;
+    expect(flatten(sidebarFor(false)).some(isSponsor)).toBe(true);
+    const desktop = flatten(sidebarFor(true));
+    expect(desktop.some(isSponsor)).toBe(false);
+    expect(desktop).toHaveLength(flatten(sidebar).length - 1);
   });
 });
 

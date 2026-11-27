@@ -150,6 +150,28 @@ export const sidebar = [
 ];
 
 /**
+ * The sidebar for one build: {@link sidebar} as it is, or for the desktop
+ * build (VC_DESKTOP=1, src/build/desktopBuild.ts) without the Sponsor entry,
+ * since that build shows no Sponsor link anywhere.
+ * @param {boolean} desktop
+ * @returns {SidebarEntry[]}
+ */
+export function sidebarFor(desktop) {
+  if (!desktop) return sidebar;
+  /** @param {SidebarEntry[]} entries @returns {SidebarEntry[]} */
+  const without = (entries) => {
+    /** @type {SidebarEntry[]} */
+    const kept = [];
+    for (const entry of entries) {
+      if ("link" in entry && entry.link === SPONSOR_URL) continue;
+      kept.push("items" in entry ? { ...entry, items: without(entry.items) } : entry);
+    }
+    return kept;
+  };
+  return without(sidebar);
+}
+
+/**
  * Where each section of the old one-page /help went (its `/help#id` anchor,
  * as the game and old links name it). "going-further" and "about" stay on the
  * front page, which links to everything they covered.

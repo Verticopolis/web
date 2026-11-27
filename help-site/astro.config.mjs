@@ -31,9 +31,12 @@ import {
   oldAnchorRedirects,
   schemeBootScript,
   sharedHead,
-  sidebar,
+  sidebarFor,
   siteHref,
 } from "./site.mjs";
+
+/** Whether this is the desktop build (VC_DESKTOP=1, src/build/desktopBuild.ts). */
+const desktop = isDesktopBuild(process.env);
 
 const site = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(site, "..");
@@ -85,7 +88,7 @@ export default defineConfig({
       // The desktop build (VC_DESKTOP=1, src/build/desktopBuild.ts): the
       // manual then offers no Sponsor item, saves no offline worker and sends
       // no analytics, like the game it ships with.
-      __DESKTOP_BUILD__: JSON.stringify(isDesktopBuild(process.env)),
+      __DESKTOP_BUILD__: JSON.stringify(desktop),
     },
     server: { fs: { allow: [repo] } },
   },
@@ -129,7 +132,7 @@ export default defineConfig({
           content: oldAnchorRedirects(OLD_ANCHORS),
         },
       ],
-      sidebar,
+      sidebar: sidebarFor(desktop),
     }),
   ],
 });
