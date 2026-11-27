@@ -19,6 +19,7 @@ import {
   sharedHead,
   sidebar,
   sidebarFor,
+  siteLinks,
   type SidebarEntry,
 } from "../../help-site/site.mjs";
 import { catalogFor } from "./catalogFixture";
@@ -117,6 +118,30 @@ describe("the side menu", () => {
     expect(sponsor).toMatchObject({ link: SPONSOR_URL, attrs: { target: "_blank", rel: "noopener noreferrer" } });
     // The front page's Supporting Verticopolis section points at the same page.
     expect(readFileSync(resolve(pagesDir, "index.md"), "utf8")).toContain(`](${SPONSOR_URL})`);
+  });
+
+  it("drops the paragraph that offers Sponsor from the desktop build's pages, and only that", () => {
+    const paragraph = { type: "element", tagName: "p" };
+    const link = (href: string) => ({ type: "element", tagName: "a", properties: { href } });
+    const ctx = () => ({ parent: vi.fn(() => paragraph), removeNode: vi.fn(), setProperty: vi.fn() });
+    const visit = (desktop: boolean, node: unknown, c: ReturnType<typeof ctx>) =>
+      siteLinks(desktop).element.visit(node as never, c as never);
+
+    const desktop = ctx();
+    visit(true, link(SPONSOR_URL), desktop);
+    expect(desktop.removeNode).toHaveBeenCalledWith(paragraph);
+
+    const web = ctx();
+    visit(false, link(SPONSOR_URL), web);
+    expect(web.removeNode).not.toHaveBeenCalled();
+
+    const other = ctx();
+    visit(true, link("https://github.com/Verticopolis/web/issues"), other);
+    expect(other.removeNode).not.toHaveBeenCalled();
+    // The offer has a paragraph of its own, so dropping it keeps the rest of the section.
+    const page = readFileSync(resolve(pagesDir, "index.md"), "utf8");
+    const offer = page.split("\n\n").find((p) => p.includes(`](${SPONSOR_URL})`));
+    expect(offer).toMatch(/^If you have enjoyed/);
   });
 
   it("leaves the Sponsor entry out of the desktop build's sidebar and keeps the rest", () => {

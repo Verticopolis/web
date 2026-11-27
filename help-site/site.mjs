@@ -256,6 +256,36 @@ export function isSponsorLink(href) {
   }
 }
 
+/**
+ * The Markdown processor's plugin for every page's links. The help pages write
+ * /help/... for a manual page and / for the game, as the game's own Help
+ * window reads them; this points each link at this build's address for it
+ * ({@link siteHref}), a no-op in a /help build. In the desktop build
+ * (VC_DESKTOP=1, src/build/desktopBuild.ts), which shows no Sponsor link
+ * anywhere, it also drops the paragraph that offers one.
+ * @param {boolean} desktop
+ */
+export function siteLinks(desktop) {
+  return {
+    name: "verticopolis-site-links",
+    /** @type {import("satteri").HastFilteredVisitor<import("hast").Element>} */
+    element: {
+      filter: ["a"],
+      visit(node, ctx) {
+        const href = node.properties?.href;
+        if (typeof href !== "string") return;
+        if (desktop && isSponsorLink(href)) {
+          const holder = ctx.parent(node);
+          ctx.removeNode(holder.type === "element" && holder.tagName === "p" ? holder : node);
+          return;
+        }
+        const to = siteHref(href);
+        if (to !== href) ctx.setProperty(node, "href", to);
+      },
+    },
+  };
+}
+
 /** `MouseEvent.button` for the middle (wheel) button, the one that opens a
  *  link in a new tab; the right button's `auxclick` opens a menu instead. */
 const MIDDLE_BUTTON = 1;
