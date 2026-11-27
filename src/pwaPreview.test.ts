@@ -18,6 +18,7 @@ vi.mock("./deployTarget", () => ({
   get PREVIEW_DEPLOY() {
     return deploy.preview;
   },
+  DESKTOP_BUILD: false,
 }));
 
 async function importPwa() {
