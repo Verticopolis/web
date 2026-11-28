@@ -5,7 +5,7 @@ import { isPrimaryPress, noButtonHeld } from "@verticopolis/components/windows/o
 import { keyId } from "@verticopolis/components/windows/overviewMapKeys";
 import { isSpaceKey, wheelZoomDelta } from "@verticopolis/components/model/inputEvents";
 import { heldEnter } from "./heldEnter";
-import { DESKTOP_BUILD } from "../deployTarget";
+import { startDesktopSound } from "./shellMusic";
 
 /**
  * Keyboard play + audio-kick + pagehide wiring, split out of the `GameApp`
@@ -579,9 +579,9 @@ export function bindKeys(app: GameApp, signal?: AbortSignal): void {
   window.addEventListener("pointerdown", kick, { signal });
   window.addEventListener("keydown", kick, { signal });
   // The desktop build's shell lets sound play without a gesture, so the
-  // title screen's theme starts as the game opens. The listeners stay, in
-  // case a shell still holds it back until the first press.
-  if (DESKTOP_BUILD) app.audio.start();
+  // title screen's theme starts as the game opens, from the shell's beat when
+  // it passed one. The listeners stay, in case a shell holds sound back.
+  startDesktopSound(app.audio);
   // Don't let a pending debounced pref write die with the page.
   window.addEventListener("pagehide", () => flushPrefsSave(app), { signal });
 }
