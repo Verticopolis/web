@@ -75,7 +75,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/functions": "^3.10.6",
     "@vercel/speed-insights": "^2.0.0",
-    "@verticopolis/components": "2.11.0",
+    "@verticopolis/components": "git+https://github.com/Verticopolis/components.git#1b924a1bac464dc23e2c0d892b715e84a79705d0",
     "@verticopolis/engine": "1.61.1",
     "excalibur": "^1.0.0",
     "fflate": "^0.8.3",
