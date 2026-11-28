@@ -274,6 +274,7 @@ player's own text and is never sent, and neither is a tower's contents.
 | `file_menu` | `pointer`, `hold` or `key` | After 4.11.0: the Open or Save As window's right-click menu opened on a row, from a right-click (`pointer`), a finger held on the row (`hold`: the game's own hold, which Safari on an iPhone or iPad needs, or an Android browser's), or the context menu key or Shift+F10 (`key`). One hold sends one event even when the browser's hold also fires |
 | `file_add` | `picked`, `drop` or `folder` | A file added to My Towers: `picked` once a file opened from the device has loaded, `drop` for a file dropped onto the Open or Save As window, `folder` for each tower file From a folder… copied in (from 4.4) |
 | `file_dropped` | none | A file dropped on the game itself, to open as a picked file does |
+| `file_handed` | none | The desktop build only: the desktop app started the game with a tower file to open, which opens as a picked file does |
 | `file_rename` | none | A file renamed |
 | `file_copy` | none | A file duplicated (Duplicate, or Copy then Paste) |
 | `file_delete` | none | A file deleted |

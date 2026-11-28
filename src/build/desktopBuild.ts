@@ -10,7 +10,8 @@
  * scripts while its events still go to `/api/ingest` on whatever host serves
  * it (src/telemetry.ts); the manual offers no Sponsor
  * item (src/ui/helpSiteMenu.ts) and saves no offline worker
- * (src/manual/manualOffline.ts). Everything else, the game and
+ * (src/manual/manualOffline.ts). As it starts, the game opens a tower file
+ * the desktop app hands it, if any (src/game/handedTower.ts). Everything else, the game and
  * its saves included, is the same build players get on the web. The page reads
  * the flag through src/deployTarget.ts, and the build's `version.json` carries
  * `"desktop": true` so the app's packaging can refuse a web build.
