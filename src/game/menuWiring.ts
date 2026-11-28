@@ -31,6 +31,7 @@ import { deskActive } from "../ui/desk/deskController";
 import { deskOptionStates } from "../ui/desk/deskMenus";
 import { DESK_TITLE_CLASS } from "@verticopolis/components/windows/desk/deskTitle";
 import { topBarView } from "../ui/topBar";
+import { openTower3d, TOWER_3D_ITEM_ID } from "../ui/tower3dWindow";
 
 /**
  * The menu bar's commands. The components' MenuBar draws the bar from
@@ -240,6 +241,7 @@ export function wireMenus(app: GameApp): MenuBar | null {
   on(TOWER_CALL_ITEM.fireRescue, () => callFireRescue(app));
   on(TOWER_CALL_ITEM.exterminator, () => void confirmExterminate(app, { reopenStats: false }));
   on("mb-rules", () => ui.showTowerRules());
+  on(TOWER_3D_ITEM_ID, () => openTower3d(app));
   on("mb-win-map", () => setOverviewMapOpen(app, !overviewMapOpen(app)));
   // Options.
   // Its check follows at once, so the desk's tray speaker and Control Panel

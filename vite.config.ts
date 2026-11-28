@@ -591,6 +591,10 @@ export default defineConfig(({ command }) => ({
           "**/debugHud-*.js",
           "**/help-bridge.html",
           "**/helpBridge-*.js",
+          // The Tower in 3D window's chunk (three.js and the components'
+          // render3d), behind a dynamic import and loaded only when the
+          // window opens; network only.
+          "**/Tower3dView-*.js",
         ],
         // The worker's own helper, loaded by importScripts and updated with it,
         // so it stays out of the precache.

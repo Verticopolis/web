@@ -13,7 +13,8 @@ import { drainEngineEvents } from "../analyticsEngineBridge";
 import { hudSource } from "./hudSource";
 import { groupDigits } from "@verticopolis/components/windows/format";
 import { TOAST_SHOWN_MS } from "../ui/uiStatus";
-import { frameWindow } from "@verticopolis/components/render/excalibur/peopleWindow";
+import { frameWindow, NO_PEOPLE } from "@verticopolis/components/render/excalibur/peopleWindow";
+import { tower3dPeopleWindow, type PeopleWindow } from "../ui/tower3dWindow";
 
 /** Real milliseconds between two ticks of the bomb's clock. */
 const BOMB_TICK_MS = 1000;
@@ -52,9 +53,24 @@ export function applySpeed(app: GameApp, s: number): void {
  *  people window), so the frame's size follows the screen and stays flat as
  *  the crowd grows, and none while the zoom cull hides the crowd. */
 function readView(app: GameApp): void {
-  const w = frameWindow(app.engine);
+  const side = frameWindow(app.engine);
+  // While the Tower in 3D window is open, the window also covers what it shows.
+  const w = withTower3d(side, tower3dPeopleWindow());
   app.enginePort.setPeopleWindow(w.floorLo, w.floorHi, w.xLo, w.xHi);
   app.reader.update();
+}
+
+/** The side view's people window, widened to the 3D window's while it is open.
+ *  A culled side view sends nobody, so then only the 3D window counts. */
+function withTower3d(side: PeopleWindow, three: PeopleWindow | null): PeopleWindow {
+  if (!three) return side;
+  if (side === NO_PEOPLE) return three;
+  return {
+    floorLo: Math.min(side.floorLo, three.floorLo),
+    floorHi: Math.max(side.floorHi, three.floorHi),
+    xLo: Math.min(side.xLo, three.xLo),
+    xHi: Math.max(side.xHi, three.xHi),
+  };
 }
 
 export function runFrame(app: GameApp, dtMs: number): void {

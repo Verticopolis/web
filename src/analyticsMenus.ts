@@ -43,6 +43,7 @@ export const MENU_ITEM_CODES = {
   "mb-fire-rescue": "fire_rescue",
   "mb-exterminator": "exterminator",
   "mb-rules": "rules",
+  "mb-tower-3d": "view_3d",
   "mb-win-tools": "tools",
   "mb-dw-tools": "window_tools",
   "mb-dw-info": "window_info",
