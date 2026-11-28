@@ -5,7 +5,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
  * registers no service worker, offers no Install, shows no Sponsor link and
  * loads no Vercel page scripts, even on the production host where all four
  * normally run, while its events still go to `/api/ingest` on whatever host
- * serves it (an `app:` page included). The build-time flag is replaced through `./deployTarget`, as
+ * serves it, a host that is not http(s) included. The build-time flag is replaced through `./deployTarget`, as
  * pwaPreview.test.ts does for previews.
  */
 

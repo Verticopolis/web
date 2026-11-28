@@ -8,7 +8,7 @@
  *  worker there (see src/build/previewDeploy.ts and src/pwa.ts). */
 export const PREVIEW_DEPLOY: boolean = typeof __PREVIEW_DEPLOY__ !== "undefined" && __PREVIEW_DEPLOY__;
 
-/** True only in the desktop build, for a packaged desktop app: the page
+/** True only in the desktop build (`npm run build:desktop`): the page
  *  registers no service worker, offers no Install, shows no Sponsor link and
  *  loads no Vercel page scripts (see src/build/desktopBuild.ts). */
 export const DESKTOP_BUILD: boolean = typeof __DESKTOP_BUILD__ !== "undefined" && __DESKTOP_BUILD__;

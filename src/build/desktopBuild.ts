@@ -1,6 +1,6 @@
 /**
- * The desktop build: the game packaged inside a desktop app, which serves the
- * built files from its own disk and updates by shipping a new app.
+ * The desktop build: the game built to be served from local files, which
+ * updates only when a new build replaces it.
  *
  * `npm run build:desktop` makes one: the game's build and then the manual's
  * (help-site/), both with `VC_DESKTOP=1`. The page then registers no service
@@ -29,7 +29,7 @@ export function isDesktopBuild(env: Readonly<Record<string, string | undefined>>
     throw new Error(`VC_DESKTOP must be "1" or unset; got "${raw}". Use VC_DESKTOP=1 for a desktop build.`);
   if (env.VERCEL)
     throw new Error(
-      "VC_DESKTOP=1 is set in a Vercel build. The desktop build is for a packaged desktop app only; remove VC_DESKTOP from the Vercel environment.",
+      "VC_DESKTOP=1 is set in a Vercel build. The desktop build is never deployed to Vercel; remove VC_DESKTOP from the Vercel environment.",
     );
   return true;
 }
