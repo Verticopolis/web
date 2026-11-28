@@ -139,6 +139,21 @@ describe("sendToRelay", () => {
     expect(bodyOf(init?.body).event).toBe("boot");
   });
 
+  it("falls back to fetch when sendBeacon throws (a page served over a non-http scheme)", async () => {
+    const { sendToRelay } = await load();
+    vi.stubGlobal("navigator", {
+      sendBeacon: () => {
+        throw new TypeError("Beacons are only supported over HTTP(S).");
+      },
+    });
+    const fetchSpy = vi.fn((_path: string, _init?: RequestInit) => Promise.resolve(new Response(null)));
+    vi.stubGlobal("fetch", fetchSpy);
+    sendToRelay("boot", {});
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0][0]).toBe("/api/ingest");
+    expect(fetchSpy.mock.calls[0][1]?.keepalive).toBe(true);
+  });
+
   it("falls back to fetch when there is no navigator at all (non-browser context)", async () => {
     const { sendToRelay } = await load();
     vi.stubGlobal("navigator", undefined);

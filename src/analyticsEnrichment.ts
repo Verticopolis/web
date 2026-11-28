@@ -1,5 +1,6 @@
 import { APP_VERSION } from "./appVersion";
 import type { EventProps } from "./analyticsAdapter";
+import { DESKTOP_BUILD } from "./deployTarget";
 
 /**
  * On-device, cookieless enrichment for the gameplay analytics events (S4). Every
@@ -18,14 +19,15 @@ import type { EventProps } from "./analyticsAdapter";
 
 /**
  * The RUNTIME SURFACE a session is played on (resolves AUD-036, closes #710):
- * the browser game, or the Android TWA, which loads the same live site with a
- * `?src=twa` start-URL marker. Closed set; {@link PLATFORM_LABELS} is its
+ * the browser game, the Android TWA, which loads the same live site with a
+ * `?src=twa` start-URL marker, or the desktop build (src/build/desktopBuild.ts).
+ * Closed set; {@link PLATFORM_LABELS} is its
  * runtime twin, pinned against this union in `analyticsEnrichment.test.ts`.
  */
-export type PlatformLabel = "web" | "twa";
+export type PlatformLabel = "web" | "twa" | "desktop";
 
 /** Every {@link PlatformLabel}, for the tests that pin the set closed. */
-export const PLATFORM_LABELS = ["web", "twa"] as const;
+export const PLATFORM_LABELS = ["web", "twa", "desktop"] as const;
 
 /**
  * The COMMERCIAL CHANNEL a session arrived through, emitted as
@@ -43,11 +45,12 @@ export type DistributionChannelLabel = PlatformLabel;
 export const DISTRIBUTION_CHANNEL_LABELS = PLATFORM_LABELS;
 
 /**
- * Resolve the platform label from the launch URL's query string: the TWA
- * start-URL marker (`?src=twa`) reads `twa`, everything else `web`. Pure, so
- * it is unit-testable without faking the location.
+ * Resolve the platform label: the desktop build reads `desktop`; otherwise the
+ * launch URL's TWA start-URL marker (`?src=twa`) reads `twa`, everything else
+ * `web`. Pure, so it is unit-testable without faking the location.
  */
-export function resolvePlatformLabel(search: string): PlatformLabel {
+export function resolvePlatformLabel(search: string, desktopBuild = false): PlatformLabel {
+  if (desktopBuild) return "desktop";
   try {
     if (new URLSearchParams(search).get("src") === "twa") return "twa";
   } catch {
@@ -69,7 +72,7 @@ export function platformLabel(): PlatformLabel {
   } catch {
     /* no window (server-side / worker): treat as the plain web default */
   }
-  return resolvePlatformLabel(search);
+  return resolvePlatformLabel(search, DESKTOP_BUILD);
 }
 
 /** The live distribution-channel dimension. Takes the platform the caller

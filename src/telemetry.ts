@@ -50,8 +50,8 @@ import { DESKTOP_BUILD } from "./deployTarget";
  */
 export function telemetryHostAllowed(): boolean {
   if (typeof window === "undefined") return false;
-  // The desktop build sends nothing, wherever its pages are served from.
-  if (DESKTOP_BUILD) return false;
+  // The desktop build posts to `/api/ingest` on whatever host serves it.
+  if (DESKTOP_BUILD) return true;
   // Strip a trailing dot so the canonical absolute FQDN (`verticopolis.com.`) is
   // matched like the usual form. Mirror this in `originAllowed`.
   const host = window.location.hostname.replace(/\.$/, "");
@@ -59,7 +59,9 @@ export function telemetryHostAllowed(): boolean {
 }
 
 export function injectPageTelemetry(): void {
-  if (!telemetryHostAllowed()) return;
+  // The Vercel page scripts need Vercel's endpoints, which a desktop build's
+  // host does not serve.
+  if (DESKTOP_BUILD || !telemetryHostAllowed()) return;
   try {
     analyticsAdapter().injectPageTelemetry();
   } catch {

@@ -33,7 +33,7 @@ describe("buildCaptureBody", () => {
   });
 
   it("REGRESSION (GH #788): a forged platform or distribution_channel becomes the fallback", () => {
-    for (const forged of ["desktop", "steam", "WEB", "", 7, null, true, { x: 1 }, ["web"]]) {
+    for (const forged of ["mobile", "steam", "WEB", "", 7, null, true, { x: 1 }, ["web"]]) {
       const body = buildCaptureBody(
         { event: "boot", properties: { platform: forged, distribution_channel: forged, kept: "yes" } },
         "production",

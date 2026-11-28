@@ -36,11 +36,11 @@ describe("the two dimensions are closed sets", () => {
   void everyListedIsAChannel;
 
   it("PlatformLabel is exactly the browser game and the Android TWA", () => {
-    expect([...PLATFORM_LABELS]).toEqual(["web", "twa"]);
+    expect([...PLATFORM_LABELS]).toEqual(["web", "twa", "desktop"]);
   });
 
   it("DistributionChannelLabel mirrors the platform labels", () => {
-    expect([...DISTRIBUTION_CHANNEL_LABELS]).toEqual(["web", "twa"]);
+    expect([...DISTRIBUTION_CHANNEL_LABELS]).toEqual(["web", "twa", "desktop"]);
   });
 });
 
@@ -54,6 +54,11 @@ describe("resolvePlatformLabel", () => {
     expect(resolvePlatformLabel("")).toBe("web");
     expect(resolvePlatformLabel("?src=other")).toBe("web");
     expect(resolvePlatformLabel("?engine=wasm")).toBe("web");
+  });
+
+  it("reports desktop for the desktop build, whatever the query says", () => {
+    expect(resolvePlatformLabel("", true)).toBe("desktop");
+    expect(resolvePlatformLabel("?src=twa", true)).toBe("desktop");
   });
 });
 
