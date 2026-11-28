@@ -140,7 +140,12 @@ function postToRelay(event: string, properties: Record<string, unknown>): void {
     // Prefer sendBeacon (survives page-hide). It returns false when the user
     // agent cannot queue the payload (buffer full); fall through to fetch then.
     if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
-      if (navigator.sendBeacon(INGEST_PATH, body)) return;
+      try {
+        if (navigator.sendBeacon(INGEST_PATH, body)) return;
+      } catch {
+        // A page served over a scheme other than http(s) has no beacons
+        // (the browser throws); fetch still reaches its host.
+      }
     }
     // The returned promise is caught so a rejected fetch (offline, DNS) cannot
     // become an unhandled rejection: the whole path stays best-effort.
