@@ -3,16 +3,21 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 /**
  * The desktop build (src/build/desktopBuild.ts): with the flag on, the page
  * registers no service worker, offers no Install, shows no Sponsor link and
- * sends no analytics, even on the production host where all four normally
- * run. The build-time flag is replaced through `./deployTarget`, as
+ * loads no Vercel page scripts, even on the production host where all four
+ * normally run, while its events still go to `/api/ingest` on whatever host
+ * serves it (an `app:` page included). The build-time flag is replaced through `./deployTarget`, as
  * pwaPreview.test.ts does for previews.
  */
 
-const { registerSW, deploy } = vi.hoisted(() => ({
+const { registerSW, deploy, injectSpeedInsights, injectWebAnalytics } = vi.hoisted(() => ({
   registerSW: vi.fn((_opts: Record<string, unknown>) => vi.fn()),
   deploy: { desktop: true },
+  injectSpeedInsights: vi.fn(),
+  injectWebAnalytics: vi.fn(),
 }));
 vi.mock("virtual:pwa-register", () => ({ registerSW }));
+vi.mock("@vercel/speed-insights", () => ({ injectSpeedInsights }));
+vi.mock("@vercel/analytics", () => ({ inject: injectWebAnalytics }));
 vi.mock("./deployTarget", () => ({
   PREVIEW_DEPLOY: false,
   get DESKTOP_BUILD() {
@@ -48,6 +53,8 @@ function productionPage(): () => void {
 
 afterEach(() => {
   registerSW.mockClear();
+  injectSpeedInsights.mockClear();
+  injectWebAnalytics.mockClear();
   deploy.desktop = true;
   vi.resetModules();
 });
@@ -67,13 +74,25 @@ describe("the desktop build", () => {
     }
   });
 
-  it("sends no analytics on the production host", async () => {
+  it("loads no Vercel page scripts on the production host", async () => {
     const restore = productionPage();
     try {
-      const { telemetryHostAllowed } = await import("./telemetry");
-      expect(telemetryHostAllowed()).toBe(false);
+      const { injectPageTelemetry } = await import("./telemetry");
+      injectPageTelemetry();
+      expect(injectSpeedInsights).not.toHaveBeenCalled();
+      expect(injectWebAnalytics).not.toHaveBeenCalled();
     } finally {
       restore();
+    }
+  });
+
+  it("sends events from a host the web gate would refuse", async () => {
+    window.location.href = "http://localhost:3000/";
+    try {
+      const { telemetryHostAllowed } = await import("./telemetry");
+      expect(telemetryHostAllowed()).toBe(true);
+    } finally {
+      window.location.href = startUrl;
     }
   });
 
@@ -107,7 +126,11 @@ describe("the desktop build", () => {
       const { registerPWA } = await import("./pwa");
       registerPWA({ onUpdateAvailable: vi.fn() });
       expect(registerSW).toHaveBeenCalledTimes(1);
-      expect((await import("./telemetry")).telemetryHostAllowed()).toBe(true);
+      const telemetry = await import("./telemetry");
+      expect(telemetry.telemetryHostAllowed()).toBe(true);
+      telemetry.injectPageTelemetry();
+      expect(injectSpeedInsights).toHaveBeenCalledTimes(1);
+      expect(injectWebAnalytics).toHaveBeenCalledTimes(1);
       expect((await import("./pwaInstall")).isStandalone()).toBe(false);
       expect((await import("./game/installAffordance")).splashInstallOffered()).toBe(true);
       expect((await import("./ui/splashTemplate")).sponsorOffered()).toBe(true);

@@ -420,7 +420,7 @@ export default defineConfig(({ command }) => ({
     // src/build/previewDeploy.ts for the worker a preview ships instead.
     __PREVIEW_DEPLOY__: JSON.stringify(isPreviewDeploy(process.env)),
     // The desktop build (VC_DESKTOP=1), for a packaged desktop app: no
-    // service worker, Install, Sponsor or analytics. See
+    // service worker, Install, Sponsor or Vercel page scripts. See
     // src/build/desktopBuild.ts; a Vercel build refuses it.
     __DESKTOP_BUILD__: JSON.stringify(DESKTOP_BUILD),
     // The engine package this shell was built with (#985 criterion 5): the

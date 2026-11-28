@@ -6,8 +6,9 @@
  * (help-site/), both with `VC_DESKTOP=1`. The page then registers no service
  * worker and polls for no update (src/pwa.ts), offers no Install anywhere
  * (src/pwaInstall.ts `isStandalone`), shows no Sponsor link
- * (src/ui/splashTemplate.ts `sponsorOffered`), and sends no analytics
- * (src/telemetry.ts `telemetryHostAllowed`); the manual offers no Sponsor
+ * (src/ui/splashTemplate.ts `sponsorOffered`), and loads no Vercel page
+ * scripts while its events still go to `/api/ingest` on whatever host serves
+ * it (src/telemetry.ts); the manual offers no Sponsor
  * item (src/ui/helpSiteMenu.ts) and saves no offline worker
  * (src/manual/manualOffline.ts). Everything else, the game and
  * its saves included, is the same build players get on the web. The page reads
@@ -19,7 +20,7 @@
 
 /** Whether this build is the desktop build. Fails on a misspelled value
  *  (`VC_DESKTOP=true` would quietly build the web game) and on a Vercel build,
- *  since a deploy with no service worker, Install or analytics must never
+ *  since a deploy with no service worker, Install or page telemetry must never
  *  reach the website. */
 export function isDesktopBuild(env: Readonly<Record<string, string | undefined>>): boolean {
   const raw = env.VC_DESKTOP;
