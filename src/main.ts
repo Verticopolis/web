@@ -6,7 +6,7 @@ import { endArrowDrag } from "@verticopolis/components/render/excalibur/pressLif
 import { AudioEngine } from "@verticopolis/components/audio/Audio";
 import { watchAway } from "@verticopolis/components/audio/awayWatch";
 import { SaveGame } from "./storage/SaveGame";
-import { loadPrefs, type Prefs } from "./storage/Prefs";
+import { startPrefs } from "./storage/shellMute";
 import { type TrafficTier } from "@verticopolis/components/presentation/traffic";
 import { UI, type Tool } from "./ui/UI";
 import { setHistoryButtons, showTower } from "./ui/uiStatus";
@@ -218,7 +218,7 @@ class GameApp implements GameAppPorts {
   /** First-run splash + onboarding (pure DOM chrome). @internal */
   onboarding!: OnboardingController;
   /** Per-device accessibility preferences (localStorage, off the save). @internal */
-  prefs: Prefs = loadPrefs();
+  prefs = startPrefs();
   /** Trailing debounce for volume-drag pref writes: slider input events fire
    *  at pointer-move rate, and a synchronous localStorage write per tick is
    *  avoidable main-thread churn during the gain ramp. A short trailing delay

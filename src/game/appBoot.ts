@@ -322,11 +322,11 @@ export function runBootFlow(app: GameApp, savedAtBoot?: number): void {
     // re-paused through pauseForSplash, so this is only the greeting that says
     // why the tower is sitting still, matching Continue's.
     onEnterTower: () => app.ui.toast("Welcome back. Press Play to resume.", "info"),
-    // Splash theme on the start screen, calm bed in the tower. Audio is
-    // autoplay-gated (it only sounds after a gesture), so the splash theme is
-    // heard on the New Tower path, where the splash stays up through the
-    // rule-set modal while the audio chunk loads and then crossfades to the
-    // bed. An instant Continue dismiss has no pre-dismiss gesture to sound
+    // Splash theme on the start screen, calm bed in the tower. Web audio is
+    // gesture-gated (the desktop build starts it at once: inputKeys.ts), so
+    // the theme is heard on the New Tower path, where the splash stays up
+    // through the rule-set modal while the audio chunk loads, then crossfades
+    // to the bed. An instant Continue dismiss has no earlier gesture to sound
     // under, so it lands straight on the bed. That is by design: browsers
     // block audio until a gesture, and Continue's own click dismisses the
     // splash.
