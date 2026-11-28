@@ -96,6 +96,12 @@ describe("the desktop build", () => {
     }
   });
 
+  it("reports its events as the desktop platform", async () => {
+    const { platformLabel, distributionChannelLabel } = await import("./analyticsEnrichment");
+    expect(platformLabel()).toBe("desktop");
+    expect(distributionChannelLabel(platformLabel())).toBe("desktop");
+  });
+
   it("counts as installed, so no surface offers Install", async () => {
     const restore = productionPage();
     try {
@@ -131,6 +137,7 @@ describe("the desktop build", () => {
       telemetry.injectPageTelemetry();
       expect(injectSpeedInsights).toHaveBeenCalledTimes(1);
       expect(injectWebAnalytics).toHaveBeenCalledTimes(1);
+      expect((await import("./analyticsEnrichment")).platformLabel()).toBe("web");
       expect((await import("./pwaInstall")).isStandalone()).toBe(false);
       expect((await import("./game/installAffordance")).splashInstallOffered()).toBe(true);
       expect((await import("./ui/splashTemplate")).sponsorOffered()).toBe(true);

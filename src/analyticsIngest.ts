@@ -240,7 +240,7 @@ export function originAllowed(origin: string | null, environment: string | undef
  * because this module stays free of the client tree; a test pins the two
  * together so they cannot drift.
  */
-export const INGEST_PLATFORM_LABELS: readonly string[] = ["web", "twa"];
+export const INGEST_PLATFORM_LABELS: readonly string[] = ["web", "twa", "desktop"];
 
 /** The value a label outside {@link INGEST_PLATFORM_LABELS} is rewritten to. */
 export const INGEST_PLATFORM_FALLBACK = "unknown";
