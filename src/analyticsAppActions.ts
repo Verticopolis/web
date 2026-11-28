@@ -23,6 +23,8 @@ export type AppActionName =
   | "file_save"
   | "file_add"
   | "file_dropped"
+  // The desktop app handed the game a tower file to open as it started.
+  | "file_handed"
   | "file_rename"
   | "file_copy"
   | "file_delete"

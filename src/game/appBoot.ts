@@ -1,4 +1,5 @@
 import { openFileSpace, wireTowerDrop } from "./fileSpaceCommands";
+import { wireHandedTower } from "./handedTower";
 import type { GameApp } from "../main";
 import { BuildActions } from "./buildActions";
 import { EditorActions } from "./editorActions";
@@ -447,10 +448,10 @@ export function runBootFlow(app: GameApp, savedAtBoot?: number): void {
   }
 
   // The first real screen (the splash, or the resumed tower) is now mounted, so
-  // end the startup screen: the sunrise finishes in a moment and the cover
-  // fades, on the splash path to the identical title sky underneath, on the
-  // resume path to the running tower.
+  // end the startup screen: the sunrise finishes and the cover fades, to the
+  // title sky on the splash path or to the running tower on a resume.
   finishBootCover();
+  wireHandedTower(app); // the desktop build opens a tower its app handed it, over that screen
 
   // The welcome fireworks, each boot until the player closes them, never over an unreadable save.
   maybeLaunchFireworks(app.ui, () => reducedMotionActive(app.prefs, app.reduceMq.matches), app.saveWasCorrupt);
@@ -465,8 +466,7 @@ export function runBootFlow(app: GameApp, savedAtBoot?: number): void {
   // Autosave periodically, but never while the first-run splash is up, so an
   // idle first visit can't persist the throwaway boot sim (which would flip
   // hasSave() true for a tower the player never started). Each autosave also
-  // writes the tower's own file, and any copy in the linked folder
-  // (`towerDocument.ts`).
+  // writes the tower's own file, and any copy in the linked folder (`towerDocument.ts`).
   startAutosave(app.saveLoad);
 }
 
