@@ -21,6 +21,13 @@ import { drawElement } from "../ui/testing/litTestUtils";
  */
 
 vi.mock("./audioPrefs", () => ({ flushPrefsSave: vi.fn() }));
+const build = vi.hoisted(() => ({ desktop: false }));
+vi.mock("../deployTarget", async (actual) => ({
+  ...(await actual<typeof import("../deployTarget")>()),
+  get DESKTOP_BUILD() {
+    return build.desktop;
+  },
+}));
 
 beforeEach(() => {
   vi.mocked(flushPrefsSave).mockClear();
@@ -384,6 +391,19 @@ describe("audio kick + pagehide", () => {
     crash.remove();
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "q" }));
     expect(app.audio.start).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits for a gesture on the web, and starts at once in the desktop build", () => {
+    expect(makeApp().audio.start).not.toHaveBeenCalled();
+    build.desktop = true;
+    try {
+      const app = makeApp();
+      expect(app.audio.start).toHaveBeenCalledTimes(1);
+      window.dispatchEvent(new Event("pointerdown"));
+      expect(app.audio.start).toHaveBeenCalledTimes(2);
+    } finally {
+      build.desktop = false;
+    }
   });
 
   it("pagehide flushes the pending pref save", () => {
