@@ -326,8 +326,11 @@ links and the desk Help window point there). The game then registers no
 service worker and polls for no update, offers no Install (it already counts
 as installed), shows no Sponsor link and sends no analytics; the manual offers
 no Sponsor item, saves no offline worker and sends no analytics either. The
-game and its saves are unchanged. A Vercel build refuses the flag
-(`src/build/desktopBuild.ts`), and both read it through `src/deployTarget.ts`.
+game's sound starts as the page opens, without waiting for a press, since a
+desktop app can allow that, and its shell may open it with `?muted=1` or
+`?muted=0` to pass on a sound setting the player chose before the game
+opened (`src/storage/shellMute.ts`). The game and its saves are unchanged. A
+Vercel build refuses the flag (`src/build/desktopBuild.ts`), and both read it through `src/deployTarget.ts`.
 
 ## The engine build
 
