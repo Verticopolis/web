@@ -329,7 +329,11 @@ no Sponsor item, saves no offline worker and sends no analytics either. The
 game's sound starts as the page opens, without waiting for a press, since the
 desktop build's shell allows it, and the shell may open the game with
 `?muted=1` or `?muted=0` to pass on a sound setting the player chose before the
-game opened (`src/storage/shellMute.ts`). The game and its saves are unchanged.
+game opened (`src/storage/shellMute.ts`). A shell that played the title theme on
+a screen of its own before the game opened may pass where it was, `music`
+(seconds into the theme's loop) read at `musicAt` (milliseconds since 1970), and
+the title screen carries the theme on from that beat instead of starting it over
+(`src/game/shellMusic.ts`). The game and its saves are unchanged.
 A Vercel build refuses the flag (`src/build/desktopBuild.ts`), and both read it
 through `src/deployTarget.ts`.
 
